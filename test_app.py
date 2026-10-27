@@ -28,7 +28,7 @@ def main():
                     page.locator(f'#foe{i}').fill(name)
                 page.locator('#analyze').click()
                 assert page.locator('#result').is_visible(), f'No result: {names}'
-                assert len(page.locator('#result .chip').all())==3, 'Must select 3'
+                assert len(page.locator('#result .hero .chip').all())==3, 'Must select 3'
                 assert '先発' in page.locator('#result').inner_text()
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'), 'Horizontal overflow'
             page.locator('#clear').click()
