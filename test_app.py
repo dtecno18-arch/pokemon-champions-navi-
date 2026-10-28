@@ -86,15 +86,16 @@ def main():
             assert '1/6匹' in page.locator('#result .risk-banner').inner_text()
             assert '0/6匹' in page.locator('#result .abstention-banner').inner_text()
             assert page.locator('#result .hero').count() == 0
-            # Two independent answers still produce a clearly provisional pick.
+            # Two named answers do not justify a pick while four threats are unknown.
             two_answers = ['ゴリランダー','ドドゲザン','ガブリアス',
                            'ウルガモス','エースバーン','ドラパルト']
             for i, name in enumerate(two_answers):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
-            assert page.locator('#result .hero .chip').count() == 3
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
             assert '2/6匹' in page.locator('#result .evidence-summary').inner_text()
-            assert '暫定' in page.locator('#result .hero').inner_text()
+            assert '選出判断を保留' in page.locator('#result .risk-banner').inner_text()
             # A manual name outside the incomplete M-C candidate catalog must
             # not inherit a recommendation from the other five known names.
             high_coverage = ['アシレーヌ','ドドゲザン','サーフゴー',
@@ -107,6 +108,20 @@ def main():
             assert page.locator('#result .candidate-unverified').count() == 1
             assert page.locator('#result .abstention-banner').count() == 1
             assert page.locator('#result .hero').count() == 0
+            # An autocomplete-listed normal form is not a validated matchup.
+            # Even five named answers cannot make its unknown lead safe.
+            listed_unknown = ['ガブリアス', *high_coverage]
+            assert page.locator('#dex option').evaluate_all(
+                "(els) => els.some(el => el.value === 'ガブリアス')")
+            assert page.evaluate('(names) => recommend(names).comparisonSummary.total', listed_unknown) == 5
+            for i, name in enumerate(listed_unknown):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert 'ガブリアス' in page.locator('#result .risk-banner').inner_text()
+            assert '5/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert page.locator('#result .candidate-unverified').count() == 0
             # Mega X and even name-registered Mega Salamence are not verified
             # matchups; a high name-only score must not imply a safe trio.
             for mega in ('メガリザードンX', 'メガボーマンダ'):
@@ -134,11 +149,12 @@ def main():
             assert '対策候補付きルール 2/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert '選出3匹の対応 1/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert all(name in page.locator('#result').inner_text() for name in partial_coverage)
-            # Two actual answers remain eligible for a provisional suggestion.
+            # Two actual answers are still insufficient with four unknown opponents.
             for i, name in enumerate(two_answers):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
-            assert page.locator('#result .hero .chip').count() == 3
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
             assert '選出3匹の対応 2/6匹' in page.locator('#result .evidence-summary').inner_text()
             # Tier-1 Mega candidates without matchup verification must override
             # otherwise plentiful (5/6) name-only answers. This is particularly
@@ -180,7 +196,8 @@ def main():
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
             assert page.locator('#result .terrain-uncertainty').count() == 0
-            assert page.locator('#result .hero .chip').count() == 3
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
 
             for names in CASES:
                 for i,name in enumerate(names):
@@ -188,7 +205,8 @@ def main():
                 page.locator('#analyze').click()
                 assert page.locator('#result').is_visible(), f'No result: {names}'
                 selected = page.evaluate('(names) => recommend(names).comparisonSummary.chosen', names)
-                if selected < 2 or any(name.startswith(('イエッサン', 'メガ')) for name in names):
+                if (selected < 2 or any(name.startswith(('イエッサン', 'メガ')) for name in names)
+                        or page.evaluate('(names) => names.some(n => !knownCoverage.has(formKey(n)))', names)):
                     assert page.locator('#result .abstention-banner').count() == 1
                     assert page.locator('#result .hero').count() == 0
                 else:
@@ -204,7 +222,8 @@ def main():
                 page.locator('#analyze').click()
                 chosen = page.locator('#result .hero .chip').all_inner_texts()
                 selected = page.evaluate('(names) => recommend(names).comparisonSummary.chosen', names)
-                if selected < 2 or any(name.startswith(('イエッサン', 'メガ')) for name in names):
+                if (selected < 2 or any(name.startswith(('イエッサン', 'メガ')) for name in names)
+                        or page.evaluate('(names) => names.some(n => !knownCoverage.has(formKey(n)))', names)):
                     assert chosen == [], 'Must not display an unsafe trio'
                     assert page.locator('#result .abstention-banner').count() == 1
                 else:
@@ -219,12 +238,13 @@ def main():
                 for i, name in enumerate(names):
                     page.locator(f'#foe{i}').fill(name)
                 page.locator('#analyze').click()
-                chips = [x.strip() for x in page.locator('#result .hero .chip').all_inner_texts()]
-                result = page.locator('#result .hero').inner_text()
-                lead = page.evaluate('(names) => recommend(names).lead', names)
-                assert lead in chips, f'Lead must be one of the selected trio: {lead}, {chips}'
-                assert lead != 'カバルドン', f'Unsafe Hippowdon lead vs {danger}: {chips}'
-                assert '先発変更' in page.locator('#result').inner_text(), f'Missing safety explanation vs {danger}'
+                decision = page.evaluate('(names) => recommend(names)', names)
+                lead = decision['lead']
+                assert lead in decision['team'], f'Lead must be one of the selected trio: {lead}'
+                assert lead != 'カバルドン', f'Unsafe Hippowdon lead vs {danger}'
+                assert any('先発変更' in note for note in decision['cautions']), f'Missing safety explanation vs {danger}'
+                assert page.locator('#result .abstention-banner').count() == 1
+                assert page.locator('#result .hero').count() == 0
             # Without those specific dangers, preserve the article's baseline lead.
             safe_names = ['ガブリアス','ゲンガー','エースバーン','ドラパルト','ルカリオ','サザンドラ']
             assert page.evaluate('(names) => recommend(names).lead', safe_names) == 'カバルドン'
@@ -245,7 +265,7 @@ def main():
             banner = page.locator('#result .risk-banner')
             assert '0/6匹' in banner.inner_text(), banner.inner_text()
             assert all(name in banner.inner_text() for name in unknown_names), 'Missing unknown names in risk banner'
-            assert '暫定案' in banner.inner_text(), 'Must not present unknown coverage as validated'
+            assert '選出判断を保留' in banner.inner_text(), 'Must not present unknown coverage as validated'
             assert page.locator('#result .abstention-banner').count() == 1
             assert page.locator('#result .hero').count() == 0, 'All-unknown opponents must not receive a recommended lead'
             assert all(name in page.locator('#result').inner_text() for name in unknown_names)
