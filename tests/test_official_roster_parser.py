@@ -18,7 +18,7 @@ class OfficialRosterParserTest(unittest.TestCase):
         ])
 
     def test_newline_separated_entries(self):
-        body = "No.0003 フシギバナ\\nNo.0006 リザードン\\n"
+        body = "No.0003 フシギバナ\nNo.0006 リザードン\n"
         self.assertEqual(audit.extract_official(body), [
             (3, "フシギバナ"), (6, "リザードン")
         ])
