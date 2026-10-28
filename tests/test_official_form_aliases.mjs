@@ -39,4 +39,12 @@ for (const [official, expected] of cases) {
 }
 assert.equal(new Set(cases.map(x => key(x[0]))).size, cases.length,
   'distinct official forms must not collapse to one matchup form');
-console.log('PASS: 20 official M-C form aliases and form identity separation');
+const rotomList = html.match(/const officialMcRosterKnownForms=(\[[^;]+\]);/);
+assert.ok(rotomList, 'official M-C Rotom forms must be explicit input candidates');
+const rotom = vm.runInNewContext(rotomList[1]);
+assert.deepEqual(Array.from(rotom), [
+  'ロトム','ヒートロトム','ウォッシュロトム',
+  'フロストロトム','スピンロトム','カットロトム'
+]);
+assert.equal(new Set(rotom).size, 6, 'Rotom forms must remain distinct');
+console.log('PASS: 20 official M-C aliases + 6 Rotom forms + distinct form identity');
