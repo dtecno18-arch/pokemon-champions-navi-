@@ -513,9 +513,21 @@ function updateInputProvenance(){
  });
 }
 const reviewedFormCount=Object.values(verifiedMatchupEvidence).filter(isAuditedMatchupRecord).length;
+// Auditable partial official M-C coverage: 29 newly scouted forms (2026-09-09)
+// and six newly allowed Mega forms. This is NOT the full eligible roster.
+// Sources: https://news.pokemon-home.com/ja/page/821.html
+//          https://news.pokemon-home.com/ja/page/816.html
+const officialMcDeltaRegistered=officialMcAdditions.filter(n=>supportedNames.has(formKey(n))).length;
+const officialMcDeltaUnique=new Set(officialMcAdditions.map(formKey)).size;
 const auditStatus=document.createElement('p');
 auditStatus.id='catalog-audit';auditStatus.className='muted';
 auditStatus.textContent='入力候補 '+supportedNames.size+'/352形態（参考値・公式M-C全件照合未完了）／出典・日付・回答付き検証済み対面 '+reviewedFormCount+'/'+supportedNames.size+'形態。入力可能率と対策検証率は別指標です。';
+auditStatus.append(' ／ 公式M-C追加分 '+officialMcDeltaRegistered+'/'+officialMcDeltaUnique+'形態を候補登録（公式全件突合とは別） ／ ');
+const officialMcRosterLink=document.createElement('a');
+officialMcRosterLink.href='https://web-view.app.pokemonchampions.jp/battle/pages/events/rs178713870219xeaaio/ja/pokemon.html';
+officialMcRosterLink.textContent='公式M-C参加可能一覧（全件照合の原本）';
+officialMcRosterLink.target='_blank';officialMcRosterLink.rel='noopener noreferrer';
+auditStatus.append(officialMcRosterLink);
 $('#count').nextElementSibling.after(auditStatus);
 const knownCoverage=new Set(['ミミッキュ','ドドゲザン','ペリッパー','ヤミラミ','ジュペッタ','アシレーヌ','カバルドン','ボーマンダ','メガボーマンダ','サーフゴー','アーマーガア','ゴリランダー','イエッサン','ドヒドイデ','ラッキー','ハピナス','ヘイラッシャ','ブラッキー','キョジオーン','クレセリア'].map(formKey));
 function likelyRole(n){
