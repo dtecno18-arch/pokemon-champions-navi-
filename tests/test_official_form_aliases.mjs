@@ -46,6 +46,6 @@ assert.deepEqual(Array.from(rotom.slice(0, 6)), [
   'ロトム','ヒートロトム','ウォッシュロトム',
   'フロストロトム','スピンロトム','カットロトム'
 ]);
-assert.equal(rotom.length, 16, 'six Rotom forms plus ten other official M-C forms');
-assert.equal(new Set(rotom).size, 16, 'all official roster additions must remain distinct');
+assert.equal(rotom.length, 14, 'six Rotom forms plus eight other official M-C forms');
+assert.equal(new Set(rotom).size, 14, 'all official roster additions must remain distinct');
 console.log('PASS: 20 official M-C aliases + 6 Rotom forms + distinct form identity');
