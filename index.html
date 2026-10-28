@@ -415,18 +415,18 @@ function analyze(){
  const intel=sourcedThreatIntel['メガグソクムシャ'];
  const sourcedWarning=megaGoliPresent?'<div class="warn sourced-intel"><b>重要：グソクムシャのメガ分岐・先制技</b><div>'+ (megaGoliExact?'メガ形態で入力されています。':'通常形態で入力されています。メガシンカするかは未確定です。') +' メガ後は'+esc(intel.types)+'／特性'+esc(intel.ability)+'／攻撃'+intel.attackBase+'・防御'+intel.defenseBase+'・素早さ'+intel.speedBase+'（種族値）。先制技候補：'+esc(intel.priority)+'。'+esc(intel.note)+'</div><div class="muted">使用率データ集計：'+intel.usageAsOf+'／記事確認：'+intel.sourceUpdated+'。<a href="'+intel.source+'" target="_blank" rel="noopener noreferrer">出典・型の確認（GameWith）</a>。個別対面の勝敗は未検証。</div></div>':'';
  const confidenceBanner=uncovered.length
-  ?'<div class="warn risk-banner" role="status"><b>⚠️ 対策データ不足：'+knownCount+'/6匹のみ登録</b><div>未登録：'+esc(uncovered.join('・'))+'</div><div>未登録の相手への有利不利は評価できません。暫定案を表示する場合も、先発・交代先の安全は保証されません。</div></div>'
+  ?'<div class="warn risk-banner" role="status"><b>⚠️ 対策データ不足：'+knownCount+'/6匹のみ登録</b><div>未登録：'+esc(uncovered.join('・'))+'</div><div>未登録の相手への有利不利は評価できません。選出判断を保留し、先発・交代先を安全とは判定しません。</div></div>'
   :'<div class="warn risk-banner" role="status"><b>注意：対策ルール登録6/6匹</b><div>名前ベースの登録件数であり、型・技・持ち物・特性・素早さ・メガ候補の対策精度は未検証です。安全性を保証しません。</div></div>';
  // No verified form-specific matchup coverage means there is no evidence-based
  // basis to rank three Pokémon or a lead. Do not present the default trio as a
  // recommendation just because the opponent's six names are syntactically valid.
  // Sourced threat facts alone are not validated matchup answers.
- if(actionableCount<2 || selectedCoverage<2 || criticalUnknown.length>0 || terrainUnknown.length>0 || notInSuggestions.length>0 || unverifiedMegaForms.length>0){
+ if(actionableCount<2 || selectedCoverage<2 || uncovered.length>0 || criticalUnknown.length>0 || terrainUnknown.length>0 || notInSuggestions.length>0 || unverifiedMegaForms.length>0){
   $('#result').classList.remove('hidden');
   const megaCandidates=megaCandidatesFor(vals);
   const megaCaution=megaCandidates.length?'<div class="warn mega-uncertainty"><b>メガシンカの分岐に注意</b><div>'+esc(megaCandidates.join('・'))+' が候補に含まれます。実際のメガシンカ先は選出段階では確定できません。通常形態とメガ形態を両方警戒してください。</div></div>':'';
   $('#result').innerHTML=suggestionWarning+
-   '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対策候補付きルール '+actionableCount+'/6匹／選出3匹の対応 '+selectedCoverage+'/6匹：選出3匹・先発は推奨しません</b><div>相手6匹のうち名前ベースの対策候補は'+actionableCount+'匹、暫定選出3匹が実際に対応できる候補は'+selectedCoverage+'匹です。どちらかが2匹未満、または候補未照合の入力・個別対面未検証のメガ形態・重大メガ分岐・サイコフィールド展開役が含まれる場合は推奨を保留します。登録された対策も型・技・持ち物・素早さまで検証済みではありません。対戦画面でメガ候補・先制技も確認してください。</div></div>'+
+   '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対策候補付きルール '+actionableCount+'/6匹／選出3匹の対応 '+selectedCoverage+'/6匹：選出3匹・先発は推奨しません</b><div>相手6匹のうち名前ベースの対策候補は'+actionableCount+'匹、暫定選出3匹が実際に対応できる候補は'+selectedCoverage+'匹です。どちらかが2匹未満、または相手6匹の中に個別対策未登録・候補未照合の入力・個別対面未検証のメガ形態・重大メガ分岐・サイコフィールド展開役が1匹でも含まれる場合は推奨を保留します。登録された対策も型・技・持ち物・素早さまで検証済みではありません。対戦画面でメガ候補・先制技も確認してください。</div></div>'+
    confidenceBanner+criticalWarning+terrainWarning+megaFormWarning+evidenceSummary+sourcedWarning+megaCaution+
    '<div class="line"><b>相手6匹（個別対面未検証）</b>'+vals.map(n=>'<div class="line">'+esc(n)+'</div>').join('')+'</div>';
   $('#result').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
