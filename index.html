@@ -234,6 +234,14 @@ const sourcedThreatIntel=Object.freeze({
   priority:'採用状況未検証',
   note:'特攻種族値159。ひでりによる晴れで炎技が強化されます。通常リザードンの入力ではメガX/Yを決め打ちできません。'
  }),
+ 'メガフラエッテ':Object.freeze({
+  source:'https://gamewith.jp/pokemon-champions/553325',
+  sourceUpdated:'2026-10-27',usageAsOf:'未確認',
+  types:'フェアリー',ability:'フェアリーオーラ',
+  speedBase:102,attackBase:85,defenseBase:87,
+  priority:'採用状況未検証',
+  note:'特攻種族値155。フラエッテ(えいえんのはな)からのメガ分岐であり、通常のフラエッテと混同しません。メガ前は素早さ種族値92。'
+ }),
  'メガゲンガー':Object.freeze({
   source:'https://gamewith.jp/pokemon-champions/554816',
   sourceUpdated:'2026-10-27',usageAsOf:'未確認',
@@ -259,6 +267,9 @@ function requiredMatchupForms(opponent){
   if(isMegaForm(opponent))return [base];
   const megaBranches=megaInputForms.filter(name=>{
     const megaBase=formKey(name).replace(/^メガ/,'').replace(/[XYZ]$/,'');
+    // Only the Eternal Flower Floette can branch to Mega Floette.
+    // Plain Floette must not inherit that Mega branch.
+    if(megaBase==='フラエッテ')return base==='フラエッテ(えいえんのはな)';
     return megaBase===base ||
       (base==='ニャオニクス' && megaBase.startsWith('ニャオニクス('));
   }).map(formKey);
@@ -640,8 +651,10 @@ function analyze(){
  const intel=sourcedThreatIntel['メガグソクムシャ'];
  const sourcedWarning=megaGoliPresent?'<div class="warn sourced-intel"><b>重要：グソクムシャのメガ分岐・先制技</b><div>'+ (megaGoliExact?'メガ形態で入力されています。':'通常形態で入力されています。メガシンカするかは未確定です。') +' メガ後は'+esc(intel.types)+'／特性'+esc(intel.ability)+'／攻撃'+intel.attackBase+'・防御'+intel.defenseBase+'・素早さ'+intel.speedBase+'（種族値）。先制技候補：'+esc(intel.priority)+'。'+esc(intel.note)+'</div><div class="muted">使用率データ集計：'+intel.usageAsOf+'／記事確認：'+intel.sourceUpdated+'。<a href="'+intel.source+'" target="_blank" rel="noopener noreferrer">出典・型の確認（GameWith）</a>。個別対面の勝敗は未検証。</div></div>':'';
  // Source-dated threat facts improve warnings, never verified matchup coverage.
- const extraThreatWarnings=['メガリザードンY','メガゲンガー'].filter(key=>
-  vals.some(n=>formKey(n)===key || (!isMegaForm(n)&&normalize(n)===normalize(key))))
+ const extraThreatWarnings=['メガリザードンY','メガゲンガー','メガフラエッテ'].filter(key=>
+  vals.some(n=>formKey(n)===key ||
+   (key==='メガフラエッテ'?formKey(n)==='フラエッテ(えいえんのはな)':
+    (!isMegaForm(n)&&normalize(n)===normalize(key)))))
   .map(key=>{const data=sourcedThreatIntel[key];const exact=vals.some(n=>formKey(n)===key);
    return '<div class="warn extra-sourced-intel" role="status"><b>出典付き脅威情報：'+esc(key)+'</b><div>'+
     (exact?'メガ形態で入力。':'通常形態からのメガ分岐候補（メガシンカ確定ではありません）。')+
