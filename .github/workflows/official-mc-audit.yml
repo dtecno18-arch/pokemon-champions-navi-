@@ -26,5 +26,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mc-roster-audit
-          path: mc-roster-audit.json
+          path: |
+            mc-roster-audit.json
+            mc-official-body.txt
+            mc-official-network.json
+            mc-official-snapshot.png
           if-no-files-found: warn
