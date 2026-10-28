@@ -619,7 +619,11 @@ def main():
               const record={...cited,form:'ドヒドイデ',reviewed:true,formReviewed:true,
                 branchScope:'all-known',
                 variants:[{...cited,id:'normal',form:'ドヒドイデ',reviewed:true,
-                  ability:'さいせいりょく',speedBase:35,priorityMoves:[]}],
+                  ability:'さいせいりょく',speedBase:35,
+                  speedRangeReviewed:true,speedMin:45,speedMax:95,
+                  moveCoverageReviewed:true,moves:['どくどく','じこさいせい'],
+                  itemCoverageReviewed:true,items:['くろいヘドロ'],
+                  priorityMoves:[]}],
                 answers:[{...cited,variant:'normal',pokemon:'カバルドン',
                   reason:'synthetic schema fixture, not a real matchup',reviewed:true}],
                 leadChecks:[{...cited,variant:'normal',lead:'カバルドン',
@@ -649,6 +653,20 @@ def main():
                   {...record.variants[0],id:'mega'}]}),
                 badSwitch:check({...record,leadChecks:[{...record.leadChecks[0],
                   response:'switch',switchTo:'アシレーヌ'}]}),
+                missingSpeedReview:check({...record,variants:[{
+                  ...record.variants[0],speedRangeReviewed:false}]}),
+                reversedSpeedRange:check({...record,variants:[{
+                  ...record.variants[0],speedMin:120,speedMax:95}]}),
+                missingMoveReview:check({...record,variants:[{
+                  ...record.variants[0],moveCoverageReviewed:false}]}),
+                emptyMoves:check({...record,variants:[{
+                  ...record.variants[0],moves:[]}]}),
+                missingItemReview:check({...record,variants:[{
+                  ...record.variants[0],itemCoverageReviewed:false}]}),
+                emptyItems:check({...record,variants:[{
+                  ...record.variants[0],items:[]}]}),
+                unlistedPriority:check({...record,variants:[{
+                  ...record.variants[0],priorityMoves:['しんそく']}]}),
                 badCitation:check({...record,answers:[{...record.answers[0],source:''}]}),
                 unrelatedLeadAnswer:check({...record,answers:[{
                   ...record.answers[0],pokemon:'ミミッキュ'}]}),
@@ -673,6 +691,10 @@ def main():
                             'duplicateLead': False, 'shadowTagTrapped': False,
                             'shadowTagGhostCanSwitch': True, 'missingBranch': False,
                             'badSwitch': False, 'badCitation': False,
+                            'missingSpeedReview': False, 'reversedSpeedRange': False,
+                            'missingMoveReview': False, 'emptyMoves': False,
+                            'missingItemReview': False, 'emptyItems': False,
+                            'unlistedPriority': False,
                             'unrelatedLeadAnswer': False, 'missingVariantAnswer': False,
                             'missingLeadReason': False, 'missingMegaBranch': False,
                             'charizardBranches': ['リザードン','メガリザードンX','メガリザードンY'],
