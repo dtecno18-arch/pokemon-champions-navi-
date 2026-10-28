@@ -71,6 +71,9 @@ def main():
             assert all(page.locator(f'#foe{i}').input_value() == '' for i in range(6))
 
             # Unknown Pokémon must not crash the app or inject markup.
+            # Refill all slots after the explicit clear/reload above.
+            for i, name in enumerate(unknown_names):
+                page.locator(f'#foe{i}').fill(name)
             page.locator('#foe0').fill('<img src=x onerror=alert(1)>')
             page.locator('#analyze').click()
             assert page.locator('#result').is_visible()
