@@ -31,7 +31,55 @@ def main():
             assert page.evaluate("""() => officialMaSpecialRoster.every(
                 name => Array.from(document.querySelectorAll('#dex option'),
                     option => option.value).includes(name))""")
-            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 245
+            assert page.evaluate("() => historicalMaTournamentCandidates.length") == 41
+            assert page.evaluate("() => historicalMaTournamentMoreCandidates.length") == 63
+            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 349
+            assert '過去のM-A大会参加可能リスト由来104形態' in page.locator('#count + p').inner_text()
+            assert '現行M-C未照合' in page.locator('#count + p').inner_text()
+            # Exhaustive catalog smoke: every listed form must be accepted as
+            # one of six distinct species, never silently unlock a trio/lead.
+            # Run in one browser evaluation to keep CI fast on mobile + desktop.
+            audit = page.evaluate("""() => {
+                const options = Array.from(document.querySelectorAll('#dex option'), o => o.value);
+                const baseline = ['カバルドン','アシレーヌ','サーフゴー',
+                                  'ガブリアス','ミミッキュ','ドドゲザン'];
+                for (const candidate of options) {
+                    const others = baseline.filter(name => normalize(name) !== normalize(candidate)).slice(0, 5);
+                    const names = [candidate, ...others];
+                    if (names.length !== 6 || new Set(names.map(normalize)).size !== 6)
+                        return {candidate, reason: 'species identity collision'};
+                    fields.forEach((field, i) => {field.value = names[i]});
+                    analyze();
+                    if (document.querySelector('#status').textContent ||
+                        !document.querySelector('#result .abstention-banner') ||
+                        document.querySelector('#result .hero'))
+                        return {candidate, reason: 'invalid input or unsafe recommendation'};
+                }
+                return {checked: options.length};
+            }""")
+            assert audit == {'checked': 349}, audit
+            # Historical M-A regional forms share a species slot but retain
+            # distinct form identities for any future matchup evidence.
+            for regional, ordinary in (
+                ('アローラライチュウ', 'ライチュウ'),
+                ('ヒスイウインディ', 'ウインディ'),
+                ('ガラルヤドラン', 'ヤドラン'),
+                ('ガラルヤドキング', 'ヤドキング'),
+                ('ヒスイバクフーン', 'バクフーン'),
+                ('ヒスイダイケンキ', 'ダイケンキ'),
+                ('パルデアケンタロス(かくとう)', 'ケンタロス'),
+                ('ヒスイゾロアーク', 'ゾロアーク'),
+                ('ヒスイヌメルゴン', 'ヌメルゴン'),
+                ('ガラルマッギョ', 'マッギョ'),
+                ('ヒスイクレベース', 'クレベース'),
+                ('ヒスイジュナイパー', 'ジュナイパー'),
+            ):
+                assert page.evaluate("(pair) => normalize(pair[0]) === normalize(pair[1])",
+                                     [regional, ordinary]), regional
+                assert page.evaluate("(pair) => formKey(pair[0]) !== formKey(pair[1])",
+                                     [regional, ordinary]), regional
+            assert page.evaluate("() => formKey('イエッサン♀') === formKey('イエッサン(メス)')")
+            assert page.evaluate("() => formKey('パルデアケンタロス(炎)') === formKey('パルデアケンタロス(ほのお)')")
             assert '公式M-A特別セレクト31形態' in page.locator('#count + p').inner_text()
             assert '全352形態の網羅は未検証' in page.locator('#count + p').inner_text()
             ma_new = ['アローラキュウコン','コータス','エルフーン',
