@@ -84,13 +84,13 @@ def audit():
                              "status": response.status if response else None,
                              "prefix": page_text[:160]})
             if len(entries) >= MIN_EXPECTED and {"プクリン", "セグレイブ"}.issubset(
-                    {name for _, name in entries}):
+                    {entry[1] for entry in entries}):
                 break
         Path("mc-official-body.txt").write_text(page_text + "\n--- RAW TEXT CONTENT ---\\n" + raw_text, encoding="utf-8")
         Path("mc-official-network.json").write_text(json.dumps(network, ensure_ascii=False, indent=2), encoding="utf-8")
         official.screenshot(path="mc-official-snapshot.png", full_page=True)
         if len(entries) < MIN_EXPECTED or not {"プクリン", "セグレイブ"}.issubset(
-                {name for _, name in entries}):
+                {entry[1] for entry in entries}):
             raise RuntimeError(f"No complete current M-C roster extracted; attempts={attempts!r}; network={network[-12:]!r}. Coverage NOT certified.")
         # Official text may omit visually distinguished variants (e.g. plumage).
         # Preserve ambiguous duplicates in the report and FAIL the quality gate.
