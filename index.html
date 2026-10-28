@@ -250,32 +250,66 @@ const sourcedThreatIntel=Object.freeze({
 const verifiedMatchupEvidence=Object.freeze({});
 const hasEvidenceCitation=r=>r && typeof r.source==='string' &&
  r.source.startsWith('https://') && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(r.updated);
+// A preview shows the ordinary species even when multiple Mega outcomes are
+// possible. The branch audit must include *each* possible form, not merely a
+// self-declared "all-known" label. Regional forms cannot Mega Evolve solely
+// because a different regional form of the species can.
+function requiredMatchupForms(opponent){
+  const base=formKey(opponent);
+  if(isMegaForm(opponent))return [base];
+  const megaBranches=megaInputForms.filter(name=>{
+    const megaBase=formKey(name).replace(/^メガ/,'').replace(/[XYZ]$/,'');
+    return megaBase===base ||
+      (base==='ニャオニクス' && megaBase.startsWith('ニャオニクス('));
+  }).map(formKey);
+  return [...new Set([base,...megaBranches])];
+}
 function isAuditedMatchupRecord(r){
- if(!r || r.reviewed!==true || r.formReviewed!==true || r.branchScope!=='all-known' ||
-    typeof r.form!=='string' || !hasEvidenceCitation(r) ||
-    !Array.isArray(r.variants) || !r.variants.length ||
-    !Array.isArray(r.answers) || !r.answers.length ||
-    !Array.isArray(r.leadChecks) || !r.leadChecks.length)return false;
- const ids=r.variants.map(v=>v&&v.id);
- if(new Set(ids).size!==ids.length || r.variants.some(v=>
-    !v || v.reviewed!==true || typeof v.id!=='string' || !v.id ||
-    typeof v.ability!=='string' || !Number.isFinite(v.speedBase) ||
-    !Array.isArray(v.priorityMoves) || !hasEvidenceCitation(v)))return false;
- if(r.answers.some(a=>!a || a.reviewed!==true || typeof a.pokemon!=='string' ||
-    !a.pokemon || !hasEvidenceCitation(a)))return false;
- if(r.leadChecks.some(c=>!c || c.reviewed!==true || !ids.includes(c.variant) ||
-    typeof c.lead!=='string' || !['stay','switch','unsafe'].includes(c.response) ||
-    (c.response==='switch' && typeof c.switchTo!=='string') || !hasEvidenceCitation(c)))return false;
- return true;
+  if(!r || r.reviewed!==true || r.formReviewed!==true || r.branchScope!=='all-known' ||
+     typeof r.form!=='string' || !hasEvidenceCitation(r) ||
+     !Array.isArray(r.variants) || !r.variants.length ||
+     !Array.isArray(r.answers) || !r.answers.length ||
+     !Array.isArray(r.leadChecks) || !r.leadChecks.length)return false;
+  const ids=r.variants.map(v=>v&&v.id);
+  if(new Set(ids).size!==ids.length || r.variants.some(v=>
+     !v || v.reviewed!==true || typeof v.id!=='string' || !v.id ||
+     typeof v.form!=='string' || !v.form || formKey(v.form)!==v.form ||
+     typeof v.ability!=='string' || !v.ability ||
+     !Number.isFinite(v.speedBase) || v.speedBase<1 ||
+     !Array.isArray(v.priorityMoves) ||
+     v.priorityMoves.some(move=>typeof move!=='string') ||
+     !hasEvidenceCitation(v)))return false;
+  if(r.answers.some(a=>!a || a.reviewed!==true || typeof a.pokemon!=='string' ||
+     !a.pokemon || !roster.some(p=>p[0]===a.pokemon) ||
+     !ids.includes(a.variant) || typeof a.reason!=='string' || !a.reason.trim() ||
+     !hasEvidenceCitation(a)))return false;
+  if(r.leadChecks.some(c=>!c || c.reviewed!==true || !ids.includes(c.variant) ||
+     typeof c.lead!=='string' || !roster.some(p=>p[0]===c.lead) ||
+     !['stay','switch','unsafe'].includes(c.response) ||
+     (c.response==='switch' && (typeof c.switchTo!=='string' ||
+       !roster.some(p=>p[0]===c.switchTo))) ||
+     typeof c.reason!=='string' || !c.reason.trim() ||
+     !hasEvidenceCitation(c)))return false;
+  return true;
 }
 function hasVerifiedMatchupAnswer(record,opponent,team,lead){
- if(!isAuditedMatchupRecord(record) || record.form!==formKey(opponent) ||
-    !record.answers.some(a=>team.includes(a.pokemon)))return false;
- // Every documented variant must have a sourced safe lead response.
- // A missing variant, unsafe lead, or switch to a non-selected ally abstains.
- return record.variants.every(v=>record.leadChecks.some(c=>
-   c.variant===v.id && c.lead===lead && c.response!=='unsafe' &&
-   (c.response==='stay' || team.includes(c.switchTo))));
+  if(!isAuditedMatchupRecord(record) || record.form!==formKey(opponent) ||
+     !team.includes(lead))return false;
+  const required=requiredMatchupForms(opponent);
+  const documented=new Set(record.variants.map(v=>v.form));
+  if(documented.size!==required.length ||
+     !required.every(form=>documented.has(form)))return false;
+  // A generic team-member answer cannot certify an unrelated lead. For each
+  // ability/moveset branch the lead must either be the reviewed answer, or
+  // switch to a *selected* ally who is the reviewed answer for that branch.
+  return record.variants.every(v=>{
+    const safeAnswers=record.answers.filter(a=>
+      a.variant===v.id && team.includes(a.pokemon)).map(a=>a.pokemon);
+    return safeAnswers.length>0 && record.leadChecks.some(c=>
+      c.variant===v.id && c.lead===lead && c.response!=='unsafe' &&
+      (c.response==='stay'?safeAnswers.includes(lead):
+        team.includes(c.switchTo) && safeAnswers.includes(c.switchTo)));
+  });
 }
 // Keep opponent inputs on reload; clear explicitly with the reset button.
 const INPUT_KEY='champions-navi-opponents-v1';
