@@ -49,6 +49,31 @@ def main():
             assert page.evaluate("""() => officialMcSpecialForms.every(name =>
                 Array.from(document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
             assert page.evaluate("() => requiredMatchupForms('ヤバソチャ').length") == 2
+            # Generic species previews must cover all playable sex / size /
+            # named forms. An exact form must not inherit its sibling's data.
+            generic_branches = {
+                'イエッサン': ['イエッサン(オス)', 'イエッサン(メス)'],
+                'イダイトウ': ['イダイトウ(オス)', 'イダイトウ(メス)'],
+                'ストリンダー': ['ストリンダー(ハイ)', 'ストリンダー(ロー)'],
+                'ルガルガン': ['ルガルガン(まひる)', 'ルガルガン(まよなか)', 'ルガルガン(たそがれ)'],
+                'パンプジン': ['パンプジン(こだま)', 'パンプジン(ちゅうだま)',
+                           'パンプジン(おおだま)', 'パンプジン(ギガだま)'],
+            }
+            for species, forms in generic_branches.items():
+                actual = page.evaluate("(name) => requiredMatchupForms(name)", species)
+                assert set(actual) == set(forms), (species, actual)
+                for form in forms:
+                    assert page.evaluate("(name) => requiredMatchupForms(name)", form) == [form]
+            assert set(page.evaluate("() => requiredMatchupForms('ニャオニクス')")) == {
+                'ニャオニクス(オス)', 'ニャオニクス(メス)',
+                'メガニャオニクス(オス)', 'メガニャオニクス(メス)'
+            }
+            assert page.evaluate("() => requiredMatchupForms('ニャオニクス(オス)')") == [
+                'ニャオニクス(オス)', 'メガニャオニクス(オス)'
+            ]
+            assert page.evaluate("() => requiredMatchupForms('ニャオニクス(メス)')") == [
+                'ニャオニクス(メス)', 'メガニャオニクス(メス)'
+            ]
             assert page.evaluate("() => !megaCandidatesFor(['イッカネズミ','イキリンコ']).length")
 
             assert page.evaluate("() => formKey('ロトム (フロストロトム)') === 'フロストロトム'")
