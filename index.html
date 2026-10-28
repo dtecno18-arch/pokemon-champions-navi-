@@ -390,6 +390,9 @@ function analyze(){
  const selectedCoverage=r.comparisonSummary.chosen;
  const sourcedCount=vals.filter(n=>Object.prototype.hasOwnProperty.call(sourcedThreatIntel,formKey(n))).length;
  const notInSuggestions=vals.filter(n=>!supportedNames.has(formKey(n)));
+ // A displayed Mega form is not a verified matchup. Even the existing
+ // Mega Salamence name-only rule cannot establish a safe lead or trio.
+ const unverifiedMegaForms=vals.filter(n=>/^メガ/.test(formKey(n)));
  // M-C high-tier Megas without a validated matchup answer are not safe to
  // infer from a small number of unrelated name-only coverage rules.
  // Normal Charizard / Gengar / Golisopod also require a Mega branch.
@@ -404,6 +407,7 @@ function analyze(){
  const criticalWarning=criticalUnknown.length?
   '<div class="warn critical-uncertainty" role="alert"><b>⚠️ 未検証の重大メガ分岐：'+esc(criticalUnknown.join('・'))+'</b><div>環境上位のメガ候補ですが、この構築との個別対面・先発安全性は検証できていません。他の相手に対策候補があっても選出3匹・先発は推奨しません。通常形態の入力でもメガシンカの可能性を確認してください。</div><div class="muted">参考：<a href="https://gamewith.jp/pokemon-champions/546413" target="_blank" rel="noopener noreferrer">GameWith Tier表（2026-10-27更新）</a>。メガグソクムシャの詳細：<a href="https://gamewith.jp/pokemon-champions/575652" target="_blank" rel="noopener noreferrer">GameWith（2026-10-28確認）</a>。個別対面の有利不利は未検証。</div></div>':'';
 
+ const megaFormWarning=unverifiedMegaForms.length?'<div class="warn mega-form-unverified" role="alert"><b>⚠️ メガ形態の個別対面が未検証：'+esc(unverifiedMegaForms.join('・'))+'</b><div>メガ形態の型・特性・素早さ・先制技・初手安全性を検証した対面データがないため、名前ベースの対策ルールがあっても選出3匹・先発は推奨しません。</div></div>':'';
  const suggestionWarning=notInSuggestions.length?'<div class="warn candidate-unverified" role="status"><b>入力候補未照合：'+esc(notInSuggestions.join('・'))+'</b><div>現在の候補リストにない名前です。入力自体は受け付けますが、Pokémon Championsの現行レギュレーションでの使用可否・表記・フォルムは未確認です。対戦画面と照合してください。候補外＝使用不可とは限りません。</div></div>':'';
  const evidenceSummary='<p class="muted evidence-summary">入力候補 '+supportedNames.size+'/352形態（暫定・全件照合未完了）／対策候補付きルール '+actionableCount+'/6匹（名前ベース・型未検証）／選出3匹の対応 '+selectedCoverage+'/6匹（暫定・型未検証）／出典付き個別脅威情報 '+sourcedCount+'/6匹。名前ベースの対面ルール登録件数とは別指標です。</p>';
  const megaGoliPresent=vals.some(n=>normalize(n)==='グソクムシャ');
@@ -417,13 +421,13 @@ function analyze(){
  // basis to rank three Pokémon or a lead. Do not present the default trio as a
  // recommendation just because the opponent's six names are syntactically valid.
  // Sourced threat facts alone are not validated matchup answers.
- if(actionableCount<2 || selectedCoverage<2 || criticalUnknown.length>0 || terrainUnknown.length>0){
+ if(actionableCount<2 || selectedCoverage<2 || criticalUnknown.length>0 || terrainUnknown.length>0 || notInSuggestions.length>0 || unverifiedMegaForms.length>0){
   $('#result').classList.remove('hidden');
   const megaCandidates=megaCandidatesFor(vals);
   const megaCaution=megaCandidates.length?'<div class="warn mega-uncertainty"><b>メガシンカの分岐に注意</b><div>'+esc(megaCandidates.join('・'))+' が候補に含まれます。実際のメガシンカ先は選出段階では確定できません。通常形態とメガ形態を両方警戒してください。</div></div>':'';
   $('#result').innerHTML=suggestionWarning+
-   '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対策候補付きルール '+actionableCount+'/6匹／選出3匹の対応 '+selectedCoverage+'/6匹：選出3匹・先発は推奨しません</b><div>相手6匹のうち名前ベースの対策候補は'+actionableCount+'匹、暫定選出3匹が実際に対応できる候補は'+selectedCoverage+'匹です。どちらかが2匹未満、または未検証の重大メガ分岐・サイコフィールド展開役が含まれる場合は推奨を保留します。登録された対策も型・技・持ち物・素早さまで検証済みではありません。対戦画面でメガ候補・先制技も確認してください。</div></div>'+
-   confidenceBanner+criticalWarning+terrainWarning+evidenceSummary+sourcedWarning+megaCaution+
+   '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対策候補付きルール '+actionableCount+'/6匹／選出3匹の対応 '+selectedCoverage+'/6匹：選出3匹・先発は推奨しません</b><div>相手6匹のうち名前ベースの対策候補は'+actionableCount+'匹、暫定選出3匹が実際に対応できる候補は'+selectedCoverage+'匹です。どちらかが2匹未満、または候補未照合の入力・個別対面未検証のメガ形態・重大メガ分岐・サイコフィールド展開役が含まれる場合は推奨を保留します。登録された対策も型・技・持ち物・素早さまで検証済みではありません。対戦画面でメガ候補・先制技も確認してください。</div></div>'+
+   confidenceBanner+criticalWarning+terrainWarning+megaFormWarning+evidenceSummary+sourcedWarning+megaCaution+
    '<div class="line"><b>相手6匹（個別対面未検証）</b>'+vals.map(n=>'<div class="line">'+esc(n)+'</div>').join('')+'</div>';
   $('#result').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
   $('#result').focus({preventScroll:true});
