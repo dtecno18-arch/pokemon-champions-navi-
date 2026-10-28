@@ -16,7 +16,24 @@ OFFICIAL_URL = "https://web-view.app.pokemonchampions.jp/battle/pages/events/rs1
 ALTERNATE_URL = "https://web-view.app.pokemonchampions.jp/battle/pages/events/ic178714032620uzyrlm/ja/pokemon.html"
 REPORT = Path(os.environ.get("MC_AUDIT_REPORT", "mc-roster-audit.json"))
 APP = Path(os.environ.get("MC_AUDIT_APP", "index.html"))
-MIN_EXPECTED = 200
+MIN_EXPECTED = 262  # Official M-C has 262 battle-form entries (2026-10-29).
+
+# Official eligible-list codes collapse some cosmetic forms to one battle entry.
+# Expand only with independently dated form-specific evidence.
+FORM_EXPANSIONS = {
+    "0670-005": ["フラエッテ(えいえんのはな)"],
+    "0925-001": ["イッカネズミ(3びき)", "イッカネズミ(4ひき)"],
+    "0931-000": ["イキリンコ(グリーンフェザー)", "イキリンコ(ブルーフェザー)"],
+    "0931-002": ["イキリンコ(イエローフェザー)", "イキリンコ(ホワイトフェザー)"],
+    "1013-000": ["ヤバソチャ(ボンサクのすがた)", "ヤバソチャ(ケッサクのすがた)"],
+}
+EXPANSION_SOURCES = {
+    "0670-005": ("https://gamewith.jp/pokemon-champions/553326", "2026-10-27", "secondary source; official form code 005"),
+    "0925-001": ("https://champions-news.pokemon-home.com/en/page/834.html", "2026-09-18", "official M-C special roster"),
+    "0931-000": ("https://champions-news.pokemon-home.com/ja/page/821.html", "2026-09-09", "official M-C select, same battle-ability group"),
+    "0931-002": ("https://champions-news.pokemon-home.com/ja/page/821.html", "2026-09-09", "official M-C select, same battle-ability group"),
+    "1013-000": ("https://champions-news.pokemon-home.com/en/page/834.html", "2026-09-18", "official M-C special roster"),
+}
 
 
 def extract_official(text):
@@ -92,8 +109,15 @@ def audit():
         if len(entries) < MIN_EXPECTED or not {"プクリン", "セグレイブ"}.issubset(
                 {entry[1] for entry in entries}):
             raise RuntimeError(f"No complete current M-C roster extracted; attempts={attempts!r}; network={network[-12:]!r}. Coverage NOT certified.")
-        # Official text may omit visually distinguished variants (e.g. plumage).
-        # Preserve ambiguous duplicates in the report and FAIL the quality gate.
+        # Fail closed if the official embedded form IDs disappear or a
+        # documented cosmetic expansion is no longer backed by this roster.
+        codes = {entry[2] for entry in entries if len(entry) == 3}
+        if len(codes) != len(entries) or not set(FORM_EXPANSIONS).issubset(codes):
+            raise RuntimeError("Official form IDs incomplete or changed; do not certify")
+        if set(FORM_EXPANSIONS) != set(EXPANSION_SOURCES):
+            raise RuntimeError("Cosmetic expansion missing a dated source")
+        expanded = [(dex, name, code, FORM_EXPANSIONS.get(code, [name]))
+                    for dex, name, code in entries]
         app = browser.new_page(locale="ja-JP")
         app.goto(APP.resolve().as_uri(), wait_until="load")
         data = app.evaluate("""(official) => {
@@ -102,16 +126,20 @@ def audit():
             return {
                 inputCount: options.length,
                 nonMegaCount: normal.length,
-                official: official.map(([dex, name, code]) => ({dex, name, code: code || null, key: formKey(name)})),
+                megaCount: options.filter(isMegaForm).length,
+                official: official.map(([dex, name, code, forms]) => ({dex, name, code, keys: forms.map(formKey)})),
                 candidates: normal.map(name => ({name, key: formKey(name)}))
             };
-        }""", entries)
+        }""", expanded)
         browser.close()
-    official_keys = {x["key"] for x in data["official"]}
-    official_labels = [(x["dex"], x["key"]) for x in data["official"]]
-    ambiguous = [x for x in data["official"] if official_labels.count((x["dex"], x["key"])) > 1]
+    official_keys = {key for x in data["official"] for key in x["keys"]}
+    official_labels = [(x["dex"], x["name"]) for x in data["official"]]
+    ambiguous = [x for x in data["official"]
+                 if official_labels.count((x["dex"], x["name"])) > 1]
+    unresolved_ambiguities = [x for x in ambiguous if x["code"] not in FORM_EXPANSIONS]
     candidate_keys = {x["key"] for x in data["candidates"]}
-    missing = [x for x in data["official"] if x["key"] not in candidate_keys]
+    missing = [{**x, "missingKey": key} for x in data["official"]
+               for key in x["keys"] if key not in candidate_keys]
     extra = [x for x in data["candidates"] if x["key"] not in official_keys]
     keys = [x["key"] for x in data["candidates"]]
     duplicate_keys = sorted({k for k in keys if keys.count(k) > 1})
@@ -129,8 +157,11 @@ def audit():
         "extra": extra,
         "duplicateCandidateKeys": duplicate_keys,
         "ambiguousOfficialLabels": ambiguous,
-        "passed": not missing and not extra and not duplicate_keys and not ambiguous and len(official_keys) == len(entries),
-        "scope": "Official M-C non-Mega eligibility only; Mega eligibility requires separate official audit."
+        "unresolvedAmbiguities": unresolved_ambiguities,
+        "documentedFormExpansions": [{"code": code, "forms": forms, "source": EXPANSION_SOURCES[code][0], "updated": EXPANSION_SOURCES[code][1], "basis": EXPANSION_SOURCES[code][2]} for code, forms in FORM_EXPANSIONS.items()],
+        "megaInputForms": data["megaCount"],
+        "passed": not missing and not extra and not duplicate_keys and not unresolved_ambiguities and len(official_keys) == data["nonMegaCount"] and len(entries) >= MIN_EXPECTED and data["megaCount"] == 82,
+        "scope": "262 official M-C battle-form codes plus documented cosmetic expansions; 82 Mega input forms independently listed in official M-A/B/C notices."
     }
 
 
