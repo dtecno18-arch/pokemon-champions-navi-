@@ -188,7 +188,7 @@ def main():
                 assert page.locator('#result .hero').count() == 0
 
             # The official M-C delta must be complete, including four Squawkabilly
-            # feather forms. Do not confuse the 35 additions with all 352 forms.
+            # feather forms. Do not confuse the 35 additions with all official M-C eligible forms.
             assert page.evaluate("() => officialMcAdditions.length") == 35
             # Independent snapshot from the official M-C standard select (29)
             # and M-C Mega regulation update (6), both dated 2026-09-09.
@@ -232,7 +232,7 @@ def main():
             assert page.evaluate("""() => new Set(officialMcAdditions.filter(
                 name => name.startsWith('イキリンコ')).map(formKey)).size""") == 4
             assert 'M-C追加35形態' in page.locator('#count + p').inner_text()
-            assert '全352形態の網羅は未検証' in page.locator('#count + p').inner_text()
+            assert '公式M-C全参加可能形態の網羅は未検証' in page.locator('#count + p').inner_text()
             assert 'raw.githubusercontent.com/fanzeyi/pokemon.json' not in page.content(), (
                 'Unverified national Pokédex must not populate eligible suggestions'
             )
@@ -250,7 +250,7 @@ def main():
             assert '現行M-C使用可否の全件照合は未完了' in page.locator('#count + p').inner_text()
             # All Mega forms listed by the official M-A/M-B/M-C regulations
             # must be independently selectable. These are catalog entries,
-            # NOT proof of a safe matchup or a completed 352-form audit.
+            # NOT proof of a safe matchup or a completed official M-C audit.
             assert page.evaluate("() => [officialMegaMa.length, officialMegaMb.length, officialMegaMc.length]") == [59, 16, 6]
             assert page.evaluate("() => officialMegaForms.length") == 81
             assert page.evaluate("() => megaInputForms.length") == 82
