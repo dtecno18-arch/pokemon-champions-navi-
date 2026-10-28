@@ -368,6 +368,31 @@ function recommend(names){
 
 // All six entered species are accepted; an autocomplete list is a suggestion, not a whitelist.
 const supportedNames=new Set(Array.from(document.querySelectorAll('#dex option'),o=>formKey(o.value)));
+// Every input candidate has a provenance tier. A historical M-A listing is
+// never silently promoted to verified current M-C eligibility.
+const candidateSourceTiers=[
+ {label:'公式M-C追加（2026-09-09）',source:'https://champions-news.pokemon-home.com/ja/page/821.html',names:officialMcAdditions.filter(n=>!isMegaForm(n))},
+ {label:'公式M-Cメガ追加（2026-09-09）',source:'https://news.pokemon-home.com/ja/page/816.html',names:officialMegaMc},
+ {label:'公式M-B追加（現行M-C全件未照合）',source:'https://champions-news.pokemon-home.com/ja/page/777.html',names:officialMbAdditions},
+ {label:'公式M-Bメガ（現行M-C全件未照合）',source:'https://champions-news.pokemon-home.com/ja/page/776.html',names:officialMegaMb},
+ {label:'公式M-Aメガ（現行M-C全件未照合）',source:'https://champions-news.pokemon-home.com/ja/page/751.html',names:officialMegaMa},
+ {label:'公式M-A特別セレクト（現行M-C全件未照合）',source:'https://champions-news.pokemon-home.com/en/page/759.html',names:officialMaSpecialRoster},
+ {label:'過去M-A大会由来（現行M-C未照合）',source:'https://gamewith.jp/pokemon-champions/555416',names:[...historicalMaTournamentCandidates,...historicalMaTournamentMoreCandidates]},
+ {label:'メガ対応通常種（現行M-C全件未照合）',source:'https://champions-news.pokemon-home.com/ja/page/751.html',names:officialMegaBaseCandidates}
+].map(t=>({...t,keys:new Set(t.names.map(formKey))}));
+function candidateProvenance(name){
+ const key=formKey(name);
+ if(!supportedNames.has(key))return {label:'候補外（現行M-C使用可否・表記未照合）',source:''};
+ const tier=candidateSourceTiers.find(t=>t.keys.has(key));
+ return tier?{label:tier.label,source:tier.source}:{label:'固定候補のみ（現行M-C全件未照合）',source:''};
+}
+const reviewedFormCount=Object.values(verifiedMatchupEvidence).filter(r=>
+ r && r.reviewed===true && typeof r.source==='string' && /^https:\/\//.test(r.source) &&
+ /^\d{4}-\d{2}-\d{2}$/.test(r.updated) && Array.isArray(r.answers) && r.answers.length>0).length;
+const auditStatus=document.createElement('p');
+auditStatus.id='catalog-audit';auditStatus.className='muted';
+auditStatus.textContent='入力候補 '+supportedNames.size+'/352形態（参考値・公式M-C全件照合未完了）／出典・日付・回答付き検証済み対面 '+reviewedFormCount+'/'+supportedNames.size+'形態。入力可能率と対策検証率は別指標です。';
+$('#count').nextElementSibling.after(auditStatus);
 const knownCoverage=new Set(['ミミッキュ','ドドゲザン','ペリッパー','ヤミラミ','ジュペッタ','アシレーヌ','カバルドン','ボーマンダ','メガボーマンダ','サーフゴー','アーマーガア','ゴリランダー','イエッサン','ドヒドイデ','ラッキー','ハピナス','ヘイラッシャ','ブラッキー','キョジオーン','クレセリア'].map(formKey));
 function likelyRole(n){
  const x=normalize(n);
@@ -515,7 +540,7 @@ function analyze(){
    confidenceBanner+criticalWarning+terrainWarning+megaFormWarning+megaBaseWarning+evidenceSummary+sourcedWarning+megaCaution+
    (missingVerifiedMatchups.length?'<div class="warn matchup-unverified" role="alert"><b>⚠️ 個別対面の検証不足：'+verifiedMatchupCount+'/6匹</b><div>未検証：'+esc(missingVerifiedMatchups.join('・'))+'。名前ベースの対策候補・出典付き脅威情報は、選出3匹で勝てる根拠ではありません。</div></div>':'')+
    '<div class="line abstention-coverage"><b>選出3匹で対応できない相手</b>'+ (unansweredByTrio.length?unansweredByTrio.map(c=>'<div class="line"><b>'+esc(c.name)+'</b>：'+esc(c.answer)+'</div>').join(''):'<p class="muted">名前ベースの対応候補はありますが、型・技・メガ分岐等の検証が不足しています。</p>')+'</div>'+
-   '<div class="line"><b>相手6匹（個別対面未検証）</b>'+vals.map(n=>'<div class="line">'+esc(n)+'</div>').join('')+'</div>';
+   '<div class="line"><b>相手6匹（入力候補の根拠／個別対面未検証）</b>'+vals.map(n=>{const p=candidateProvenance(n);return '<div class="line candidate-provenance"><b>'+esc(n)+'</b><div class="muted">'+esc(p.label)+(p.source?' ／ <a href="'+esc(p.source)+'" target="_blank" rel="noopener noreferrer">出典</a>':'')+'</div></div>';}).join('')+'</div>';
   $('#result').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
   $('#result').focus({preventScroll:true});
   return;

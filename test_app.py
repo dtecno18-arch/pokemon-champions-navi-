@@ -92,6 +92,33 @@ def main():
             assert page.locator('#result .hero').count() == 0
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
 
+            # Provenance must distinguish official M-C additions from historical
+            # M-A candidates; neither a catalog entry nor a source link is
+            # evidence of a verified matchup.
+            audit_text = page.locator('#catalog-audit').inner_text()
+            assert '349/352形態' in audit_text
+            assert '公式M-C全件照合未完了' in audit_text
+            assert '検証済み対面 0/349形態' in audit_text
+            for name, label in (
+                ('グソクムシャ', '公式M-C追加'),
+                ('メガグソクムシャ', '公式M-Cメガ追加'),
+                ('サーフゴー', '公式M-B追加'),
+                ('アーボック', '過去M-A大会由来'),
+                ('未照合ポケモン', '候補外'),
+            ):
+                actual = page.evaluate('(n) => candidateProvenance(n).label', name)
+                assert label in actual, (name, actual)
+            provenance_case = ['グソクムシャ','メガアブソルZ','アーボック',
+                               'サーフゴー','カバルドン','未照合ポケモン']
+            for i, name in enumerate(provenance_case):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert page.locator('#result .candidate-provenance').count() == 6
+            assert '過去M-A大会由来' in page.locator('#result .candidate-provenance').all_inner_texts()[2]
+            assert '候補外' in page.locator('#result .candidate-provenance').all_inner_texts()[5]
+
             # Form-aware lookup must remain distinct from species-level
             # duplicate detection. A regional or appliance form cannot
             # occupy a second preview slot of the same species.
