@@ -35,8 +35,8 @@ def main():
                 assert page.locator('#dex option').evaluate_all(
                     "(els, form) => els.some(el => el.value === form)", form
                 ), f'Missing M-C form: {form}'
-            assert page.evaluate("() => new Set(officialMcAdditions.filter(
-                name => name.startsWith('イキリンコ')).map(formKey)).size") == 4
+            assert page.evaluate("""() => new Set(officialMcAdditions.filter(
+                name => name.startsWith('イキリンコ')).map(formKey)).size""") == 4
             assert 'M-C追加35形態' in page.locator('#count + p').inner_text()
             assert '全352形態の網羅は未検証' in page.locator('#count + p').inner_text()
             assert 'raw.githubusercontent.com/fanzeyi/pokemon.json' not in page.content(), (
