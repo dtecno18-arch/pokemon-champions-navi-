@@ -270,8 +270,8 @@ function buildDecisionExplanation(opponents,r){
  const sweeperCandidates=opponents.filter(n=>['突破役','終盤役'].includes(likelyRole(n)[0]));
  const predicted=[...leadCandidates.slice(0,1),...sweeperCandidates.slice(0,2)];
  for(const n of opponents)if(predicted.length<3&&!predicted.includes(n))predicted.push(n);
- const forecast=predicted.map(n=>'<span class="chip">'+esc(n)+'</span>').join('');
- const forecastWhy=predicted.map(n=>'<div class="line"><b>'+esc(n)+'</b>：'+esc(likelyRole(n).join('／'))+'</div>').join('');
+ // Do not present a speculative opponent trio as a prediction. Focus on all six threats.
+ const opponentRoles=opponents.map(n=>'<div class="line"><b>'+esc(n)+'</b>：'+esc(likelyRole(n).join('／'))+'</div>').join('');
  const leadNotes=opponents.map(n=>{
   const role=likelyRole(n)[0];
   const action=n===r.lead?'同種対面。先に型を確認':
@@ -289,7 +289,7 @@ function buildDecisionExplanation(opponents,r){
  '<div class="line"><b>中盤｜突破の条件を作る</b><div>'+esc(team.includes('メガルカリオZ')?'メガルカリオZのわるだくみを安全に使える場面を作る。無理なら攻撃で削る。':team.includes('メガカイリュー')?'メガカイリューの技範囲で相手の受け先を削る。':'相手の受け先を削り、後続の先制技圏内に入れる。')+'</div></div>'+
  '<div class="line"><b>終盤｜勝ち切る</b><div>'+esc(team.includes('イダイトウ♂')?'倒れた味方の数と相手の残HPを見て、おはかまいりで締める。':team.includes('ミミッキュ')?'ミミッキュのばけのかわ・かげうちを残し、相手の高速エースを止める。':team.includes('ギルガルド')?'ギルガルドのタスキ・かげうちを温存して締める。':'先制技と残HPを確認して取り切る。')+'</div></div>';
  return '<section class="line"><h2>③ なぜこの3匹なのか</h2><p class="sub">役割と採用理由を1匹ずつ表示。選出変更があった場合も実際の3匹に合わせます。</p>'+explain+'</section>'+
- '<section class="line"><h2>④ 相手の選出予測（仮説）</h2><p class="sub">展開役1匹＋突破・終盤役を優先した仮説です。採用率や実際の選出を示すものではありません。</p><div class="pokemon">'+forecast+'</div>'+forecastWhy+'<p class="muted">先発候補：'+esc(leadCandidates.join('・')||'特定できず')+'。相手の6匹全員が選出される可能性は残ります。</p></section>'+
+ '<section class="line"><h2>④ 相手6匹の役割・脅威</h2><p class="sub">相手の選出3匹を決め打ちせず、6匹全員への対応を確認します。役割は一般的な傾向であり、実際の技・持ち物は未確定です。</p>'+opponentRoles+'</section>'+
  '<section class="line"><h2>⑤ どう動かすか：序盤→終盤</h2>'+steps+'<details><summary>相手6匹それぞれが先発だった場合</summary>'+leadNotes+'</details></section>'+
  '<section class="line"><h2>⑥ データの信頼性</h2>'+warning+'<p class="muted">対面ルール適用：'+recognized.length+'/6匹。登録済みの名前一覧と、個別対策の検証状況は別物です。</p></section>';
 }
