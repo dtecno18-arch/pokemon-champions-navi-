@@ -109,15 +109,24 @@ const fields=Array.from({length:6},(_,i)=>$('#foe'+i));
 // (updated 2026-08-05). Prior inclusion does NOT replace a full M-C eligibility audit.
 const officialMbAdditions=["ラフレシア","ハリーセン","ジュカイン","バシャーモ","ラグラージ","クチート","メタグロス","ムクホーク","ムシャーナ","ペンドラー","ズルズキン","シビルドン","カエンジシ","カラマネロ","ガメノデス","ドラミドロ","オーロンゲ","タイレーツ","ハリーマン","ハカドッグ","コノヨザル","サーフゴー"];
 const officialMcAdditions=["プクリン","ペルシアン","アローラペルシアン","カモネギ","バリヤード","マルノーム","ボーマンダ","ゴーゴート","グソクムシャ","ゴリランダー","エースバーン","インテレオン","フォクスライ","ストリンダー(ハイ)","ストリンダー(ロー)","オトスパス","ニャイキング","ネギガナイト","バチンウニ","イエッサン(オス)","イエッサン(メス)","パーモット","オリーヴァ","イキリンコ(グリーンフェザー)","イキリンコ(ブルーフェザー)","イキリンコ(イエローフェザー)","イキリンコ(ホワイトフェザー)","マフィティフ","セグレイブ","メガアブソルZ","メガボーマンダ","メガガブリアスZ","メガルカリオZ","メガグソクムシャ","メガセグレイブ"];
+// Official regulation Mega eligibility: M-A (2026-04-08), M-B (2026-08-05 update),
+// M-C (2026-09-09 update). A Mega-form autocomplete entry is NOT a reviewed matchup.
+// Sources: https://champions-news.pokemon-home.com/ja/page/751.html
+// https://champions-news.pokemon-home.com/ja/page/776.html
+// https://news.pokemon-home.com/ja/page/816.html
+const officialMegaMa=["メガフシギバナ","メガリザードンX","メガリザードンY","メガカメックス","メガスピアー","メガピジョット","メガピクシー","メガフーディン","メガウツボット","メガヤドラン","メガゲンガー","メガガルーラ","メガスターミー","メガカイロス","メガギャラドス","メガプテラ","メガカイリュー","メガメガニウム","メガオーダイル","メガデンリュウ","メガハガネール","メガハッサム","メガヘラクロス","メガエアームド","メガヘルガー","メガバンギラス","メガサーナイト","メガヤミラミ","メガボスゴドラ","メガチャーレム","メガライボルト","メガサメハダー","メガバクーダ","メガチルタリス","メガジュペッタ","メガチリーン","メガアブソル","メガオニゴーリ","メガミミロップ","メガガブリアス","メガルカリオ","メガユキノオー","メガエルレイド","メガユキメノコ","メガエンブオー","メガドリュウズ","メガタブンネ","メガシャンデラ","メガゴルーグ","メガブリガロン","メガマフォクシー","メガゲッコウガ","メガフラエッテ","メガニャオニクス","メガルチャブル","メガケケンカニ","メガジジーロン","メガスコヴィラン","メガキラフロル"];
+const officialMegaMb=["メガライチュウX","メガライチュウY","メガジュカイン","メガバシャーモ","メガラグラージ","メガクチート","メガメタグロス","メガムクホーク","メガペンドラー","メガズルズキン","メガシビルドン","メガカエンジシ","メガカラマネロ","メガガメノデス","メガドラミドロ","メガタイレーツ"];
+const officialMegaMc=["メガアブソルZ","メガボーマンダ","メガガブリアスZ","メガルカリオZ","メガグソクムシャ","メガセグレイブ"];
+const officialMegaForms=[...officialMegaMa,...officialMegaMb,...officialMegaMc];
 {
  const options=$('#dex');
  const seen=new Set(Array.from(options.options,o=>o.value.normalize('NFKC')));
- for(const name of [...officialMbAdditions,...officialMcAdditions]){
+ for(const name of [...officialMbAdditions,...officialMcAdditions,...officialMegaForms]){
   if(seen.has(name.normalize('NFKC')))continue;
   const opt=document.createElement('option');opt.value=name;options.appendChild(opt);seen.add(name.normalize('NFKC'));
  }
  const note=document.createElement('p');note.className='muted';
- note.innerHTML='公式M-B追加22種（2026-08-05更新）・M-C追加35形態（2026-10-28確認）を候補に反映。固定候補 '+options.options.length+'件／全352形態の網羅は未検証。M-B掲載種を含め現行M-C使用可否の全件照合は未完了。候補外は手入力可。候補にあるだけで個別対策が検証済みとは限りません。出典：<a href="https://champions-news.pokemon-home.com/ja/page/777.html" target="_blank" rel="noopener noreferrer">公式M-B追加情報（2026-08-05更新）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/821.html" target="_blank" rel="noopener noreferrer">公式M-C追加情報</a>・<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith（2026-10-28更新）</a>。';
+ note.innerHTML='公式M-B追加22種（2026-08-05更新）・M-C追加35形態（2026-10-28確認）・公式M-A/B/Cメガ形態81件（2026-10-28照合）を候補に反映。固定候補 '+options.options.length+'件／全352形態の網羅は未検証。M-B掲載種を含め現行M-C使用可否の全件照合は未完了。候補外は手入力可。候補にあるだけで個別対策が検証済みとは限りません。出典：<a href="https://champions-news.pokemon-home.com/ja/page/777.html" target="_blank" rel="noopener noreferrer">公式M-B追加情報（2026-08-05更新）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/821.html" target="_blank" rel="noopener noreferrer">公式M-C追加情報</a>・<a href="https://champions-news.pokemon-home.com/ja/page/751.html" target="_blank" rel="noopener noreferrer">公式M-Aメガ一覧</a>・<a href="https://champions-news.pokemon-home.com/ja/page/776.html" target="_blank" rel="noopener noreferrer">公式M-Bメガ一覧</a>・<a href="https://news.pokemon-home.com/ja/page/816.html" target="_blank" rel="noopener noreferrer">公式M-Cメガ一覧</a>・<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith（2026-10-28更新）</a>。';
  $('#count').after(note);
 }
 
@@ -320,7 +329,7 @@ function likelyRole(n){
 }
 // Confirmed Mega-capable base forms (GameWith Champions Mega list, checked 2026-10-28).
 // A base-form name is NOT proof that the opponent holds a Mega Stone.
-const megaBaseNames=new Set(['リザードン','ゲンガー','アブソル','ガブリアス','ルカリオ','ボーマンダ','グソクムシャ','セグレイブ','カイリュー','ゲッコウガ','メタグロス','ギャラドス','カメックス','フシギバナ','ラグラージ','バシャーモ','ジュペッタ','ヤミラミ','ライチュウ','オーダイル'].map(normalize));
+const megaBaseNames=new Set(officialMegaForms.map(normalize));
 const megaCandidatesFor=opponents=>opponents.filter(n=>/^メガ/.test(n.normalize('NFKC'))||megaBaseNames.has(normalize(n)));
 function buildDecisionExplanation(opponents,r){
  const team=r.team;
