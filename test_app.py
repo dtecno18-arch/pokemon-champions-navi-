@@ -24,6 +24,50 @@ def main():
             page.goto(url, wait_until='domcontentloaded')
             assert page.locator('#analyze').count()==1
 
+            # Official 2026 M-A Global Challenge roster: 31 distinct forms,
+            # including region, sex and family-size variants (historical
+            # eligibility only; M-C audit remains incomplete).
+            assert page.evaluate("() => officialMaSpecialRoster.length") == 31
+            assert page.evaluate("""() => officialMaSpecialRoster.every(
+                name => Array.from(document.querySelectorAll('#dex option'),
+                    option => option.value).includes(name))""")
+            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 245
+            assert '公式M-A特別セレクト31形態' in page.locator('#count + p').inner_text()
+            assert '全352形態の網羅は未検証' in page.locator('#count + p').inner_text()
+            ma_new = ['アローラキュウコン','コータス','エルフーン',
+                      'ニャオニクス(メス)','イダイトウ(オス)','イッカネズミ(3びき)']
+            for i, name in enumerate(ma_new):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .candidate-unverified').count() == 0
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
+
+            # Form-aware lookup must remain distinct from species-level
+            # duplicate detection. A regional or appliance form cannot
+            # occupy a second preview slot of the same species.
+            assert page.evaluate("() => normalize('ペルシアン') === normalize('アローラペルシアン')")
+            assert page.evaluate("() => normalize('キュウコン') === normalize('アローラキュウコン')")
+            assert page.evaluate("() => normalize('ウォッシュロトム') === normalize('ヒートロトム')")
+            assert page.evaluate("() => formKey('ペルシアン') !== formKey('アローラペルシアン')")
+            assert page.evaluate("() => formKey('ウォッシュロトム') !== formKey('ヒートロトム')")
+            assert page.evaluate("() => formKey('ペルシアン（アローラのすがた）') === formKey('アローラペルシアン')")
+            assert page.evaluate("() => formKey('イダイトウ♂') === formKey('イダイトウ(オス)')")
+            assert page.evaluate("() => formKey('イダイトウ(オス)') !== formKey('イダイトウ(メス)')")
+            for first, second in (
+                ('ペルシアン','アローラペルシアン'),
+                ('キュウコン','アローラキュウコン'),
+                ('ウォッシュロトム','ヒートロトム'),
+                ('イダイトウ(オス)','イダイトウ(メス)'),
+            ):
+                for i, name in enumerate([first, second, 'カバルドン',
+                                          'サーフゴー', 'ドドゲザン', 'ミミッキュ']):
+                    page.locator(f'#foe{i}').fill(name)
+                page.locator('#analyze').click()
+                assert '同じポケモンが重複' in page.locator('#status').inner_text()
+                assert page.locator('#result .hero').count() == 0
+
             # The official M-C delta must be complete, including four Squawkabilly
             # feather forms. Do not confuse the 35 additions with all 352 forms.
             assert page.evaluate("() => officialMcAdditions.length") == 35
