@@ -613,6 +613,18 @@ def main():
                             'charizardBranches': ['リザードン','メガリザードンX','メガリザードンY'],
                             'alolanRaichuBranches': ['アローラライチュウ'],
                             'maleMeowsticBranches': ['ニャオニクス(オス)','メガニャオニクス(オス)']}, gate
+            # Regional variants must not inherit another form's Mega branch.
+            # This is a threat-warning correctness check, NOT matchup clearance.
+            regional_case = ['アローラライチュウ','ミミッキュ','ドドゲザン',
+                             'ペリッパー','アシレーヌ','サーフゴー']
+            for i, name in enumerate(regional_case):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .mega-base-unverified').count() == 0
+            assert page.locator('#result .mega-uncertainty').count() == 0
+            assert page.evaluate("() => megaCandidatesFor(['アローラライチュウ']).length") == 0
+            assert page.evaluate("() => megaCandidatesFor(['ライチュウ']).length") == 1
             # Name coverage 6/6 does not validate base-to-Mega branching.
             # Banette, Sableye and Salamence previously bypassed the explicit
             # Mega-form gate when entered in their normal forms.
