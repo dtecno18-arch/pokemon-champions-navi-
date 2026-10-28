@@ -388,6 +388,10 @@ function analyze(){
  const actionableCount=r.comparisonSummary.total;
  // A rule being present is not the same as the chosen trio answering it.
  const selectedCoverage=r.comparisonSummary.chosen;
+ // Even when all six names have rules, the proposed trio may leave a specific
+ // opponent unanswered. Do not recommend a lead while any of the six lacks a
+ // selected counter; name-level coverage is not proof of matchup safety.
+ const unansweredByTrio=r.coverage.filter(c=>c.status!=='候補あり');
  const sourcedCount=vals.filter(n=>Object.prototype.hasOwnProperty.call(sourcedThreatIntel,formKey(n))).length;
  const notInSuggestions=vals.filter(n=>!supportedNames.has(formKey(n)));
  // A displayed Mega form is not a verified matchup. Even the existing
@@ -425,13 +429,14 @@ function analyze(){
  // basis to rank three Pokémon or a lead. Do not present the default trio as a
  // recommendation just because the opponent's six names are syntactically valid.
  // Sourced threat facts alone are not validated matchup answers.
- if(actionableCount<2 || selectedCoverage<2 || uncovered.length>0 || criticalUnknown.length>0 || terrainUnknown.length>0 || notInSuggestions.length>0 || unverifiedMegaForms.length>0 || unverifiedMegaBases.length>0){
+ if(actionableCount<2 || selectedCoverage<6 || unansweredByTrio.length>0 || uncovered.length>0 || criticalUnknown.length>0 || terrainUnknown.length>0 || notInSuggestions.length>0 || unverifiedMegaForms.length>0 || unverifiedMegaBases.length>0){
   $('#result').classList.remove('hidden');
   const megaCandidates=megaCandidatesFor(vals);
   const megaCaution=megaCandidates.length?'<div class="warn mega-uncertainty"><b>メガシンカの分岐に注意</b><div>'+esc(megaCandidates.join('・'))+' が候補に含まれます。実際のメガシンカ先は選出段階では確定できません。通常形態とメガ形態を両方警戒してください。</div></div>':'';
   $('#result').innerHTML=suggestionWarning+
-   '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対策候補付きルール '+actionableCount+'/6匹／選出3匹の対応 '+selectedCoverage+'/6匹：選出3匹・先発は推奨しません</b><div>相手6匹のうち名前ベースの対策候補は'+actionableCount+'匹、暫定選出3匹が実際に対応できる候補は'+selectedCoverage+'匹です。どちらかが2匹未満、または相手6匹の中に個別対策未登録・候補未照合の入力・個別対面未検証のメガ形態・メガシンカ可能な通常形態・重大メガ分岐・サイコフィールド展開役が1匹でも含まれる場合は推奨を保留します。登録された対策も型・技・持ち物・素早さまで検証済みではありません。対戦画面でメガ候補・先制技も確認してください。</div></div>'+
+   '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対策候補付きルール '+actionableCount+'/6匹／選出3匹の対応 '+selectedCoverage+'/6匹：選出3匹・先発は推奨しません</b><div>相手6匹のうち名前ベースの対策候補は'+actionableCount+'匹、暫定選出3匹が実際に対応できる候補は'+selectedCoverage+'匹です。選出3匹で対応できない相手が1匹でもいる場合、または相手6匹の中に個別対策未登録・候補未照合の入力・個別対面未検証のメガ形態・メガシンカ可能な通常形態・重大メガ分岐・サイコフィールド展開役が1匹でも含まれる場合は推奨を保留します。登録された対策も型・技・持ち物・素早さまで検証済みではありません。対戦画面でメガ候補・先制技も確認してください。</div></div>'+
    confidenceBanner+criticalWarning+terrainWarning+megaFormWarning+megaBaseWarning+evidenceSummary+sourcedWarning+megaCaution+
+   '<div class="line abstention-coverage"><b>選出3匹で対応できない相手</b>'+ (unansweredByTrio.length?unansweredByTrio.map(c=>'<div class="line"><b>'+esc(c.name)+'</b>：'+esc(c.answer)+'</div>').join(''):'<p class="muted">名前ベースの対応候補はありますが、型・技・メガ分岐等の検証が不足しています。</p>')+'</div>'+
    '<div class="line"><b>相手6匹（個別対面未検証）</b>'+vals.map(n=>'<div class="line">'+esc(n)+'</div>').join('')+'</div>';
   $('#result').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
   $('#result').focus({preventScroll:true});
