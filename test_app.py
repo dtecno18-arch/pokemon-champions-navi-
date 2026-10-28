@@ -87,6 +87,32 @@ def main():
             page.reload(wait_until='domcontentloaded')
             assert all(page.locator(f'#foe{i}').input_value() == '' for i in range(6))
 
+            # Mega safety: normal-form names can be Mega-capable; never assume
+            # which of multiple possible Mega evolutions the opponent will use.
+            mega_base_names = ['ボーマンダ','ルカリオ','ガブリアス','サーフゴー','ドドゲザン','ペリッパー']
+            for i, name in enumerate(mega_base_names):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            mega_warning = page.locator('#result .mega-uncertainty')
+            assert mega_warning.count() == 1, 'Base-form Mega candidates must trigger a warning'
+            warning_text = mega_warning.inner_text()
+            assert all(n in warning_text for n in mega_base_names[:3]), warning_text
+            assert '確定できません' in warning_text, 'Must not guess the Mega user'
+            assert 'サーフゴー' not in warning_text, 'Non-Mega candidate misidentified'
+
+            explicit_mega = ['メガグソクムシャ','メガセグレイブ','サーフゴー','ドドゲザン','ペリッパー','イエッサン']
+            for i, name in enumerate(explicit_mega):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            warning_text = page.locator('#result .mega-uncertainty').inner_text()
+            assert all(n in warning_text for n in explicit_mega[:2]), warning_text
+
+            no_mega = ['サーフゴー','ドドゲザン','ペリッパー','イエッサン','アシレーヌ','カバルドン']
+            for i, name in enumerate(no_mega):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .mega-uncertainty').count() == 0
+
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):
