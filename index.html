@@ -224,13 +224,11 @@ function recommend(names){
  const choices=[];
  for(let a=0;a<pool.length;a++)for(let b=a+1;b<pool.length;b++)for(let c=b+1;c<pool.length;c++){
   const trio=[pool[a],pool[b],pool[c]];
-  const hits=coverageRules.map(rule=>{
-   const present=names.some(n=>ruleMatches(n,rule));
-   return present?rule.answers.filter(x=>trio.includes(x)).length:0;
-  });
-  const matched=coverageRules.map((rule,i)=>names.some(n=>ruleMatches(n,rule))&&rule.answers.length>0?i:-1).filter(i=>i>=0);
-  const covered=matched.filter(i=>hits[i]>0).length;
-  const missing=matched.length-covered;
+  // Score each of the six opposing slots, not each shared rule group.
+  // E.g. ヤミラミ and ジュペッタ use one rule but are TWO distinct threats.
+  const matchedOpponents=names.map(name=>coverageRules.find(rule=>ruleMatches(name,rule))).filter(rule=>rule&&rule.answers.length>0);
+  const covered=matchedOpponents.filter(rule=>rule.answers.some(x=>trio.includes(x))).length;
+  const missing=matchedOpponents.length-covered;
   // Preserve a coherent win condition: one Mega attacker, an opener, and a cleaner/check.
   const megaCount=trio.filter(x=>x==='メガルカリオZ'||x==='メガカイリュー').length;
   const hasSetup=trio.includes('カバルドン');
@@ -252,7 +250,7 @@ function recommend(names){
   reason+=' '+comparison+'。';
   plan='初手'+lead+'で対面を確認し、'+team.filter(x=>x!==lead).join('・')+'を控えに置く。相手の実際の選出と技を見て、攻撃・交代・積みの優先度を判断する。';
  }
- const comparisonSummary={mode:comparison,baseline:baseline.covered,chosen:choices.find(x=>x.trio.every(t=>team.includes(t))).covered,total:coverageRules.filter(rule=>rule.answers.length&&names.some(n=>ruleMatches(n,rule))).length,alternatives:choices.slice(0,3)};
+ const comparisonSummary={mode:comparison,baseline:baseline.covered,chosen:choices.find(x=>x.trio.every(t=>team.includes(t))).covered,total:names.filter(name=>coverageRules.some(rule=>rule.answers.length&&ruleMatches(name,rule))).length,alternatives:choices.slice(0,3)};
  const coverage=names.map(name=>{
   const rule=coverageRules.find(rule=>ruleMatches(name,rule));
   if(!rule)return {name,status:'要確認',answer:'個別対面の検証データが未登録'};
@@ -394,7 +392,7 @@ function analyze(){
   ?'<div class="warn risk-banner" role="status"><b>⚠️ 対策データ不足：'+knownCount+'/6匹のみ登録</b><div>未登録：'+esc(uncovered.join('・'))+'</div><div>この選出は暫定案です。未登録の相手への有利不利は評価できないため、先発・交代先を必ず確認してください。</div></div>'
   :'<div class="warn risk-banner" role="status"><b>注意：対策ルール登録6/6匹</b><div>名前ベースの登録件数であり、型・技・持ち物・特性・素早さ・メガ候補の対策精度は未検証です。安全性を保証しません。</div></div>';
  $('#result').classList.remove('hidden');
- $('#result').innerHTML='<h2>② おすすめ選出</h2><div class="hero"><div class="tag">登録済みの戦術ルールに基づく推奨（暫定）</div><div class="pokemon">'+r.team.map(x=>'<span class="chip">'+esc(x)+'</span>').join('')+'</div><p><b>先発：'+esc(r.lead)+'</b></p><p>'+esc(r.reason)+'</p></div>'+confidenceBanner+evidenceSummary+sourcedWarning+'<div class="line"><b>立ち回り</b><p>'+esc(r.plan)+'</p></div><div class="line"><b>注意点</b>'+r.cautions.map(x=>'<div class="warn">'+esc(x)+'</div>').join('')+'</div><div class="line"><b>相手6匹の脅威チェック</b>'+r.threats.map(t=>'<div class="line"><b>'+esc(t.name)+'</b><div>'+esc(t.why)+'</div><div class="tag">対策：'+esc(t.answer)+'</div></div>').join('')+'</div><div class="line"><b>3匹比較（20通り）</b><p class="muted">'+esc(r.comparisonSummary.mode)+'。既知の対策がある相手 '+r.comparisonSummary.total+'匹中、基本選出 '+r.comparisonSummary.baseline+'匹 → 推奨 '+r.comparisonSummary.chosen+'匹。個別データがない相手は比較に反映できません。</p></div><div class="line"><b>選出3匹の対応範囲（暫定）</b><p class="muted">既知の対策候補だけを照合。要確認は相性不利の断定ではありません。</p>'+r.coverage.map(c=>'<div class="line"><b>'+esc(c.name)+' ｜ '+esc(c.status)+'</b><div class="muted">'+esc(c.answer)+'</div></div>').join('')+'</div><div class="line"><b>初手の行動分岐</b>'+r.leadBranches.map(b=>'<div class="line"><b>'+esc(b.when)+'</b><div>'+esc(b.action)+'</div></div>').join('')+'</div><details><summary>別の選出を考える条件</summary><p>相手の初手に不利で、控えの後出しも難しい場合は、メガカイリューの対面性能、ギルガルドのタスキ＋先制技、イダイトウのスカーフを軸に組み直してください。相手の選出3匹は決め打ちしません。</p></details>';
+ $('#result').innerHTML='<h2>② おすすめ選出</h2><div class="hero"><div class="tag">登録済みの戦術ルールに基づく推奨（暫定）</div><div class="pokemon">'+r.team.map(x=>'<span class="chip">'+esc(x)+'</span>').join('')+'</div><p><b>先発：'+esc(r.lead)+'</b></p><p>'+esc(r.reason)+'</p></div>'+confidenceBanner+evidenceSummary+sourcedWarning+'<div class="line"><b>立ち回り</b><p>'+esc(r.plan)+'</p></div><div class="line"><b>注意点</b>'+r.cautions.map(x=>'<div class="warn">'+esc(x)+'</div>').join('')+'</div><div class="line"><b>相手6匹の脅威チェック</b>'+r.threats.map(t=>'<div class="line"><b>'+esc(t.name)+'</b><div>'+esc(t.why)+'</div><div class="tag">対策：'+esc(t.answer)+'</div></div>').join('')+'</div><div class="line"><b>3匹比較（20通り）</b><p class="muted">'+esc(r.comparisonSummary.mode)+'。既知の対策ルールがある相手 '+r.comparisonSummary.total+'匹中、基本選出 '+r.comparisonSummary.baseline+'匹 → 推奨 '+r.comparisonSummary.chosen+'匹。個別データがない相手は比較に反映できません。</p></div><div class="line"><b>選出3匹の対応範囲（暫定）</b><p class="muted">既知の対策候補だけを照合。要確認は相性不利の断定ではありません。</p>'+r.coverage.map(c=>'<div class="line"><b>'+esc(c.name)+' ｜ '+esc(c.status)+'</b><div class="muted">'+esc(c.answer)+'</div></div>').join('')+'</div><div class="line"><b>初手の行動分岐</b>'+r.leadBranches.map(b=>'<div class="line"><b>'+esc(b.when)+'</b><div>'+esc(b.action)+'</div></div>').join('')+'</div><details><summary>別の選出を考える条件</summary><p>相手の初手に不利で、控えの後出しも難しい場合は、メガカイリューの対面性能、ギルガルドのタスキ＋先制技、イダイトウのスカーフを軸に組み直してください。相手の選出3匹は決め打ちしません。</p></details>';
 
  // The original coverage model is sparse. Show the gaps rather than claiming exhaustive optimization.
  const detail=buildDecisionExplanation(vals,r);
