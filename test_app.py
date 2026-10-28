@@ -88,7 +88,7 @@ def main():
             assert page.locator('#result .hero').count() == 0
             # Two independent answers still produce a clearly provisional pick.
             two_answers = ['ゴリランダー','ドドゲザン','ガブリアス',
-                           'ゲンガー','エースバーン','ドラパルト']
+                           'ウルガモス','エースバーン','ドラパルト']
             for i, name in enumerate(two_answers):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
@@ -116,6 +116,27 @@ def main():
             page.locator('#analyze').click()
             assert page.locator('#result .hero .chip').count() == 3
             assert '選出3匹の対応 2/6匹' in page.locator('#result .evidence-summary').inner_text()
+            # Tier-1 Mega candidates without matchup verification must override
+            # otherwise plentiful (5/6) name-only answers. This is particularly
+            # important for a normal-form name that may Mega evolve.
+            for danger in ('リザードン', 'メガリザードンY',
+                           'ゲンガー', 'メガゲンガー',
+                           'グソクムシャ', 'メガグソクムシャ'):
+                critical_case = [danger, 'アシレーヌ', 'ドドゲザン',
+                                 'サーフゴー', 'ミミッキュ', 'カバルドン']
+                assert page.evaluate('(names) => recommend(names).comparisonSummary.total', critical_case) == 5
+                for i, name in enumerate(critical_case):
+                    page.locator(f'#foe{i}').fill(name)
+                page.locator('#analyze').click()
+                assert page.locator('#result .abstention-banner').count() == 1, danger
+                assert page.locator('#result .hero').count() == 0, danger
+                critical_text = page.locator('#result .critical-uncertainty').inner_text()
+                assert danger in critical_text and '未検証' in critical_text, critical_text
+                assert '2026-10-27' in critical_text, critical_text
+                assert danger in page.locator('#result .mega-uncertainty').inner_text()
+                assert '5/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert page.evaluate("() => megaCandidatesFor(['リザードン','ゲンガー']).length") == 2
+
             for names in CASES:
                 for i,name in enumerate(names):
                     page.locator(f'#foe{i}').fill(name)
@@ -149,7 +170,7 @@ def main():
             # Lead safety regression: do not recommend Hippowdon into obvious
             # Rillaboom / Pelipper lead pressure when a fallback is selected.
             for danger in ('ゴリランダー', 'ペリッパー'):
-                names = [danger,'ガブリアス','ゲンガー','エースバーン','ドドゲザン','ドラパルト']
+                names = [danger,'ガブリアス','ウルガモス','エースバーン','ドドゲザン','ドラパルト']
                 for i, name in enumerate(names):
                     page.locator(f'#foe{i}').fill(name)
                 page.locator('#analyze').click()
