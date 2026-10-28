@@ -311,7 +311,10 @@ function buildDecisionExplanation(opponents,r){
  }).join('');
  const leadThreatNames=opponents.filter(n=>r.lead==='カバルドン'&&['アシレーヌ','ゴリランダー','ウォッシュロトム','ラグラージ','ゲッコウガ','マスカーニャ','イダイトウ','カメックス'].includes(normalize(n)));
  const leadRisk=leadThreatNames.length?'<div class="warn lead-risk"><b>⚠️ 先発の危険対面</b><div>先発 '+esc(r.lead)+' に対して '+esc(leadThreatNames.join('・'))+' の水・草打点が脅威です。該当する相手が先発なら展開技を強行せず、交代先を確認してください。相手の技・型は未確定です。</div></div>':'';
- const megaCandidates=opponents.filter(n=>/^メガ/.test(n.normalize('NFKC')));
+ // Confirmed Mega-capable base forms (GameWith Champions Mega list, checked 2026-10-28).
+ // A base-form name is NOT proof that the opponent holds a Mega Stone.
+ const megaBaseNames=new Set(['アブソル','ガブリアス','ルカリオ','ボーマンダ','グソクムシャ','セグレイブ','カイリュー','ゲッコウガ','メタグロス','ギャラドス','カメックス','フシギバナ','ラグラージ','バシャーモ','ジュペッタ','ヤミラミ','ライチュウ','オーダイル'].map(normalize));
+ const megaCandidates=opponents.filter(n=>/^メガ/.test(n.normalize('NFKC'))||megaBaseNames.has(normalize(n)));
  const megaCaution=megaCandidates.length?'<div class="warn mega-uncertainty"><b>メガシンカの分岐に注意</b><div>'+esc(megaCandidates.join('・'))+' が候補に含まれます。相手が実際にメガシンカするか、どの個体をメガシンカさせるかは選出段階では確定できません。通常形態とメガ形態の両方を想定して初手を判断してください。</div></div>':'';
  const warning=unrecognized.length?'<div class="warn"><b>重要：個別対面データが不足</b><div>'+esc(unrecognized.join('・'))+' の個別対策は未登録です。20通りの比較はこの相手を十分に評価できません。以下の選出は暫定案で、最適と断定できません。</div></div>':'<p class="ready">6匹とも既知の対策ルールに該当。ただし技・持ち物は未確定です。</p>';
  const steps='<div class="line"><b>序盤｜先発 '+esc(r.lead)+'</b><div>'+esc(roleMap[r.lead]?.[0]||'相手の初手を見て対面を調整')+'</div></div>'+
