@@ -93,6 +93,7 @@ def audit():
         "source": actual_source,
         "checkedAtUtc": datetime.now(timezone.utc).isoformat(),
         "officialEntries": len(entries),
+        "lastOfficialRawPreview": raw_text[raw_text.rfind("No.1019"):][:350],
         "officialUniqueForms": len(official_keys),
         "appInputCandidates": data["inputCount"],
         "appNonMegaCandidates": data["nonMegaCount"],
