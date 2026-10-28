@@ -340,6 +340,10 @@ function isAuditedMatchupRecord(r){
      !Array.isArray(r.variants) || !r.variants.length ||
      !Array.isArray(r.answers) || !r.answers.length ||
      !Array.isArray(r.leadChecks) || !r.leadChecks.length)return false;
+  // Contradictory lead responses must never be resolved by taking only the safe one.
+  // A single unsafe or conflicting response vetoes an entire reviewed record.
+  const leadKeys=r.leadChecks.map(c=>c&&`${c.variant}\u0000${c.lead}`);
+  if(new Set(leadKeys).size!==leadKeys.length)return false;
   const ids=r.variants.map(v=>v&&v.id);
   if(new Set(ids).size!==ids.length || r.variants.some(v=>
      !v || v.reviewed!==true || typeof v.id!=='string' || !v.id ||
@@ -373,10 +377,14 @@ function hasVerifiedMatchupAnswer(record,opponent,team,lead){
   // ability/moveset branch the lead must either be the reviewed answer, or
   // switch to a *selected* ally who is the reviewed answer for that branch.
   return record.variants.every(v=>{
+    // Shadow Tag traps non-Ghost leads. Switching to a Ghost teammate does
+    // not free the trapped lead; a documented switch is not a safe answer.
+    const trapped=v.ability==='かげふみ' && !['ミミッキュ','ギルガルド'].includes(lead);
     const safeAnswers=record.answers.filter(a=>
       a.variant===v.id && team.includes(a.pokemon)).map(a=>a.pokemon);
     return safeAnswers.length>0 && record.leadChecks.some(c=>
       c.variant===v.id && c.lead===lead && c.response!=='unsafe' &&
+      !(trapped && c.response==='switch') &&
       (c.response==='stay'?safeAnswers.includes(lead):
         team.includes(c.switchTo) && safeAnswers.includes(c.switchTo)));
   });
