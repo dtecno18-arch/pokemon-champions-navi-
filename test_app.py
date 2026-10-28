@@ -42,6 +42,27 @@ def main():
             assert 'raw.githubusercontent.com/fanzeyi/pokemon.json' not in page.content(), (
                 'Unverified national Pokédex must not populate eligible suggestions'
             )
+            # Official 2026-08-05 M-B additions: catalog coverage is not
+            # matchup coverage, nor a completed M-C eligibility audit.
+            assert page.evaluate("() => officialMbAdditions.length") == 22
+            assert page.evaluate("""() => officialMbAdditions.every(
+                name => Array.from(document.querySelectorAll('#dex option'),
+                    option => option.value).includes(name))""")
+            assert page.evaluate("""() => new Set(Array.from(
+                document.querySelectorAll('#dex option'), o => o.value)).size ===
+                document.querySelectorAll('#dex option').length""")
+            assert '公式M-B追加22種' in page.locator('#count + p').inner_text()
+            assert '2026-08-05' in page.locator('#count + p').inner_text()
+            assert '現行M-C使用可否の全件照合は未完了' in page.locator('#count + p').inner_text()
+            unverified_mb = ['ラフレシア','ハリーセン','ムクホーク',
+                             'ムシャーナ','ペンドラー','シビルドン']
+            for i, name in enumerate(unverified_mb):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .candidate-unverified').count() == 0
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert '0/6匹' in page.locator('#result .risk-banner').inner_text()
             # Newly added autocomplete entries are NOT automatically verified
             # matchup rules. Unknown threats must remain visibly unknown.
             unverified_mc = ['プクリン', 'マルノーム', 'オトスパス',
