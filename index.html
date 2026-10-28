@@ -311,6 +311,10 @@ function likelyRole(n){
  };
  return roles[x]||['役割未確認','技・持ち物・役割は未検証'];
 }
+// Confirmed Mega-capable base forms (GameWith Champions Mega list, checked 2026-10-28).
+// A base-form name is NOT proof that the opponent holds a Mega Stone.
+const megaBaseNames=new Set(['アブソル','ガブリアス','ルカリオ','ボーマンダ','グソクムシャ','セグレイブ','カイリュー','ゲッコウガ','メタグロス','ギャラドス','カメックス','フシギバナ','ラグラージ','バシャーモ','ジュペッタ','ヤミラミ','ライチュウ','オーダイル'].map(normalize));
+const megaCandidatesFor=opponents=>opponents.filter(n=>/^メガ/.test(n.normalize('NFKC'))||megaBaseNames.has(normalize(n)));
 function buildDecisionExplanation(opponents,r){
  const team=r.team;
  const roleMap={
@@ -356,10 +360,7 @@ function buildDecisionExplanation(opponents,r){
  }).join('');
  const leadThreatNames=opponents.filter(n=>r.lead==='カバルドン'&&['アシレーヌ','ゴリランダー','ウォッシュロトム','ラグラージ','ゲッコウガ','マスカーニャ','イダイトウ','カメックス'].includes(normalize(n)));
  const leadRisk=leadThreatNames.length?'<div class="warn lead-risk"><b>⚠️ 先発の危険対面</b><div>先発 '+esc(r.lead)+' に対して '+esc(leadThreatNames.join('・'))+' の水・草打点が脅威です。該当する相手が先発なら展開技を強行せず、交代先を確認してください。相手の技・型は未確定です。</div></div>':'';
- // Confirmed Mega-capable base forms (GameWith Champions Mega list, checked 2026-10-28).
- // A base-form name is NOT proof that the opponent holds a Mega Stone.
- const megaBaseNames=new Set(['アブソル','ガブリアス','ルカリオ','ボーマンダ','グソクムシャ','セグレイブ','カイリュー','ゲッコウガ','メタグロス','ギャラドス','カメックス','フシギバナ','ラグラージ','バシャーモ','ジュペッタ','ヤミラミ','ライチュウ','オーダイル'].map(normalize));
- const megaCandidates=opponents.filter(n=>/^メガ/.test(n.normalize('NFKC'))||megaBaseNames.has(normalize(n)));
+ const megaCandidates=megaCandidatesFor(opponents);
  const megaCaution=megaCandidates.length?'<div class="warn mega-uncertainty"><b>メガシンカの分岐に注意</b><div>'+esc(megaCandidates.join('・'))+' が候補に含まれます。相手が実際にメガシンカするか、どの個体をメガシンカさせるかは選出段階では確定できません。通常形態とメガ形態の両方を想定して初手を判断してください。</div></div>':'';
  const warning=unrecognized.length?'<div class="warn"><b>重要：個別対面データが不足</b><div>'+esc(unrecognized.join('・'))+' の個別対策は未登録です。20通りの比較はこの相手を十分に評価できません。以下の選出は暫定案で、最適と断定できません。</div></div>':'<div class="warn"><b>注意：6匹とも名前ベースの対面ルールに該当</b><div>型・技・持ち物・特性・素早さ・メガシンカ先は検証済みとは限りません。対面ルールの適用件数は対策精度や安全性を保証しません。</div></div>';
  const steps='<div class="line"><b>序盤｜先発 '+esc(r.lead)+'</b><div>'+esc(roleMap[r.lead]?.[0]||'相手の初手を見て対面を調整')+'</div></div>'+
@@ -399,9 +400,11 @@ function analyze(){
  // Sourced threat facts alone are not validated matchup answers.
  if(knownCount===0){
   $('#result').classList.remove('hidden');
+  const megaCandidates=megaCandidatesFor(vals);
+  const megaCaution=megaCandidates.length?'<div class="warn mega-uncertainty"><b>メガシンカの分岐に注意</b><div>'+esc(megaCandidates.join('・'))+' が候補に含まれます。実際のメガシンカ先は選出段階では確定できません。通常形態とメガ形態を両方警戒してください。</div></div>':'';
   $('#result').innerHTML=suggestionWarning+
    '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対面ルール0/6匹：選出3匹・先発は推奨しません</b><div>入力された6匹に対するフォルム別の対策ルールが未登録です。既定の3匹を安全な選出として提示すると誤判断につながるため、判断を保留します。対戦画面で型・メガ候補・素早さ・先制技を確認してください。</div></div>'+
-   confidenceBanner+evidenceSummary+sourcedWarning+
+   confidenceBanner+evidenceSummary+sourcedWarning+megaCaution+
    '<div class="line"><b>相手6匹（個別対面未検証）</b>'+vals.map(n=>'<div class="line">'+esc(n)+'</div>').join('')+'</div>';
   $('#result').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
   $('#result').focus({preventScroll:true});
