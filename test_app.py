@@ -249,14 +249,35 @@ def main():
             safe_names = ['ガブリアス','ゲンガー','エースバーン','ドラパルト','ルカリオ','サザンドラ']
             assert page.evaluate('(names) => recommend(names).lead', safe_names) == 'カバルドン'
 
-            # Data coverage must be obvious immediately below the recommendation.
-            known_names = ['ミミッキュ','ドドゲザン','ペリッパー','ヤミラミ','ジュペッタ','アシレーヌ']
+            # All six name-only rules can still yield a provisional result only
+            # when none of the opponents has an unverified Mega branch.
+            known_names = ['ミミッキュ','ドドゲザン','ペリッパー','アシレーヌ','サーフゴー','カバルドン']
             for i, name in enumerate(known_names):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
             banner = page.locator('#result .risk-banner')
             assert banner.count() == 1 and '6/6匹' in banner.inner_text(), banner.inner_text()
             assert banner.evaluate("(el) => el.previousElementSibling.classList.contains('hero')"), 'Coverage warning must be next to selection'
+            assert page.locator('#result .mega-base-unverified').count() == 0
+            # Name coverage 6/6 does not validate base-to-Mega branching.
+            # Banette, Sableye and Salamence previously bypassed the explicit
+            # Mega-form gate when entered in their normal forms.
+            for base_mega in ('ジュペッタ', 'ヤミラミ', 'ボーマンダ'):
+                mega_case = [base_mega, 'ミミッキュ', 'ドドゲザン',
+                             'ペリッパー', 'アシレーヌ', 'サーフゴー']
+                for i, name in enumerate(mega_case):
+                    page.locator(f'#foe{i}').fill(name)
+                page.locator('#analyze').click()
+                assert '6/6匹' in page.locator('#result .risk-banner').inner_text(), base_mega
+                assert page.locator('#result .abstention-banner').count() == 1, base_mega
+                assert page.locator('#result .hero').count() == 0, base_mega
+                assert base_mega in page.locator('#result .mega-base-unverified').inner_text()
+                assert base_mega in page.locator('#result .mega-uncertainty').inner_text()
+            # Keep the no-Mega six-name case available for provisional testing.
+            for i, name in enumerate(known_names):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .hero').count() == 1
 
             unknown_names = ['ガブリアス','ウルガモス','ドラパルト','キラフロル','エースバーン','ゲッコウガ']
             for i, name in enumerate(unknown_names):
