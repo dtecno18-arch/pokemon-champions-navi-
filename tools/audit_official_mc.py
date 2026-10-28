@@ -35,6 +35,30 @@ def extract_official(text):
         if name and len(name) < 100:
             entries.append((int(marker.group(1)), name))
     return entries
+def extract_official_payload(text):
+    """Parse the official page's embedded exact-form roster with form IDs.
+
+    Source HTML contains: const pokemons = [["0003-000",1,"フシギバナ"], ...];
+    Unlike rendered labels, the code distinguishes same-named forms.
+    """
+    match = re.search(r"const\\s+pokemons\\s*=\\s*(\\[\\[.*?\\]\\])\\s*;", text, re.S)
+    if not match:
+        return []
+    rows = json.loads(match.group(1))
+    if not isinstance(rows, list):
+        raise ValueError("Official embedded roster is not an array")
+    out = []
+    for row in rows:
+        if (not isinstance(row, list) or len(row) < 3 or
+                not isinstance(row[0], str) or
+                not re.fullmatch(r"\\d{4}-\\d{3}", row[0]) or
+                not isinstance(row[2], str) or not row[2].strip()):
+            raise ValueError(f"Malformed official form row: {row!r}")
+        out.append((int(row[0][:4]), row[2].strip(), row[0]))
+    if len({x[2] for x in out}) != len(out):
+        raise ValueError("Duplicate official form IDs")
+    return out
+
 
 def audit():
     from playwright.sync_api import sync_playwright
@@ -49,7 +73,9 @@ def audit():
             official.wait_for_timeout(10000)
             page_text = official.locator("body").inner_text(timeout=20000)
             raw_text = official.locator("body").text_content(timeout=20000) or ""
-            entries = extract_official(page_text)
+            entries = extract_official_payload(raw_text)
+            if len(entries) < MIN_EXPECTED:
+                entries = extract_official(page_text)
             if len(entries) < MIN_EXPECTED:
                 entries = extract_official(raw_text)
             attempts.append({"url": actual_source, "entries": len(entries),
@@ -76,7 +102,7 @@ def audit():
             return {
                 inputCount: options.length,
                 nonMegaCount: normal.length,
-                official: official.map(([dex, name]) => ({dex, name, key: formKey(name)})),
+                official: official.map(([dex, name, code]) => ({dex, name, code: code || null, key: formKey(name)})),
                 candidates: normal.map(name => ({name, key: formKey(name)}))
             };
         }""", entries)
@@ -93,6 +119,7 @@ def audit():
         "source": actual_source,
         "checkedAtUtc": datetime.now(timezone.utc).isoformat(),
         "officialEntries": len(entries),
+        "officialFormCodes": len({x[2] for x in entries if len(x) > 2}),
         "lastOfficialRawPreview": raw_text[raw_text.rfind("No.1019"):][:350],
         "officialUniqueForms": len(official_keys),
         "appInputCandidates": data["inputCount"],
