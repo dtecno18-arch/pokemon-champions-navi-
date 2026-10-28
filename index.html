@@ -105,16 +105,19 @@ const fields=Array.from({length:6},(_,i)=>$('#foe'+i));
 // M-C additions: 29 normal/form entries from the official 2026-09-09 Select notice,
 // plus six newly enabled Megas verified against the 2026-10-27 GameWith M-C list.
 // This is NOT the full M-C eligible roster (352 forms). Never present it as such.
+// M-B's 22 newly introduced species were listed in the official Select M-B notice
+// (updated 2026-08-05). Prior inclusion does NOT replace a full M-C eligibility audit.
+const officialMbAdditions=["ラフレシア","ハリーセン","ジュカイン","バシャーモ","ラグラージ","クチート","メタグロス","ムクホーク","ムシャーナ","ペンドラー","ズルズキン","シビルドン","カエンジシ","カラマネロ","ガメノデス","ドラミドロ","オーロンゲ","タイレーツ","ハリーマン","ハカドッグ","コノヨザル","サーフゴー"];
 const officialMcAdditions=["プクリン","ペルシアン","アローラペルシアン","カモネギ","バリヤード","マルノーム","ボーマンダ","ゴーゴート","グソクムシャ","ゴリランダー","エースバーン","インテレオン","フォクスライ","ストリンダー(ハイ)","ストリンダー(ロー)","オトスパス","ニャイキング","ネギガナイト","バチンウニ","イエッサン(オス)","イエッサン(メス)","パーモット","オリーヴァ","イキリンコ(グリーンフェザー)","イキリンコ(ブルーフェザー)","イキリンコ(イエローフェザー)","イキリンコ(ホワイトフェザー)","マフィティフ","セグレイブ","メガアブソルZ","メガボーマンダ","メガガブリアスZ","メガルカリオZ","メガグソクムシャ","メガセグレイブ"];
 {
  const options=$('#dex');
  const seen=new Set(Array.from(options.options,o=>o.value.normalize('NFKC')));
- for(const name of officialMcAdditions){
+ for(const name of [...officialMbAdditions,...officialMcAdditions]){
   if(seen.has(name.normalize('NFKC')))continue;
   const opt=document.createElement('option');opt.value=name;options.appendChild(opt);seen.add(name.normalize('NFKC'));
  }
  const note=document.createElement('p');note.className='muted';
- note.innerHTML='M-C追加35形態の候補を収録（2026-10-28確認）。固定候補 '+options.options.length+'件／全352形態の網羅は未検証。その他の固定候補も使用可否の全件照合は未完了です。候補外は手入力可。出典：<a href="https://champions-news.pokemon-home.com/ja/page/821.html" target="_blank" rel="noopener noreferrer">公式M-C追加情報</a>・<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith（2026-10-28更新）</a>。';
+ note.innerHTML='公式M-B追加22種（2026-08-05更新）・M-C追加35形態（2026-10-28確認）を候補に反映。固定候補 '+options.options.length+'件／全352形態の網羅は未検証。M-B掲載種を含め現行M-C使用可否の全件照合は未完了。候補外は手入力可。候補にあるだけで個別対策が検証済みとは限りません。出典：<a href="https://champions-news.pokemon-home.com/ja/page/777.html" target="_blank" rel="noopener noreferrer">公式M-B追加情報（2026-08-05更新）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/821.html" target="_blank" rel="noopener noreferrer">公式M-C追加情報</a>・<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith（2026-10-28更新）</a>。';
  $('#count').after(note);
 }
 
