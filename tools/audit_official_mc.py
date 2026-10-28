@@ -43,8 +43,8 @@ def audit():
                 f"HTTP {response.status if response else 'unknown'}, "
                 f"body prefix: {page_text[:350]!r}. Coverage NOT certified."
             )
-        if len(set(entries)) != len(entries):
-            raise RuntimeError("Duplicate dex+form entries in official source")
+        # Official text may omit visually distinguished variants (e.g. plumage).
+        # Preserve ambiguous duplicates in the report and FAIL the quality gate.
         app = browser.new_page(locale="ja-JP")
         app.goto(APP.resolve().as_uri(), wait_until="load")
         data = app.evaluate("""(official) => {
@@ -59,6 +59,8 @@ def audit():
         }""", entries)
         browser.close()
     official_keys = {x["key"] for x in data["official"]}
+    official_labels = [(x["dex"], x["key"]) for x in data["official"]]
+    ambiguous = [x for x in data["official"] if official_labels.count((x["dex"], x["key"])) > 1]
     candidate_keys = {x["key"] for x in data["candidates"]}
     missing = [x for x in data["official"] if x["key"] not in candidate_keys]
     extra = [x for x in data["candidates"] if x["key"] not in official_keys]
@@ -74,7 +76,8 @@ def audit():
         "missing": missing,
         "extra": extra,
         "duplicateCandidateKeys": duplicate_keys,
-        "passed": not missing and not extra and not duplicate_keys and len(official_keys) == len(entries),
+        "ambiguousOfficialLabels": ambiguous,
+        "passed": not missing and not extra and not duplicate_keys and not ambiguous and len(official_keys) == len(entries),
         "scope": "Official M-C non-Mega eligibility only; Mega eligibility requires separate official audit."
     }
 
