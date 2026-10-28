@@ -310,7 +310,10 @@ def main():
             form_banner = page.locator('#result .risk-banner').inner_text()
             assert '5/6匹' in form_banner and 'メガジュペッタ' in form_banner, form_banner
             assert page.evaluate("(names) => recommend(names).coverage[0].status", form_case) == '要確認'
-            assert 'M-C全352種類の入力候補網羅：未検証' in page.locator('#result').inner_text()
+            # The abstention view shows the separate candidate-coverage metric
+            # instead of the expanded recommendation-only detail section.
+            assert '入力候補' in page.locator('#result .evidence-summary').inner_text()
+            assert '全件照合未完了' in page.locator('#result .evidence-summary').inner_text()
 
             # Normal Lucario is not proof that Mega Lucario Z is selected.
             base_lucario = ['ルカリオ', 'アシレーヌ', 'サーフゴー',
