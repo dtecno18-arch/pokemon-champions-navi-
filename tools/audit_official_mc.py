@@ -26,11 +26,11 @@ def extract_official(text):
     body.inner_text() returns only its heading, while body.text_content()
     concatenates the individual No.XXXX entries. Split on each No. marker.
     """
-    markers = list(re.finditer(r"No\\.?\\s*(\\d{3,4})\\s*", text, re.I))
+    markers = list(re.finditer(r"No\.?\s*(\d{3,4})\s*", text, re.I))
     entries = []
     for i, marker in enumerate(markers):
         end = markers[i + 1].start() if i + 1 < len(markers) else len(text)
-        name = re.sub(r"\\s+", " ", text[marker.end():end]).strip()
+        name = re.sub(r"\s+", " ", text[marker.end():end]).strip()
         if name and len(name) < 100:
             entries.append((int(marker.group(1)), name))
     return entries
