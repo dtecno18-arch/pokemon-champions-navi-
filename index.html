@@ -181,7 +181,12 @@ function recommend(names){
   const matched=coverageRules.map((rule,i)=>names.some(n=>rule.match.some(m=>normalize(n)===normalize(m)))&&rule.answers.length>0?i:-1).filter(i=>i>=0);
   const covered=matched.filter(i=>hits[i]>0).length;
   const missing=matched.length-covered;
-  const roles=(trio.includes('カバルドン')?0.5:0)+(trio.includes('ミミッキュ')?0.4:0)+(trio.includes('メガルカリオZ')?0.4:0);
+  // Preserve a coherent win condition: one Mega attacker, an opener, and a cleaner/check.
+  const megaCount=trio.filter(x=>x==='メガルカリオZ'||x==='メガカイリュー').length;
+  const hasSetup=trio.includes('カバルドン');
+  const hasCleaner=trio.some(x=>['ミミッキュ','ギルガルド','イダイトウ♂'].includes(x));
+  const hasAttacker=megaCount>0||trio.includes('ギルガルド')||trio.includes('イダイトウ♂');
+  const roles=(hasSetup?0.5:0)+(hasCleaner?0.6:0)+(hasAttacker?0.6:0)-(megaCount===2?1.2:0)-(megaCount===0?0.8:0);
   const base=trio.filter(x=>initialTeam.includes(x)).length*0.24;
   const score=covered*3-missing*2+roles+base;
   choices.push({trio,covered,missing,score});
