@@ -36,7 +36,7 @@ def main():
                     option => option.value).includes(name))""")
             assert page.evaluate("() => historicalMaTournamentCandidates.length") == 41
             assert page.evaluate("() => historicalMaTournamentMoreCandidates.length") == 63
-            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 349
+            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 350
             assert '過去のM-A大会参加可能リスト由来104形態' in page.locator('#count + p').inner_text()
             assert '現行M-C未照合' in page.locator('#count + p').inner_text()
             # Exhaustive catalog smoke: every listed form must be accepted as
@@ -60,7 +60,7 @@ def main():
                 }
                 return {checked: options.length};
             }""")
-            assert audit == {'checked': 349}, audit
+            assert audit == {'checked': 350}, audit
             # Historical M-A regional forms share a species slot but retain
             # distinct form identities for any future matchup evidence.
             for regional, ordinary in (
@@ -99,9 +99,9 @@ def main():
             # M-A candidates; neither a catalog entry nor a source link is
             # evidence of a verified matchup.
             audit_text = page.locator('#catalog-audit').inner_text()
-            assert '349/352形態' in audit_text
+            assert '350/352形態' in audit_text
             assert '公式M-C全件照合未完了' in audit_text
-            assert '検証済み対面 0/349形態' in audit_text
+            assert '検証済み対面 0/350形態' in audit_text
             for name, label in (
                 ('グソクムシャ', '公式M-C追加'),
                 ('メガグソクムシャ', '公式M-Cメガ追加'),
@@ -218,6 +218,26 @@ def main():
             # NOT proof of a safe matchup or a completed 352-form audit.
             assert page.evaluate("() => [officialMegaMa.length, officialMegaMb.length, officialMegaMc.length]") == [59, 16, 6]
             assert page.evaluate("() => officialMegaForms.length") == 81
+            assert page.evaluate("() => megaInputForms.length") == 82
+            assert page.evaluate("() => new Set(megaInputForms.map(formKey)).size") == 82
+            assert page.evaluate("() => !megaInputForms.includes('メガニャオニクス')")
+            assert page.evaluate("() => megaMeowsticSexForms.length") == 2
+            assert page.evaluate("() => formKey('メガニャオニクス♂') === formKey('メガニャオニクス(オス)')")
+            assert page.evaluate("() => formKey('メガニャオニクス♀') === formKey('メガニャオニクス(メス)')")
+            assert page.evaluate("() => formKey('メガニャオニクス(オス)') !== formKey('メガニャオニクス(メス)')")
+            assert page.evaluate("() => normalize('メガニャオニクス(オス)') === normalize('ニャオニクス(メス)')")
+            assert page.evaluate("() => megaMeowsticSexForms.every(isMegaForm)")
+            for i, name in enumerate(('メガニャオニクス(オス)','メガニャオニクス(メス)',
+                                      'カバルドン','サーフゴー','ミミッキュ','ドドゲザン')):
+                page.locator(f'#foe{i}').fill(name)
+            assert '公式M-Aメガ' in page.locator('#source0').inner_text()
+            page.locator('#analyze').click()
+            assert '同じポケモンが重複' in page.locator('#status').inner_text()
+            page.locator('#foe1').fill('アシレーヌ')
+            page.locator('#analyze').click()
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert 'メガニャオニクス(オス)' in page.locator('#result .mega-form-unverified').inner_text()
             # Every eligible Mega needs its ordinary pre-Mega species available
             # as a distinct input candidate, without implying matchup evidence.
             assert page.evaluate("() => officialMegaBaseCandidates.length") == 76
@@ -238,12 +258,12 @@ def main():
             assert page.locator('#result .abstention-banner').count() == 1
             assert page.locator('#result .hero').count() == 0
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
-            assert page.evaluate("""() => new Set(officialMegaForms.map(formKey)).size === 81 &&
-                officialMegaForms.every(name => Array.from(
+            assert page.evaluate("""() => new Set(megaInputForms.map(formKey)).size === 82 &&
+                megaInputForms.every(name => Array.from(
                     document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
             assert page.evaluate("() => megaBaseNames.has(normalize('ユキメノコ'))")
             assert page.evaluate("() => megaBaseNames.has(normalize('スピアー'))")
-            assert '公式M-A/B/Cメガ形態81件' in page.locator('#count + p').inner_text()
+            assert '公式M-A/B/Cメガ81名称・性差込み82形態' in page.locator('#count + p').inner_text()
             # Meganium is a NORMAL species whose name begins with "メガ".
             # Only the cataloged "メガメガニウム" is a Mega form.
             assert page.evaluate("() => normalize('メガニウム') === 'メガニウム'")
