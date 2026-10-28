@@ -107,6 +107,10 @@ const fields=Array.from({length:6},(_,i)=>$('#foe'+i));
 // This is NOT the full M-C eligible roster (352 forms). Never present it as such.
 // M-B's 22 newly introduced species were listed in the official Select M-B notice
 // (updated 2026-08-05). Prior inclusion does NOT replace a full M-C eligibility audit.
+// Official 2026 Global Challenge M-A special roster (2026-04-24): 31
+// distinct forms, not proof of current M-C eligibility. Source:
+// https://champions-news.pokemon-home.com/en/page/759.html
+const officialMaSpecialRoster=["フシギバナ","リザードン","キュウコン","アローラキュウコン","メガニウム","オーダイル","ニョロトノ","バンギラス","ペリッパー","コータス","カバルドン","ユキノオー","エンブオー","ドリュウズ","エルフーン","バイバニラ","ウルガモス","ファイアロー","ニャオニクス(オス)","ニャオニクス(メス)","アマルルガ","ガオガエン","ルガルガン(まひる)","ヤレユータン","サダイジャ","イダイトウ(オス)","イダイトウ(メス)","イッカネズミ(3びき)","イッカネズミ(4ひき)","リキキリン","ブリジュラス"];
 const officialMbAdditions=["ラフレシア","ハリーセン","ジュカイン","バシャーモ","ラグラージ","クチート","メタグロス","ムクホーク","ムシャーナ","ペンドラー","ズルズキン","シビルドン","カエンジシ","カラマネロ","ガメノデス","ドラミドロ","オーロンゲ","タイレーツ","ハリーマン","ハカドッグ","コノヨザル","サーフゴー"];
 const officialMcAdditions=["プクリン","ペルシアン","アローラペルシアン","カモネギ","バリヤード","マルノーム","ボーマンダ","ゴーゴート","グソクムシャ","ゴリランダー","エースバーン","インテレオン","フォクスライ","ストリンダー(ハイ)","ストリンダー(ロー)","オトスパス","ニャイキング","ネギガナイト","バチンウニ","イエッサン(オス)","イエッサン(メス)","パーモット","オリーヴァ","イキリンコ(グリーンフェザー)","イキリンコ(ブルーフェザー)","イキリンコ(イエローフェザー)","イキリンコ(ホワイトフェザー)","マフィティフ","セグレイブ","メガアブソルZ","メガボーマンダ","メガガブリアスZ","メガルカリオZ","メガグソクムシャ","メガセグレイブ"];
 // Official regulation Mega eligibility: M-A (2026-04-08), M-B (2026-08-05 update),
@@ -125,22 +129,46 @@ const officialMegaBaseCandidates=[...new Set(officialMegaForms.map(name=>name.re
 {
  const options=$('#dex');
  const seen=new Set(Array.from(options.options,o=>o.value.normalize('NFKC')));
- for(const name of [...officialMbAdditions,...officialMcAdditions,...officialMegaForms,...officialMegaBaseCandidates]){
+ for(const name of [...officialMaSpecialRoster,...officialMbAdditions,...officialMcAdditions,...officialMegaForms,...officialMegaBaseCandidates]){
   if(seen.has(name.normalize('NFKC')))continue;
   const opt=document.createElement('option');opt.value=name;options.appendChild(opt);seen.add(name.normalize('NFKC'));
  }
  const note=document.createElement('p');note.className='muted';
- note.innerHTML='公式M-B追加22種（2026-08-05更新）・M-C追加35形態（2026-10-28確認）・公式M-A/B/Cメガ形態81件と対応する通常種76件（2026-10-28照合）を候補に反映。固定候補 '+options.options.length+'件／全352形態の網羅は未検証。M-B掲載種を含め現行M-C使用可否の全件照合は未完了。候補外は手入力可。候補にあるだけで個別対策が検証済みとは限りません。出典：<a href="https://champions-news.pokemon-home.com/ja/page/777.html" target="_blank" rel="noopener noreferrer">公式M-B追加情報（2026-08-05更新）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/821.html" target="_blank" rel="noopener noreferrer">公式M-C追加情報</a>・<a href="https://champions-news.pokemon-home.com/ja/page/751.html" target="_blank" rel="noopener noreferrer">公式M-Aメガ一覧</a>・<a href="https://champions-news.pokemon-home.com/ja/page/776.html" target="_blank" rel="noopener noreferrer">公式M-Bメガ一覧</a>・<a href="https://news.pokemon-home.com/ja/page/816.html" target="_blank" rel="noopener noreferrer">公式M-Cメガ一覧</a>・<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith（2026-10-28更新）</a>。';
+ note.innerHTML='公式M-A特別セレクト31形態（2026-04-24確認）・M-B追加22種（2026-08-05更新）・M-C追加35形態（2026-10-28確認）・公式M-A/B/Cメガ形態81件と対応する通常種76件（2026-10-28照合）を候補に反映。固定候補 '+options.options.length+'件／全352形態の網羅は未検証。M-B掲載種を含め現行M-C使用可否の全件照合は未完了。候補外は手入力可。候補にあるだけで個別対策が検証済みとは限りません。出典：<a href="https://champions-news.pokemon-home.com/en/page/759.html" target="_blank" rel="noopener noreferrer">公式M-A特別セレクト（2026-04-24）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/777.html" target="_blank" rel="noopener noreferrer">公式M-B追加情報（2026-08-05更新）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/821.html" target="_blank" rel="noopener noreferrer">公式M-C追加情報</a>・<a href="https://champions-news.pokemon-home.com/ja/page/751.html" target="_blank" rel="noopener noreferrer">公式M-Aメガ一覧</a>・<a href="https://champions-news.pokemon-home.com/ja/page/776.html" target="_blank" rel="noopener noreferrer">公式M-Bメガ一覧</a>・<a href="https://news.pokemon-home.com/ja/page/816.html" target="_blank" rel="noopener noreferrer">公式M-Cメガ一覧</a>・<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith（2026-10-28更新）</a>。';
  $('#count').after(note);
 }
 
 // Species-level grouping is only for duplicate detection and broad threat hints.
 // Match against the official Mega catalog: メガニウム is a NORMAL species,
 // while メガメガニウム is its Mega form. Prefix matching is unsafe.
-const normalize=s=>{const n=String(s).normalize('NFKC').replace(/[\s　・･]/g,'').replace(/（.*?）|\(.*?\)/g,'').replace(/♂|♀/g,'');return isMegaForm(s)?n.replace(/^メガ/,'').replace(/[XYZ]$/,''):n;};
+// Canonical species identity is ONLY for duplicate detection / broad threat hints.
+// Regional forms and Rotom appliances share a species slot. This must never
+// substitute for form-specific matchup evidence.
+const speciesAliases=Object.freeze({
+ 'アローラペルシアン':'ペルシアン',
+ 'アローラキュウコン':'キュウコン',
+ 'アローラライチュウ':'ライチュウ',
+ 'ウォッシュロトム':'ロトム','ヒートロトム':'ロトム',
+ 'フロストロトム':'ロトム','スピンロトム':'ロトム','カットロトム':'ロトム'
+});
 // Preserve Mega X/Y/Z, sex and regional/form labels for matchup coverage.
-// Never use species-level normalization to claim a specific form is covered.
-const formKey=s=>String(s).normalize('NFKC').replace(/[\s　・･]/g,'');
+// Accept official long-form spelling without treating a different form as reviewed.
+const formAliases=Object.freeze({
+ 'ペルシアン(アローラのすがた)':'アローラペルシアン',
+ 'キュウコン(アローラのすがた)':'アローラキュウコン',
+ 'ストリンダー(ハイなすがた)':'ストリンダー(ハイ)',
+ 'ストリンダー(ローなすがた)':'ストリンダー(ロー)',
+ 'イエッサン(オスのすがた)':'イエッサン(オス)',
+ 'イエッサン(メスのすがた)':'イエッサン(メス)',
+ 'イダイトウ♂':'イダイトウ(オス)','イダイトウ♀':'イダイトウ(メス)',
+ 'ニャオニクス♂':'ニャオニクス(オス)','ニャオニクス♀':'ニャオニクス(メス)'
+});
+const formKey=s=>{const k=String(s).normalize('NFKC').replace(/[\s　・･]/g,'');return formAliases[k]||k;};
+const normalize=s=>{
+ const n=formKey(s).replace(/\(.*?\)/g,'').replace(/[♂♀]/g,'');
+ const base=isMegaForm(s)?n.replace(/^メガ/,'').replace(/[XYZ]$/,''):n;
+ return speciesAliases[base]||base;
+};
 const megaFormKeys=new Set(officialMegaForms.map(formKey));
 const isMegaForm=s=>megaFormKeys.has(formKey(s));
 // Evidence is stored separately from name-only matchup heuristics. No win/loss claim.
