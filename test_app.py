@@ -43,6 +43,23 @@ def main():
                 assert all(name.strip() in roster for name in chosen), f'Outside configured roster: {chosen}'
                 result_text = page.locator('#result').inner_text()
                 assert all(name in result_text for name in names), 'Opponent coverage must mention all six inputs'
+            # Lead safety regression: do not recommend Hippowdon into obvious
+            # Rillaboom / Pelipper lead pressure when a fallback is selected.
+            for danger in ('ゴリランダー', 'ペリッパー'):
+                names = [danger,'ガブリアス','ゲンガー','エースバーン','ドドゲザン','ドラパルト']
+                for i, name in enumerate(names):
+                    page.locator(f'#foe{i}').fill(name)
+                page.locator('#analyze').click()
+                chips = [x.strip() for x in page.locator('#result .hero .chip').all_inner_texts()]
+                result = page.locator('#result .hero').inner_text()
+                lead = page.evaluate('(names) => recommend(names).lead', names)
+                assert lead in chips, f'Lead must be one of the selected trio: {lead}, {chips}'
+                assert lead != 'カバルドン', f'Unsafe Hippowdon lead vs {danger}: {chips}'
+                assert '先発変更' in page.locator('#result').inner_text(), f'Missing safety explanation vs {danger}'
+            # Without those specific dangers, preserve the article's baseline lead.
+            safe_names = ['ガブリアス','ゲンガー','エースバーン','ドラパルト','ルカリオ','サザンドラ']
+            assert page.evaluate('(names) => recommend(names).lead', safe_names) == 'カバルドン'
+
             # Data coverage must be obvious immediately below the recommendation.
             known_names = ['ミミッキュ','ドドゲザン','ペリッパー','ヤミラミ','ジュペッタ','アシレーヌ']
             for i, name in enumerate(known_names):

@@ -212,6 +212,23 @@ function recommend(names){
   const chosen=rule.answers.filter(x=>team.includes(x));
   return {name,status:chosen.length?'候補あり':'要注意',answer:chosen.length?chosen.join('・')+'：'+rule.note:rule.note+'（選出3匹に明確な対策枠なし）'};
  });
+ // Safety gate: a generic Hippowdon lead must not be advertised against
+ // obvious Grass priority or rain leads. This is a conservative heuristic,
+ // not a guaranteed safe matchup against the other five opposing Pokémon.
+ const dangerousHippoLeads=['ゴリランダー','ペリッパー'].filter(has);
+ if(lead==='カバルドン'&&dangerousHippoLeads.length){
+  const previousLead=lead;
+  const saferLead=team.includes('ミミッキュ')?'ミミッキュ':team.includes('メガカイリュー')?'メガカイリュー':null;
+  if(saferLead){
+   lead=saferLead;
+   reason+=' 先発カバルドンは'+dangerousHippoLeads.join('・')+'に不利になりやすいため、先発を'+saferLead+'へ変更。';
+   plan='先発'+saferLead+'で初手を確認し、不利なら交代を優先。'+plan;
+   cautions.unshift('【先発変更】'+previousLead+'→'+saferLead+'。相手の'+dangerousHippoLeads.join('・')+'先発を警戒した暫定策。残り5匹への安全を保証しません。');
+  }else{
+   cautions.unshift('【危険な先発】カバルドンは'+dangerousHippoLeads.join('・')+'への初手が不利になりやすい。選出3匹・先発の再検討が必要です。');
+  }
+  threats.unshift({name:'先発カバルドンの危険対面',why:dangerousHippoLeads.join('・')+'に対し、草打点・雨の水打点を受けやすい',answer:saferLead?'先発を'+saferLead+'へ変更（安全保証なし）':'先発と選出3匹を再検討'});
+ }
  // Explicitly state the first-turn fork instead of assuming the opponent's lead.
  const leadBranches=[];
  if(lead==='カバルドン'){
