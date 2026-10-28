@@ -137,13 +137,34 @@ def main():
                 assert '5/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert page.evaluate("() => megaCandidatesFor(['リザードン','ゲンガー']).length") == 2
 
+            # Psychic Surge invalidates priority-based cleanup even when all
+            # five OTHER opponents have name-only matchup answers.
+            for indeedee in ('イエッサン', 'イエッサン(オス)', 'イエッサン(メス)'):
+                terrain_case = [indeedee, 'アシレーヌ', 'ドドゲザン',
+                                'サーフゴー', 'ミミッキュ', 'カバルドン']
+                assert page.evaluate('(names) => recommend(names).comparisonSummary.total', terrain_case) == 5
+                for i, name in enumerate(terrain_case):
+                    page.locator(f'#foe{i}').fill(name)
+                page.locator('#analyze').click()
+                assert page.locator('#result .abstention-banner').count() == 1, indeedee
+                assert page.locator('#result .hero').count() == 0, indeedee
+                warning = page.locator('#result .terrain-uncertainty').inner_text()
+                assert indeedee in warning and 'サイコフィールド' in warning, warning
+                assert '2026-10-28' in warning and '未検証' in warning
+                assert all(name in page.locator('#result').inner_text() for name in terrain_case)
+            for i, name in enumerate(two_answers):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .terrain-uncertainty').count() == 0
+            assert page.locator('#result .hero .chip').count() == 3
+
             for names in CASES:
                 for i,name in enumerate(names):
                     page.locator(f'#foe{i}').fill(name)
                 page.locator('#analyze').click()
                 assert page.locator('#result').is_visible(), f'No result: {names}'
                 selected = page.evaluate('(names) => recommend(names).comparisonSummary.chosen', names)
-                if selected < 2:
+                if selected < 2 or any(name.startswith('イエッサン') for name in names):
                     assert page.locator('#result .abstention-banner').count() == 1
                     assert page.locator('#result .hero').count() == 0
                 else:
@@ -159,7 +180,7 @@ def main():
                 page.locator('#analyze').click()
                 chosen = page.locator('#result .hero .chip').all_inner_texts()
                 selected = page.evaluate('(names) => recommend(names).comparisonSummary.chosen', names)
-                if selected < 2:
+                if selected < 2 or any(name.startswith('イエッサン') for name in names):
                     assert chosen == [], 'Must not display an unsafe trio'
                     assert page.locator('#result .abstention-banner').count() == 1
                 else:
