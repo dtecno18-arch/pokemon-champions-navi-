@@ -42,9 +42,10 @@ assert.equal(new Set(cases.map(x => key(x[0]))).size, cases.length,
 const rotomList = html.match(/const officialMcRosterKnownForms=(\[[^;]+\]);/);
 assert.ok(rotomList, 'official M-C Rotom forms must be explicit input candidates');
 const rotom = vm.runInNewContext(rotomList[1]);
-assert.deepEqual(Array.from(rotom), [
+assert.deepEqual(Array.from(rotom.slice(0, 6)), [
   'ロトム','ヒートロトム','ウォッシュロトム',
   'フロストロトム','スピンロトム','カットロトム'
 ]);
-assert.equal(new Set(rotom).size, 6, 'Rotom forms must remain distinct');
+assert.equal(rotom.length, 16, 'six Rotom forms plus ten other official M-C forms');
+assert.equal(new Set(rotom).size, 16, 'all official roster additions must remain distinct');
 console.log('PASS: 20 official M-C aliases + 6 Rotom forms + distinct form identity');
