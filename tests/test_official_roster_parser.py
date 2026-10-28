@@ -23,6 +23,19 @@ class OfficialRosterParserTest(unittest.TestCase):
             (3, "フシギバナ"), (6, "リザードン")
         ])
 
+    def test_embedded_official_form_codes(self):
+        text = 'const pokemons = [["0003-000",1,"フシギバナ"],["0931-000",1,"イキリンコ"],["0931-002",1,"イキリンコ"]];'
+        self.assertEqual(audit.extract_official_payload(text), [
+            (3, "フシギバナ", "0003-000"),
+            (931, "イキリンコ", "0931-000"),
+            (931, "イキリンコ", "0931-002"),
+        ])
+
+    def test_embedded_duplicate_form_code_rejected(self):
+        text = 'const pokemons = [["0931-000",1,"イキリンコ"],["0931-000",1,"イキリンコ"]];'
+        with self.assertRaises(ValueError):
+            audit.extract_official_payload(text)
+
     def test_header_only_cannot_pass(self):
         self.assertEqual(audit.extract_official("参加できるポケモン"), [])
 
