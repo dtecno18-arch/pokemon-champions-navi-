@@ -85,6 +85,30 @@ def main():
             assert page.evaluate("() => megaBaseNames.has(normalize('ユキメノコ'))")
             assert page.evaluate("() => megaBaseNames.has(normalize('スピアー'))")
             assert '公式M-A/B/Cメガ形態81件' in page.locator('#count + p').inner_text()
+            # Meganium is a NORMAL species whose name begins with "メガ".
+            # Only the cataloged "メガメガニウム" is a Mega form.
+            assert page.evaluate("() => normalize('メガニウム') === 'メガニウム'")
+            assert page.evaluate("() => normalize('メガメガニウム') === 'メガニウム'")
+            assert page.evaluate("() => !isMegaForm('メガニウム') && isMegaForm('メガメガニウム')")
+            assert page.evaluate("() => megaBaseNames.has(normalize('メガニウム'))")
+            meganium_foes = ['メガニウム','カバルドン','サーフゴー',
+                             'ドドゲザン','アシレーヌ','ミミッキュ']
+            for i, name in enumerate(meganium_foes):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert 'メガニウム' in page.locator('#result .mega-base-unverified').inner_text()
+            assert page.locator('#result .mega-form-unverified').count() == 0
+            assert 'メガニウム' in page.locator('#result .mega-uncertainty').inner_text()
+            page.locator('#foe0').fill('メガメガニウム')
+            page.locator('#analyze').click()
+            assert 'メガメガニウム' in page.locator('#result .mega-form-unverified').inner_text()
+            assert page.locator('#result .mega-base-unverified').count() == 0
+            page.locator('#foe1').fill('メガニウム')
+            page.locator('#analyze').click()
+            assert '同じポケモンが重複' in page.locator('#status').inner_text()
+
             newly_listed_megas = ['メガスピアー', 'メガピジョット', 'メガユキメノコ',
                                    'メガライチュウY', 'メガラグラージ', 'メガキラフロル']
             for i, name in enumerate(newly_listed_megas):
