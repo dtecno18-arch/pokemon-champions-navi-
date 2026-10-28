@@ -54,6 +54,38 @@ def main():
             assert '公式M-B追加22種' in page.locator('#count + p').inner_text()
             assert '2026-08-05' in page.locator('#count + p').inner_text()
             assert '現行M-C使用可否の全件照合は未完了' in page.locator('#count + p').inner_text()
+            # All Mega forms listed by the official M-A/M-B/M-C regulations
+            # must be independently selectable. These are catalog entries,
+            # NOT proof of a safe matchup or a completed 352-form audit.
+            assert page.evaluate("() => [officialMegaMa.length, officialMegaMb.length, officialMegaMc.length]") == [59, 16, 6]
+            assert page.evaluate("() => officialMegaForms.length") == 81
+            assert page.evaluate("""() => new Set(officialMegaForms.map(formKey)).size === 81 &&
+                officialMegaForms.every(name => Array.from(
+                    document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
+            assert page.evaluate("() => megaBaseNames.has(normalize('ユキメノコ'))")
+            assert page.evaluate("() => megaBaseNames.has(normalize('スピアー'))")
+            assert '公式M-A/B/Cメガ形態81件' in page.locator('#count + p').inner_text()
+            newly_listed_megas = ['メガスピアー', 'メガピジョット', 'メガユキメノコ',
+                                   'メガライチュウY', 'メガラグラージ', 'メガキラフロル']
+            for i, name in enumerate(newly_listed_megas):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .candidate-unverified').count() == 0
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert all(name in page.locator('#result .mega-uncertainty').inner_text()
+                       for name in newly_listed_megas)
+            # Newly identified base-form Mega possibilities must also be warned,
+            # even though no reviewed matchup records exist yet.
+            base_mega_case = ['スピアー','ユキメノコ','ピジョット',
+                              'ジュカイン','カバルドン','アシレーヌ']
+            for i, name in enumerate(base_mega_case):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert all(name in page.locator('#result .mega-uncertainty').inner_text()
+                       for name in base_mega_case[:4])
             unverified_mb = ['ラフレシア','ハリーセン','ムクホーク',
                              'ムシャーナ','ペンドラー','シビルドン']
             for i, name in enumerate(unverified_mb):
