@@ -41,7 +41,7 @@ def extract_official_payload(text):
     Source HTML contains: const pokemons = [["0003-000",1,"フシギバナ"], ...];
     Unlike rendered labels, the code distinguishes same-named forms.
     """
-    match = re.search(r"const\\s+pokemons\\s*=\\s*(\\[\\[.*?\\]\\])\\s*;", text, re.S)
+    match = re.search(r"const\s+pokemons\s*=\s*(\[\[.*?\]\])\s*;", text, re.S)
     if not match:
         return []
     rows = json.loads(match.group(1))
@@ -51,7 +51,7 @@ def extract_official_payload(text):
     for row in rows:
         if (not isinstance(row, list) or len(row) < 3 or
                 not isinstance(row[0], str) or
-                not re.fullmatch(r"\\d{4}-\\d{3}", row[0]) or
+                not re.fullmatch(r"\d{4}-\d{3}", row[0]) or
                 not isinstance(row[2], str) or not row[2].strip()):
             raise ValueError(f"Malformed official form row: {row!r}")
         out.append((int(row[0][:4]), row[2].strip(), row[0]))
