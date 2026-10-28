@@ -226,13 +226,10 @@ def main():
                 page.locator('#analyze').click()
                 assert page.locator('#result').is_visible(), f'No result: {names}'
                 selected = page.evaluate('(names) => recommend(names).comparisonSummary.chosen', names)
-                if (selected < 2 or any(name.startswith(('イエッサン', 'メガ')) for name in names)
-                        or page.evaluate('(names) => names.some(n => !knownCoverage.has(formKey(n)))', names)):
-                    assert page.locator('#result .abstention-banner').count() == 1
-                    assert page.locator('#result .hero').count() == 0
-                else:
-                    assert len(page.locator('#result .hero .chip').all())==3, 'Must select 3'
-                    assert '先発' in page.locator('#result').inner_text()
+                assert page.locator('#result .abstention-banner').count() == 1
+                assert page.locator('#result .hero').count() == 0
+                assert page.locator('#result .matchup-unverified').count() == 1
+                assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'), 'Horizontal overflow'
 
             # A recommendation must use only the six configured team members.
@@ -243,13 +240,12 @@ def main():
                 page.locator('#analyze').click()
                 chosen = page.locator('#result .hero .chip').all_inner_texts()
                 selected = page.evaluate('(names) => recommend(names).comparisonSummary.chosen', names)
-                if (selected < 2 or any(name.startswith(('イエッサン', 'メガ')) for name in names)
-                        or page.evaluate('(names) => names.some(n => !knownCoverage.has(formKey(n)))', names)):
-                    assert chosen == [], 'Must not display an unsafe trio'
-                    assert page.locator('#result .abstention-banner').count() == 1
-                else:
-                    assert len(chosen) == 3 and len(set(chosen)) == 3, f'Duplicate or missing picks: {chosen}'
-                    assert all(name.strip() in roster for name in chosen), f'Outside configured roster: {chosen}'
+                assert chosen == [], 'Must not display an unverified trio'
+                assert page.locator('#result .abstention-banner').count() == 1
+                decision = page.evaluate('(names) => recommend(names)', names)
+                assert len(decision['team']) == 3 and len(set(decision['team'])) == 3
+                assert all(name in roster for name in decision['team'])
+                assert decision['lead'] in decision['team']
                 result_text = page.locator('#result').inner_text()
                 assert all(name in result_text for name in names), 'Opponent coverage must mention all six inputs'
             # Lead safety regression: do not recommend Hippowdon into obvious
@@ -285,16 +281,19 @@ def main():
             assert page.locator('#result .abstention-coverage').count() == 1
             assert page.locator('#result .abstention-coverage .line').count() > 0
             assert page.locator('#result .mega-base-unverified').count() == 0
-            # A genuine six-of-six name-rule match remains testable as a
-            # PROVISIONAL selection; this does not certify moves or matchups.
+            # Even a six-of-six name-rule match is NOT a verified matchup.
+            # It must not unlock a trio or lead until form-specific evidence exists.
             fully_answered = ['ドヒドイデ','ラッキー','ハピナス','ブラッキー','クレセリア','サーフゴー']
             assert page.evaluate('(names) => recommend(names).comparisonSummary.chosen', fully_answered) == 6
             for i, name in enumerate(fully_answered):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
-            assert page.locator('#result .hero .chip').count() == 3
-            assert page.locator('#result .abstention-banner').count() == 0
-            assert '暫定' in page.locator('#result').inner_text()
+            assert page.locator('#result .hero .chip').count() == 0
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .matchup-unverified').count() == 1
+            assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert all(name in page.locator('#result .matchup-unverified').inner_text() for name in fully_answered)
+            assert page.evaluate('() => Object.keys(verifiedMatchupEvidence).length') == 0
             # Name coverage 6/6 does not validate base-to-Mega branching.
             # Banette, Sableye and Salamence previously bypassed the explicit
             # Mega-form gate when entered in their normal forms.
