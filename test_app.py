@@ -249,16 +249,31 @@ def main():
             safe_names = ['ガブリアス','ゲンガー','エースバーン','ドラパルト','ルカリオ','サザンドラ']
             assert page.evaluate('(names) => recommend(names).lead', safe_names) == 'カバルドン'
 
-            # All six name-only rules can still yield a provisional result only
-            # when none of the opponents has an unverified Mega branch.
+            # Six registered names are NOT enough if the selected three lack
+            # an answer for even one of the six opponents.
             known_names = ['ミミッキュ','ドドゲザン','ペリッパー','アシレーヌ','サーフゴー','カバルドン']
+            assert page.evaluate('(names) => recommend(names).comparisonSummary.total', known_names) == 6
+            assert page.evaluate('(names) => recommend(names).comparisonSummary.chosen', known_names) < 6
             for i, name in enumerate(known_names):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
             banner = page.locator('#result .risk-banner')
             assert banner.count() == 1 and '6/6匹' in banner.inner_text(), banner.inner_text()
-            assert banner.evaluate("(el) => el.previousElementSibling.classList.contains('hero')"), 'Coverage warning must be next to selection'
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert page.locator('#result .abstention-coverage').count() == 1
+            assert page.locator('#result .abstention-coverage .line').count() > 0
             assert page.locator('#result .mega-base-unverified').count() == 0
+            # A genuine six-of-six name-rule match remains testable as a
+            # PROVISIONAL selection; this does not certify moves or matchups.
+            fully_answered = ['ドヒドイデ','ラッキー','ハピナス','ブラッキー','クレセリア','サーフゴー']
+            assert page.evaluate('(names) => recommend(names).comparisonSummary.chosen', fully_answered) == 6
+            for i, name in enumerate(fully_answered):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .hero .chip').count() == 3
+            assert page.locator('#result .abstention-banner').count() == 0
+            assert '暫定' in page.locator('#result').inner_text()
             # Name coverage 6/6 does not validate base-to-Mega branching.
             # Banette, Sableye and Salamence previously bypassed the explicit
             # Mega-form gate when entered in their normal forms.
@@ -273,11 +288,12 @@ def main():
                 assert page.locator('#result .hero').count() == 0, base_mega
                 assert base_mega in page.locator('#result .mega-base-unverified').inner_text()
                 assert base_mega in page.locator('#result .mega-uncertainty').inner_text()
-            # Keep the no-Mega six-name case available for provisional testing.
+            # The same six-name case still abstains after other checks.
             for i, name in enumerate(known_names):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
-            assert page.locator('#result .hero').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert page.locator('#result .abstention-banner').count() == 1
 
             unknown_names = ['ガブリアス','ウルガモス','ドラパルト','キラフロル','エースバーン','ゲッコウガ']
             for i, name in enumerate(unknown_names):
