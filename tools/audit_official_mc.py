@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 OFFICIAL_URL = "https://web-view.app.pokemonchampions.jp/battle/pages/events/rs178713870219xeaaio/ja/pokemon.html"
+ALTERNATE_URL = "https://web-view.app.pokemonchampions.jp/battle/pages/events/ic178714032620uzyrlm/ja/pokemon.html"
 REPORT = Path(os.environ.get("MC_AUDIT_REPORT", "mc-roster-audit.json"))
 APP = Path(os.environ.get("MC_AUDIT_APP", "index.html"))
 MIN_EXPECTED = 200
@@ -35,19 +36,24 @@ def audit():
         official = browser.new_page(locale="ja-JP", viewport={"width": 1280, "height": 900})
         network = []
         official.on("response", lambda response: network.append({"status": response.status, "url": response.url.split("?")[0]}))
-        response = official.goto(OFFICIAL_URL, wait_until="domcontentloaded", timeout=45000)
-        official.wait_for_timeout(12000)
-        page_text = official.locator("body").inner_text(timeout=20000)
+        attempts = []
+        for actual_source in (OFFICIAL_URL, ALTERNATE_URL):
+            response = official.goto(actual_source, wait_until="domcontentloaded", timeout=45000)
+            official.wait_for_timeout(10000)
+            page_text = official.locator("body").inner_text(timeout=20000)
+            entries = extract_official(page_text)
+            attempts.append({"url": actual_source, "entries": len(entries),
+                             "status": response.status if response else None,
+                             "prefix": page_text[:160]})
+            if len(entries) >= MIN_EXPECTED and {"プクリン", "セグレイブ"}.issubset(
+                    {name for _, name in entries}):
+                break
         Path("mc-official-body.txt").write_text(page_text, encoding="utf-8")
         Path("mc-official-network.json").write_text(json.dumps(network, ensure_ascii=False, indent=2), encoding="utf-8")
         official.screenshot(path="mc-official-snapshot.png", full_page=True)
-        entries = extract_official(page_text)
-        if len(entries) < MIN_EXPECTED:
-            raise RuntimeError(
-                f"Official roster returned {len(entries)} entries (<{MIN_EXPECTED}); "
-                f"HTTP {response.status if response else 'unknown'}, "
-                f"body prefix: {page_text[:350]!r}; network={network[-12:]!r}. Coverage NOT certified."
-            )
+        if len(entries) < MIN_EXPECTED or not {"プクリン", "セグレイブ"}.issubset(
+                {name for _, name in entries}):
+            raise RuntimeError(f"No complete current M-C roster extracted; attempts={attempts!r}; network={network[-12:]!r}. Coverage NOT certified.")
         # Official text may omit visually distinguished variants (e.g. plumage).
         # Preserve ambiguous duplicates in the report and FAIL the quality gate.
         app = browser.new_page(locale="ja-JP")
@@ -72,7 +78,7 @@ def audit():
     keys = [x["key"] for x in data["candidates"]]
     duplicate_keys = sorted({k for k in keys if keys.count(k) > 1})
     return {
-        "source": OFFICIAL_URL,
+        "source": actual_source,
         "checkedAtUtc": datetime.now(timezone.utc).isoformat(),
         "officialEntries": len(entries),
         "officialUniqueForms": len(official_keys),
