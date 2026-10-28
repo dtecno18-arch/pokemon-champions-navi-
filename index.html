@@ -125,10 +125,13 @@ const officialMcAdditions=["プクリン","ペルシアン","アローラペル�
 // The official M-C eligible roster explicitly lists all six Rotom forms.
 // Source: https://web-view.app.pokemonchampions.jp/battle/pages/events/rs178713870219xeaaio/ja/pokemon.html
 // Current roster snapshot 2026-09-09; full official roster audit is separate.
-const officialMcRosterKnownForms=['ロトム','ヒートロトム','ウォッシュロトム','フロストロトム','スピンロトム','カットロトム','ウインディ','ヤドキング','ラムパルド','トリデプス','ダイケンキ','ミルホッグ','ニンフィア','キョジオーン','イッカネズミ','イキリンコ'];
+const officialMcRosterKnownForms=['ロトム','ヒートロトム','ウォッシュロトム','フロストロトム','スピンロトム','カットロトム','ウインディ','ヤドキング','ラムパルド','トリデプス','ダイケンキ','ミルホッグ','ニンフィア','キョジオーン'];
+// M-C special roster (2026-09-18) independently lists both Sinistcha forms.
+// https://champions-news.pokemon-home.com/en/page/834.html
+const officialMcSpecialForms=['ヤバソチャ(ボンサクのすがた)','ヤバソチャ(ケッサクのすがた)'];
 // The official M-C eligibility list does not include these old convenience
 // suggestions. Keep manual input possible, but never present them as eligible.
-const officialMcExcludedCandidates=new Set(['イダイトウ','イエッサン','オノノクス','ガチグマ','キングドラ','ポリゴン２','ラッキー','ハピナス','クレセリア','ゼルネアス','ザシアン','モロバレル','ズガイドス','タテトプス','ニャオニクス']);
+const officialMcExcludedCandidates=new Set(['イダイトウ','イエッサン','オノノクス','ガチグマ','キングドラ','ポリゴン２','ラッキー','ハピナス','クレセリア','ゼルネアス','ザシアン','モロバレル','ズガイドス','タテトプス','ニャオニクス','フラエッテ','イッカネズミ','イキリンコ','ヤバソチャ']);
 // Official regulation Mega eligibility: M-A (2026-04-08), M-B (2026-08-05 update),
 // M-C (2026-09-09 update). A Mega-form autocomplete entry is NOT a reviewed matchup.
 // Sources: https://champions-news.pokemon-home.com/ja/page/751.html
@@ -157,13 +160,13 @@ const officialMegaBaseCandidates=[...new Set(officialMegaForms.map(name=>name.re
  const options=$('#dex');
  for(const opt of [...options.options])if(officialMcExcludedCandidates.has(opt.value))opt.remove();
  const seen=new Set(Array.from(options.options,o=>o.value.normalize('NFKC')));
- for(const name of [...officialMaSpecialRoster,...historicalMaTournamentCandidates,...historicalMaTournamentMoreCandidates,...officialMbAdditions,...officialMcAdditions,...officialMcRosterKnownForms,...megaInputForms,...officialMegaBaseCandidates,...separatelyDocumentedForms]){
+ for(const name of [...officialMaSpecialRoster,...historicalMaTournamentCandidates,...historicalMaTournamentMoreCandidates,...officialMbAdditions,...officialMcAdditions,...officialMcRosterKnownForms,...officialMcSpecialForms,...megaInputForms,...officialMegaBaseCandidates,...separatelyDocumentedForms]){
   if(officialMcExcludedCandidates.has(name))continue;
   if(seen.has(name.normalize('NFKC')))continue;
   const opt=document.createElement('option');opt.value=name;options.appendChild(opt);seen.add(name.normalize('NFKC'));
  }
  const note=document.createElement('p');note.className='muted';
- note.innerHTML='公式M-A特別セレクト31形態（2026-04-24確認）・過去のM-A大会参加可能リスト由来104形態（2026-10-28確認、現行M-C未照合）・公式M-B追加22種（2026-08-05更新）・M-C追加35形態（2026-10-28確認）・公式M-A/B/Cメガ81名称・性差込み82形態と対応する通常種候補76件（未指定形態1件除外）・フラエッテ(えいえんのはな)1形態（2026-10-27確認、二次情報）（2026-10-28照合）を候補に反映。固定候補 '+options.options.length+'件／公式M-C全参加可能形態の網羅は未検証（GameWith参考352とは母集団が異なる）。M-B掲載種を含め現行M-C使用可否の全件照合は未完了。候補外は手入力可。候補にあるだけで個別対策が検証済みとは限りません。出典：<a href="https://champions-news.pokemon-home.com/en/page/759.html" target="_blank" rel="noopener noreferrer">公式M-A特別セレクト（2026-04-24）</a>・<a href="https://gamewith.jp/pokemon-champions/555416" target="_blank" rel="noopener noreferrer">M-A大会参加可能リスト（2026-10-28確認、二次情報）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/777.html" target="_blank" rel="noopener noreferrer">公式M-B追加情報（2026-08-05更新）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/821.html" target="_blank" rel="noopener noreferrer">公式M-C追加情報</a>・<a href="https://champions-news.pokemon-home.com/ja/page/751.html" target="_blank" rel="noopener noreferrer">公式M-Aメガ一覧</a>・<a href="https://champions-news.pokemon-home.com/ja/page/776.html" target="_blank" rel="noopener noreferrer">公式M-Bメガ一覧</a>・<a href="https://news.pokemon-home.com/ja/page/816.html" target="_blank" rel="noopener noreferrer">公式M-Cメガ一覧</a>・<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith（2026-10-28更新）</a>・<a href="https://gamewith.jp/pokemon-champions/554178" target="_blank" rel="noopener noreferrer">メガニャオニクス♂（2026-10-27更新）</a>・<a href="https://gamewith.jp/pokemon-champions/554179" target="_blank" rel="noopener noreferrer">メガニャオニクス♀（2026-10-27更新）</a>・<a href="https://gamewith.jp/pokemon-champions/553326" target="_blank" rel="noopener noreferrer">フラエッテ(えいえんのはな)（2026-10-27確認）</a>。';
+ note.innerHTML='公式M-A特別セレクト31形態（2026-04-24確認）・過去のM-A大会参加可能リスト由来104形態（2026-10-28確認、現行M-C未照合）・公式M-B追加22種（2026-08-05更新）・M-C追加35形態（2026-10-28確認）・公式M-A/B/Cメガ81名称・性差込み82形態と対応する通常種候補76件（未指定・対象外形態2件除外）・フラエッテ(えいえんのはな)1形態（2026-10-27確認、二次情報）（2026-10-28照合）を候補に反映。固定候補 '+options.options.length+'件／公式M-C全参加可能形態の網羅は未検証（GameWith参考352とは母集団が異なる）。M-B掲載種を含め現行M-C使用可否の全件照合は未完了。候補外は手入力可。候補にあるだけで個別対策が検証済みとは限りません。出典：<a href="https://champions-news.pokemon-home.com/en/page/759.html" target="_blank" rel="noopener noreferrer">公式M-A特別セレクト（2026-04-24）</a>・<a href="https://gamewith.jp/pokemon-champions/555416" target="_blank" rel="noopener noreferrer">M-A大会参加可能リスト（2026-10-28確認、二次情報）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/777.html" target="_blank" rel="noopener noreferrer">公式M-B追加情報（2026-08-05更新）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/821.html" target="_blank" rel="noopener noreferrer">公式M-C追加情報</a>・<a href="https://champions-news.pokemon-home.com/ja/page/751.html" target="_blank" rel="noopener noreferrer">公式M-Aメガ一覧</a>・<a href="https://champions-news.pokemon-home.com/ja/page/776.html" target="_blank" rel="noopener noreferrer">公式M-Bメガ一覧</a>・<a href="https://news.pokemon-home.com/ja/page/816.html" target="_blank" rel="noopener noreferrer">公式M-Cメガ一覧</a>・<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith（2026-10-28更新）</a>・<a href="https://gamewith.jp/pokemon-champions/554178" target="_blank" rel="noopener noreferrer">メガニャオニクス♂（2026-10-27更新）</a>・<a href="https://gamewith.jp/pokemon-champions/554179" target="_blank" rel="noopener noreferrer">メガニャオニクス♀（2026-10-27更新）</a>・<a href="https://gamewith.jp/pokemon-champions/553326" target="_blank" rel="noopener noreferrer">フラエッテ(えいえんのはな)（2026-10-27確認）</a>。';
  $('#count').after(note);
 }
 
@@ -300,6 +303,7 @@ function requiredMatchupForms(opponent){
   // preview must not be treated as a single verified variant.
   if(base==='イッカネズミ')return ['イッカネズミ(3びき)','イッカネズミ(4ひき)'];
   if(base==='イキリンコ')return ['イキリンコ(グリーンフェザー)','イキリンコ(ブルーフェザー)','イキリンコ(イエローフェザー)','イキリンコ(ホワイトフェザー)'];
+  if(base==='ヤバソチャ')return ['ヤバソチャ(ボンサクのすがた)','ヤバソチャ(ケッサクのすがた)'];
   const megaBranches=megaInputForms.filter(name=>{
     const megaBase=formKey(name).replace(/^メガ/,'').replace(/[XYZ]$/,'');
     // Only the Eternal Flower Floette can branch to Mega Floette.
@@ -522,7 +526,8 @@ const supportedNames=new Set(Array.from(document.querySelectorAll('#dex option')
 // never silently promoted to verified current M-C eligibility.
 const candidateSourceTiers=[
  {label:'公式M-C追加（2026-09-09）',source:'https://champions-news.pokemon-home.com/ja/page/821.html',names:officialMcAdditions.filter(n=>!isMegaForm(n))},
- {label:'公式M-C参加可能一覧・追加確認16形態（2026-09-09）',source:'https://web-view.app.pokemonchampions.jp/battle/pages/events/rs178713870219xeaaio/ja/pokemon.html',names:officialMcRosterKnownForms},
+ {label:'公式M-C特別セレクト・ヤバソチャ2形態（2026-09-18）',source:'https://champions-news.pokemon-home.com/en/page/834.html',names:officialMcSpecialForms},
+ {label:'公式M-C参加可能一覧・追加確認14形態（2026-09-09）',source:'https://web-view.app.pokemonchampions.jp/battle/pages/events/rs178713870219xeaaio/ja/pokemon.html',names:officialMcRosterKnownForms},
  {label:'公式M-Cメガ追加（2026-09-09）',source:'https://news.pokemon-home.com/ja/page/816.html',names:officialMegaMc},
  {label:'公式M-B追加（現行M-C全件未照合）',source:'https://champions-news.pokemon-home.com/ja/page/777.html',names:officialMbAdditions},
  {label:'公式M-Bメガ（現行M-C全件未照合）',source:'https://champions-news.pokemon-home.com/ja/page/776.html',names:officialMegaMb},
