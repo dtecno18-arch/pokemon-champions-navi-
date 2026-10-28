@@ -33,15 +33,20 @@ def audit():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         official = browser.new_page(locale="ja-JP", viewport={"width": 1280, "height": 900})
+        network = []
+        official.on("response", lambda response: network.append({"status": response.status, "url": response.url.split("?")[0]}))
         response = official.goto(OFFICIAL_URL, wait_until="domcontentloaded", timeout=45000)
         official.wait_for_timeout(12000)
         page_text = official.locator("body").inner_text(timeout=20000)
+        Path("mc-official-body.txt").write_text(page_text, encoding="utf-8")
+        Path("mc-official-network.json").write_text(json.dumps(network, ensure_ascii=False, indent=2), encoding="utf-8")
+        official.screenshot(path="mc-official-snapshot.png", full_page=True)
         entries = extract_official(page_text)
         if len(entries) < MIN_EXPECTED:
             raise RuntimeError(
                 f"Official roster returned {len(entries)} entries (<{MIN_EXPECTED}); "
                 f"HTTP {response.status if response else 'unknown'}, "
-                f"body prefix: {page_text[:350]!r}. Coverage NOT certified."
+                f"body prefix: {page_text[:350]!r}; network={network[-12:]!r}. Coverage NOT certified."
             )
         # Official text may omit visually distinguished variants (e.g. plumage).
         # Preserve ambiguous duplicates in the report and FAIL the quality gate.
