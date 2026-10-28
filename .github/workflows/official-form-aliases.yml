@@ -1,0 +1,15 @@
+name: Official M-C form aliases
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  official-aliases:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check all 20 official form labels and form separation
+        run: node tests/test_official_form_aliases.mjs
