@@ -864,6 +864,33 @@ def main():
             assert page.locator('#result .extra-sourced-intel').count() == 0
             assert page.locator('#result .hero').count() == 0
 
+            # Source-backed *conditional* matchup risks must be visible for
+            # both explicit Mega forms and a possible Mega branch of a base
+            # form. They must NEVER unlock a three-pick or lead recommendation.
+            for opponent, base, own, source, warning in (
+                ('メガグソクムシャ', 'グソクムシャ', 'カバルドン', '575652', 'つるぎのまい'),
+                ('メガリザードンY', 'リザードン', 'カバルドン', '554808', 'ソーラービーム'),
+                ('メガゲンガー', 'ゲンガー', 'カバルドン', '555161', 'かげふみ'),
+            ):
+                for i, name in enumerate((opponent, 'サーフゴー', 'ガブリアス',
+                                          'ドドゲザン', 'ペリッパー', 'アシレーヌ')):
+                    page.locator(f'#foe{i}').fill(name)
+                page.locator('#analyze').click()
+                risk = page.locator('#result .reviewed-pair-risks')
+                assert risk.count() == 1
+                assert all(x in risk.inner_text() for x in (own, opponent, warning, '未検証'))
+                assert risk.locator('a[href*="'+source+'"]').count() == 1
+                assert '出典付き条件付き対面注意 1件' in page.locator('#result .evidence-summary').inner_text()
+                assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
+                assert page.locator('#result .hero').count() == 0
+                page.locator('#foe0').fill(base)
+                page.locator('#analyze').click()
+                assert page.locator('#result .reviewed-pair-risks').count() == 1
+                assert page.locator('#result .hero').count() == 0
+            page.locator('#foe0').fill('エースバーン')
+            page.locator('#analyze').click()
+            assert page.locator('#result .reviewed-pair-risks').count() == 0
+
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):
