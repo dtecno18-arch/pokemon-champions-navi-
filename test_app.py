@@ -50,6 +50,22 @@ def main():
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
             assert '0/6匹' in page.locator('#result .risk-banner').inner_text()
+            assert page.locator('#result .abstention-banner').count() == 1, 'No verified matchup: must abstain'
+            assert page.locator('#result .hero').count() == 0, 'Must not invent a default trio for six unknown opponents'
+            assert all(name in page.locator('#result').inner_text() for name in unverified_mc)
+            # Even sourced Mega facts are not a validated answer to the six
+            # individual matchups; preserve Mega uncertainty while abstaining.
+            unknown_mega = ['メガグソクムシャ','メガセグレイブ','メガガブリアスZ',
+                            'ルカリオ','ゲッコウガ','メガジュペッタ']
+            for i, name in enumerate(unknown_mega):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .hero').count() == 0
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .sourced-intel').count() == 1
+            assert '1/6匹' in page.locator('#result .evidence-summary').inner_text()
+            mega_warning = page.locator('#result .mega-uncertainty').inner_text()
+            assert all(name in mega_warning for name in unknown_mega), mega_warning
             for names in CASES:
                 for i,name in enumerate(names):
                     page.locator(f'#foe{i}').fill(name)
@@ -104,12 +120,16 @@ def main():
             assert '0/6匹' in banner.inner_text(), banner.inner_text()
             assert all(name in banner.inner_text() for name in unknown_names), 'Missing unknown names in risk banner'
             assert '暫定案' in banner.inner_text(), 'Must not present unknown coverage as validated'
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0, 'All-unknown opponents must not receive a recommended lead'
+            assert all(name in page.locator('#result').inner_text() for name in unknown_names)
 
             # Opponent input survives reload, and explicit clear survives another reload.
             page.reload(wait_until='domcontentloaded')
             assert [page.locator(f'#foe{i}').input_value() for i in range(6)] == unknown_names
             page.locator('#analyze').click()
             assert '0/6匹' in page.locator('#result .risk-banner').inner_text()
+            assert page.locator('#result .hero').count() == 0
             page.locator('#clear').click()
             page.reload(wait_until='domcontentloaded')
             assert all(page.locator(f'#foe{i}').input_value() == '' for i in range(6))
