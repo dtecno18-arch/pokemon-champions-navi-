@@ -93,8 +93,11 @@ $('#roster').innerHTML=roster.map(x=>'<div><b>'+x[0]+'</b><span class="tag">'+x[
 $('#inputs').innerHTML=Array.from({length:6},(_,i)=>'<div class="slot"><label for="foe'+i+'">相手 '+(i+1)+'</label><input id="foe'+i+'" list="dex" autocomplete="off" placeholder="ポケモン名"></div>').join('');
 const fields=Array.from({length:6},(_,i)=>$('#foe'+i));
 const normalize=s=>s.normalize('NFKC').replace(/[\s　・･]/g,'').replace(/（.*?）|\(.*?\)/g,'').replace(/♂|♀/g,'').replace(/^メガ/,'').replace(/[XYZ]$/,'');
+// Keep opponent inputs on reload; clear explicitly with the reset button.
+const INPUT_KEY='champions-navi-opponents-v1';
+try{const saved=JSON.parse(sessionStorage.getItem(INPUT_KEY)||'[]');if(Array.isArray(saved))fields.forEach((f,i)=>{if(typeof saved[i]==='string')f.value=saved[i]});}catch(e){}
 function update(){const n=fields.filter(f=>f.value.trim()).length;$('#count').textContent=n+' / 6匹入力';$('#status').textContent=n===6?'分析できます':'';$('#status').className='muted';$('#result').classList.add('hidden');}
-fields.forEach((f,i)=>{f.addEventListener('input',update);f.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(i<5)fields[i+1].focus();else $('#analyze').click();}})});
+fields.forEach((f,i)=>{f.addEventListener('input',()=>{try{sessionStorage.setItem(INPUT_KEY,JSON.stringify(fields.map(x=>x.value)))}catch(e){}});f.addEventListener('input',update);f.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(i<5)fields[i+1].focus();else $('#analyze').click();}})});
 function recommend(names){
  const has=n=>names.some(x=>normalize(x)===normalize(n));
  let team=['カバルドン','メガルカリオZ','ミミッキュ'],lead='カバルドン';
@@ -332,6 +335,6 @@ function analyze(){
  $('#result').focus({preventScroll:true});
 }
 $('#analyze').addEventListener('click',analyze);
-$('#clear').addEventListener('click',()=>{fields.forEach(f=>f.value='');$('#result').classList.add('hidden');update();fields[0].focus();});
+$('#clear').addEventListener('click',()=>{try{sessionStorage.removeItem(INPUT_KEY)}catch(e){}fields.forEach(f=>f.value='');$('#result').classList.add('hidden');update();fields[0].focus();});
 update();
 </script></body></html>
