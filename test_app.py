@@ -564,6 +564,36 @@ def main():
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert all(name in page.locator('#result .matchup-unverified').inner_text() for name in fully_answered)
             assert page.evaluate('() => Object.keys(verifiedMatchupEvidence).length') == 0
+            # Fail-closed schema: a dated source and a matching name are not
+            # enough. Every known form branch needs a reviewed lead response.
+            gate = page.evaluate("""() => {
+              const source='https://example.org/reviewed',updated='2026-10-28';
+              const cited={source,updated};
+              const record={...cited,form:'ドヒドイデ',reviewed:true,formReviewed:true,
+                branchScope:'all-known',
+                variants:[{...cited,id:'normal',reviewed:true,ability:'さいせいりょく',
+                  speedBase:35,priorityMoves:[]}],
+                answers:[{...cited,pokemon:'カバルドン',reviewed:true}],
+                leadChecks:[{...cited,variant:'normal',lead:'カバルドン',
+                  response:'stay',reviewed:true}]};
+              const team=['カバルドン','ミミッキュ','メガルカリオZ'];
+              const check=r=>hasVerifiedMatchupAnswer(r,'ドヒドイデ',team,'カバルドン');
+              return {
+                complete:check(record),
+                oldNameOnly:check({...cited,reviewed:true,answers:['カバルドン']}),
+                wrongForm:hasVerifiedMatchupAnswer(record,'メガドヒドイデ',team,'カバルドン'),
+                wrongLead:hasVerifiedMatchupAnswer(record,'ドヒドイデ',team,'ミミッキュ'),
+                unsafe:check({...record,leadChecks:[{...record.leadChecks[0],response:'unsafe'}]}),
+                missingBranch:check({...record,variants:[...record.variants,
+                  {...record.variants[0],id:'mega'}]}),
+                badSwitch:check({...record,leadChecks:[{...record.leadChecks[0],
+                  response:'switch',switchTo:'アシレーヌ'}]}),
+                badCitation:check({...record,answers:[{...record.answers[0],source:''}]})
+              };
+            }""")
+            assert gate == {'complete': True, 'oldNameOnly': False, 'wrongForm': False,
+                            'wrongLead': False, 'unsafe': False, 'missingBranch': False,
+                            'badSwitch': False, 'badCitation': False}, gate
             # Name coverage 6/6 does not validate base-to-Mega branching.
             # Banette, Sableye and Salamence previously bypassed the explicit
             # Mega-form gate when entered in their normal forms.
@@ -705,6 +735,24 @@ def main():
             page.locator('#foe0').fill('エースバーン')
             page.locator('#analyze').click()
             assert page.locator('#result .sourced-intel').count() == 0
+
+            # Additional high-risk Mega profiles show source-dated facts, not
+            # an unsafe recommended lead; normal forms keep both branches open.
+            for threat,base,ability,speed,source in (
+                ('メガリザードンY','リザードン','ひでり','100','554808'),
+                ('メガゲンガー','ゲンガー','かげふみ','130','554816'),
+            ):
+                page.locator('#foe0').fill(threat)
+                page.locator('#analyze').click()
+                card = page.locator('#result .extra-sourced-intel')
+                assert card.count() == 1
+                assert all(x in card.inner_text() for x in (ability,speed,'未検証'))
+                assert card.locator('a[href*="'+source+'"]').count() == 1
+                assert page.locator('#result .hero').count() == 0
+                page.locator('#foe0').fill(base)
+                page.locator('#analyze').click()
+                assert 'メガシンカ確定ではありません' in page.locator('#result .extra-sourced-intel').inner_text()
+                assert page.locator('#result .hero').count() == 0
 
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.

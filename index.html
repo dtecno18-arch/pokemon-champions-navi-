@@ -225,12 +225,58 @@ const sourcedThreatIntel=Object.freeze({
   speedBase:40,attackBase:150,defenseBase:175,
   priority:'ふいうち・であいがしら・アクアジェット',
   note:'メガ後は炎4倍。先制技の採用は型によって異なり、素早さ種族値だけで先制できるとは限りません。'
+ }),
+ 'メガリザードンY':Object.freeze({
+  source:'https://gamewith.jp/pokemon-champions/554808',
+  sourceUpdated:'2026-10-28',usageAsOf:'未確認',
+  types:'ほのお・ひこう',ability:'ひでり',
+  speedBase:100,attackBase:104,defenseBase:78,
+  priority:'採用状況未検証',
+  note:'特攻種族値159。ひでりによる晴れで炎技が強化されます。通常リザードンの入力ではメガX/Yを決め打ちできません。'
+ }),
+ 'メガゲンガー':Object.freeze({
+  source:'https://gamewith.jp/pokemon-champions/554816',
+  sourceUpdated:'2026-10-27',usageAsOf:'未確認',
+  types:'ゴースト・どく',ability:'かげふみ',
+  speedBase:130,attackBase:65,defenseBase:80,
+  priority:'採用状況未検証',
+  note:'特攻種族値170。かげふみでゴーストタイプ以外の交代が制限されます。メガ前後で特性・素早さが異なるため初手の安全性は未検証です。'
  })
 });
 // Evidence gate: only reviewed, source-dated, form-specific matchup answers can unlock a recommendation.
 // No matchup has yet passed that audit. Threat facts and name-only rules are NOT evidence.
-// Future records must provide {reviewed:true,source,updated,answers:[roster names]}.
+// Future records require source-dated form/variant/lead-specific evidence.
+// A reviewed flag or a single team member name is never sufficient by itself.
 const verifiedMatchupEvidence=Object.freeze({});
+const hasEvidenceCitation=r=>r && typeof r.source==='string' &&
+ r.source.startsWith('https://') && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(r.updated);
+function isAuditedMatchupRecord(r){
+ if(!r || r.reviewed!==true || r.formReviewed!==true || r.branchScope!=='all-known' ||
+    typeof r.form!=='string' || !hasEvidenceCitation(r) ||
+    !Array.isArray(r.variants) || !r.variants.length ||
+    !Array.isArray(r.answers) || !r.answers.length ||
+    !Array.isArray(r.leadChecks) || !r.leadChecks.length)return false;
+ const ids=r.variants.map(v=>v&&v.id);
+ if(new Set(ids).size!==ids.length || r.variants.some(v=>
+    !v || v.reviewed!==true || typeof v.id!=='string' || !v.id ||
+    typeof v.ability!=='string' || !Number.isFinite(v.speedBase) ||
+    !Array.isArray(v.priorityMoves) || !hasEvidenceCitation(v)))return false;
+ if(r.answers.some(a=>!a || a.reviewed!==true || typeof a.pokemon!=='string' ||
+    !a.pokemon || !hasEvidenceCitation(a)))return false;
+ if(r.leadChecks.some(c=>!c || c.reviewed!==true || !ids.includes(c.variant) ||
+    typeof c.lead!=='string' || !['stay','switch','unsafe'].includes(c.response) ||
+    (c.response==='switch' && typeof c.switchTo!=='string') || !hasEvidenceCitation(c)))return false;
+ return true;
+}
+function hasVerifiedMatchupAnswer(record,opponent,team,lead){
+ if(!isAuditedMatchupRecord(record) || record.form!==formKey(opponent) ||
+    !record.answers.some(a=>team.includes(a.pokemon)))return false;
+ // Every documented variant must have a sourced safe lead response.
+ // A missing variant, unsafe lead, or switch to a non-selected ally abstains.
+ return record.variants.every(v=>record.leadChecks.some(c=>
+   c.variant===v.id && c.lead===lead && c.response!=='unsafe' &&
+   (c.response==='stay' || team.includes(c.switchTo))));
+}
 // Keep opponent inputs on reload; clear explicitly with the reset button.
 const INPUT_KEY='champions-navi-opponents-v1';
 try{const saved=JSON.parse(sessionStorage.getItem(INPUT_KEY)||'[]');if(Array.isArray(saved))fields.forEach((f,i)=>{if(typeof saved[i]==='string')f.value=saved[i]});}catch(e){}
@@ -421,9 +467,7 @@ function updateInputProvenance(){
   el.className='slot-source muted'+(provenance.label.startsWith('公式M-C')?'':' source-uncertain');
  });
 }
-const reviewedFormCount=Object.values(verifiedMatchupEvidence).filter(r=>
- r && r.reviewed===true && typeof r.source==='string' && /^https:\/\//.test(r.source) &&
- /^\d{4}-\d{2}-\d{2}$/.test(r.updated) && Array.isArray(r.answers) && r.answers.length>0).length;
+const reviewedFormCount=Object.values(verifiedMatchupEvidence).filter(isAuditedMatchupRecord).length;
 const auditStatus=document.createElement('p');
 auditStatus.id='catalog-audit';auditStatus.className='muted';
 auditStatus.textContent='入力候補 '+supportedNames.size+'/352形態（参考値・公式M-C全件照合未完了）／出典・日付・回答付き検証済み対面 '+reviewedFormCount+'/'+supportedNames.size+'形態。入力可能率と対策検証率は別指標です。';
@@ -527,7 +571,7 @@ function analyze(){
  const sourcedCount=vals.filter(n=>Object.prototype.hasOwnProperty.call(sourcedThreatIntel,formKey(n))).length;
  const missingVerifiedMatchups=vals.filter(n=>{
   const record=verifiedMatchupEvidence[formKey(n)];
-  return !(record && record.reviewed===true && typeof record.source==='string' && /^https:\/\//.test(record.source) && /^\d{4}-\d{2}-\d{2}$/.test(record.updated) && Array.isArray(record.answers) && record.answers.some(answer=>r.team.includes(answer)));
+  return !hasVerifiedMatchupAnswer(record,n,r.team,r.lead);
  });
  const verifiedMatchupCount=6-missingVerifiedMatchups.length;
  const notInSuggestions=vals.filter(n=>!supportedNames.has(formKey(n)));
@@ -559,6 +603,15 @@ function analyze(){
  const megaGoliExact=vals.some(n=>formKey(n)==='メガグソクムシャ');
  const intel=sourcedThreatIntel['メガグソクムシャ'];
  const sourcedWarning=megaGoliPresent?'<div class="warn sourced-intel"><b>重要：グソクムシャのメガ分岐・先制技</b><div>'+ (megaGoliExact?'メガ形態で入力されています。':'通常形態で入力されています。メガシンカするかは未確定です。') +' メガ後は'+esc(intel.types)+'／特性'+esc(intel.ability)+'／攻撃'+intel.attackBase+'・防御'+intel.defenseBase+'・素早さ'+intel.speedBase+'（種族値）。先制技候補：'+esc(intel.priority)+'。'+esc(intel.note)+'</div><div class="muted">使用率データ集計：'+intel.usageAsOf+'／記事確認：'+intel.sourceUpdated+'。<a href="'+intel.source+'" target="_blank" rel="noopener noreferrer">出典・型の確認（GameWith）</a>。個別対面の勝敗は未検証。</div></div>':'';
+ // Source-dated threat facts improve warnings, never verified matchup coverage.
+ const extraThreatWarnings=['メガリザードンY','メガゲンガー'].filter(key=>
+  vals.some(n=>formKey(n)===key || (!isMegaForm(n)&&normalize(n)===normalize(key))))
+  .map(key=>{const data=sourcedThreatIntel[key];const exact=vals.some(n=>formKey(n)===key);
+   return '<div class="warn extra-sourced-intel" role="status"><b>出典付き脅威情報：'+esc(key)+'</b><div>'+
+    (exact?'メガ形態で入力。':'通常形態からのメガ分岐候補（メガシンカ確定ではありません）。')+
+    ' タイプ '+esc(data.types)+'／特性 '+esc(data.ability)+'／素早さ種族値 '+data.speedBase+
+    '／先制技 '+esc(data.priority)+'。'+esc(data.note)+'</div><div class="muted">記事更新：'+
+    data.sourceUpdated+'／<a href="'+data.source+'" target="_blank" rel="noopener noreferrer">GameWith出典</a>。個別対面・初手安全性は未検証。</div></div>';}).join('');
  const confidenceBanner=uncovered.length
   ?'<div class="warn risk-banner" role="status"><b>⚠️ 対策データ不足：'+knownCount+'/6匹のみ登録</b><div>未登録：'+esc(uncovered.join('・'))+'</div><div>未登録の相手への有利不利は評価できません。選出判断を保留し、先発・交代先を安全とは判定しません。</div></div>'
   :'<div class="warn risk-banner" role="status"><b>注意：対策ルール登録6/6匹</b><div>名前ベースの登録件数であり、型・技・持ち物・特性・素早さ・メガ候補の対策精度は未検証です。安全性を保証しません。</div></div>';
@@ -572,7 +625,7 @@ function analyze(){
   const megaCaution=megaCandidates.length?'<div class="warn mega-uncertainty"><b>メガシンカの分岐に注意</b><div>'+esc(megaCandidates.join('・'))+' が候補に含まれます。実際のメガシンカ先は選出段階では確定できません。通常形態とメガ形態を両方警戒してください。</div></div>':'';
   $('#result').innerHTML=suggestionWarning+
    '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対策候補付きルール '+actionableCount+'/6匹／選出3匹の対応 '+selectedCoverage+'/6匹／検証済み対面 '+verifiedMatchupCount+'/6匹：選出3匹・先発は推奨しません</b><div>相手6匹のうち名前ベースの対策候補は'+actionableCount+'匹、暫定選出3匹が実際に対応できる候補は'+selectedCoverage+'匹です。選出3匹で対応できない相手が1匹でもいる場合、または相手6匹の中に個別対策未登録・候補未照合の入力・個別対面未検証のメガ形態・メガシンカ可能な通常形態・重大メガ分岐・サイコフィールド展開役が1匹でも含まれる場合は推奨を保留します。さらに相手6匹全員について、出典・更新日付きの個別対面と選出3匹の回答が検証済みでなければ推奨しません。名前ベースの対策候補が6/6匹でも安全とは判定しません。対戦画面でメガ候補・先制技も確認してください。</div></div>'+
-   confidenceBanner+criticalWarning+terrainWarning+megaFormWarning+megaBaseWarning+evidenceSummary+sourcedWarning+megaCaution+
+   confidenceBanner+criticalWarning+terrainWarning+megaFormWarning+megaBaseWarning+evidenceSummary+sourcedWarning+extraThreatWarnings+megaCaution+
    (missingVerifiedMatchups.length?'<div class="warn matchup-unverified" role="alert"><b>⚠️ 個別対面の検証不足：'+verifiedMatchupCount+'/6匹</b><div>未検証：'+esc(missingVerifiedMatchups.join('・'))+'。名前ベースの対策候補・出典付き脅威情報は、選出3匹で勝てる根拠ではありません。</div></div>':'')+
    '<div class="line abstention-coverage"><b>選出3匹で対応できない相手</b>'+ (unansweredByTrio.length?unansweredByTrio.map(c=>'<div class="line"><b>'+esc(c.name)+'</b>：'+esc(c.answer)+'</div>').join(''):'<p class="muted">名前ベースの対応候補はありますが、型・技・メガ分岐等の検証が不足しています。</p>')+'</div>'+
    '<div class="line"><b>相手6匹（入力候補の根拠／個別対面未検証）</b>'+vals.map(n=>{const p=candidateProvenance(n);return '<div class="line candidate-provenance"><b>'+esc(n)+'</b><div class="muted">'+esc(p.label)+(p.source?' ／ <a href="'+esc(p.source)+'" target="_blank" rel="noopener noreferrer">出典</a>':'')+'</div></div>';}).join('')+'</div>';
