@@ -299,10 +299,10 @@ def main():
             # Every eligible Mega needs its ordinary pre-Mega species available
             # as a distinct input candidate, without implying matchup evidence.
             assert page.evaluate("() => officialMegaBaseCandidates.length") == 76
-            assert page.evaluate("""() => officialMegaBaseCandidates.every(name =>
+            assert page.evaluate("""() => officialMegaBaseCandidates.every(name => officialMcExcludedCandidates.has(name) ||
                 Array.from(document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
             assert page.evaluate("() => document.querySelectorAll('#dex option').length") >= 229
-            assert '対応する通常種76件' in page.locator('#count + p').inner_text()
+            assert '対応する通常種候補76件（未指定形態1件除外）' in page.locator('#count + p').inner_text()
             for species in ('スピアー', 'ピジョット', 'ユキメノコ',
                             'メガニウム', 'エンブオー', 'フラエッテ'):
                 assert page.locator('#dex option').evaluate_all(
