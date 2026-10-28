@@ -102,6 +102,22 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 $('#roster').innerHTML=roster.map(x=>'<div><b>'+x[0]+'</b><span class="tag">'+x[3]+'</span><div class="moves">'+x[1]+'<br>'+x[2]+'</div></div>').join('');
 $('#inputs').innerHTML=Array.from({length:6},(_,i)=>'<div class="slot"><label for="foe'+i+'">相手 '+(i+1)+'</label><input id="foe'+i+'" list="dex" autocomplete="off" placeholder="ポケモン名"></div>').join('');
 const fields=Array.from({length:6},(_,i)=>$('#foe'+i));
+// M-C additions: 29 normal/form entries from the official 2026-09-09 Select notice,
+// plus six newly enabled Megas verified against the 2026-10-27 GameWith M-C list.
+// This is NOT the full M-C eligible roster (352 forms). Never present it as such.
+const officialMcAdditions=["プクリン","ペルシアン","アローラペルシアン","カモネギ","バリヤード","マルノーム","ボーマンダ","ゴーゴート","グソクムシャ","ゴリランダー","エースバーン","インテレオン","フォクスライ","ストリンダー(ハイ)","ストリンダー(ロー)","オトスパス","ニャイキング","ネギガナイト","バチンウニ","イエッサン(オス)","イエッサン(メス)","パーモット","オリーヴァ","イキリンコ(グリーンフェザー)","イキリンコ(ブルーフェザー)","イキリンコ(イエローフェザー)","イキリンコ(ホワイトフェザー)","マフィティフ","セグレイブ","メガアブソルZ","メガボーマンダ","メガガブリアスZ","メガルカリオZ","メガグソクムシャ","メガセグレイブ"];
+{
+ const options=$('#dex');
+ const seen=new Set(Array.from(options.options,o=>o.value.normalize('NFKC')));
+ for(const name of officialMcAdditions){
+  if(seen.has(name.normalize('NFKC')))continue;
+  const opt=document.createElement('option');opt.value=name;options.appendChild(opt);seen.add(name.normalize('NFKC'));
+ }
+ const note=document.createElement('p');note.className='muted';
+ note.innerHTML='M-C追加35形態の候補を収録（2026-10-28確認）。固定候補 '+options.options.length+'件／全352形態の網羅は未検証。その他の固定候補も使用可否の全件照合は未完了です。候補外は手入力可。出典：<a href="https://champions-news.pokemon-home.com/ja/page/821.html" target="_blank" rel="noopener noreferrer">公式M-C追加情報</a>・<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith（2026-10-27更新）</a>。';
+ $('#count').after(note);
+}
+
 // Species-level grouping is only for duplicate detection and broad threat hints.
 const normalize=s=>s.normalize('NFKC').replace(/[\s　・･]/g,'').replace(/（.*?）|\(.*?\)/g,'').replace(/♂|♀/g,'').replace(/^メガ/,'').replace(/[XYZ]$/,'');
 // Preserve Mega X/Y/Z, sex and regional/form labels for matchup coverage.
@@ -342,22 +358,8 @@ function buildDecisionExplanation(opponents,r){
  '<section class="line"><h2>⑤ どう動かすか：序盤→終盤</h2>'+megaCaution+leadRisk+steps+'<details><summary>相手6匹それぞれが先発だった場合</summary>'+leadNotes+'</details></section>'+
  '<section class="line"><h2>⑥ データの信頼性</h2>'+warning+'<p class="muted">対面ルール適用：'+recognized.length+'/6匹。登録済みの名前一覧と、個別対策の検証状況は別物です。</p><p class="muted">M-C全352種類の入力候補網羅：未検証（候補にない名前も手入力可）。参考：<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith内定一覧（2026-10-27更新）</a>。対策データの検証率とは別指標です。</p></section>';
 }
-// Best-effort online autocomplete; manual input always works offline.
-(async()=>{
- const el=$('#status');
- try{
-  const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),8000);
-  const res=await fetch('https://raw.githubusercontent.com/fanzeyi/pokemon.json/master/pokedex.json',{signal:ctrl.signal});clearTimeout(timer);
-  if(!res.ok)throw Error('HTTP '+res.status);
-  const data=await res.json();if(!Array.isArray(data)||data.length<800)throw Error('図鑑件数不足');
-  const list=$('#dex');const present=new Set(Array.from(list.options,o=>formKey(o.value)));
-  let added=0;
-  for(const entry of data){const n=entry?.name?.japanese;if(typeof n!=='string'||!n.trim()||present.has(formKey(n)))continue;
-   const option=document.createElement('option');option.value=n;list.appendChild(option);present.add(formKey(n));added++;
-  }
-  const note=document.createElement('p');note.className='ready';note.textContent='オンライン図鑑の候補を追加：'+added+'種類。メガ形態などは手入力も可能です。';$('#count').after(note);
- }catch(e){const note=document.createElement('p');note.className='muted';note.textContent='オンライン図鑑の取得不可（オフライン等）。候補にないポケモンも手入力できます。';$('#count').after(note);}
-})();
+// Do not add all 800+ National Pokédex species to M-C suggestions:
+// many are not eligible. Manual entry remains possible for forms awaiting verification.
 
 function analyze(){
  $('#result').classList.add('hidden');
