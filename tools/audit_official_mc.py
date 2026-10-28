@@ -120,6 +120,7 @@ def audit():
         "checkedAtUtc": datetime.now(timezone.utc).isoformat(),
         "officialEntries": len(entries),
         "officialFormCodes": len({x[2] for x in entries if len(x) > 2}),
+        "formCodeSamples": [{"dex": x[0], "name": x[1], "code": x[2]} for x in entries if len(x) > 2 and x[0] in (479,670,711,876,902,925,931,1013)],
         "lastOfficialRawPreview": raw_text[raw_text.rfind("No.1019"):][:350],
         "officialUniqueForms": len(official_keys),
         "appInputCandidates": data["inputCount"],
