@@ -125,7 +125,10 @@ const officialMcAdditions=["プクリン","ペルシアン","アローラペル�
 // The official M-C eligible roster explicitly lists all six Rotom forms.
 // Source: https://web-view.app.pokemonchampions.jp/battle/pages/events/rs178713870219xeaaio/ja/pokemon.html
 // Current roster snapshot 2026-09-09; full official roster audit is separate.
-const officialMcRosterKnownForms=['ロトム','ヒートロトム','ウォッシュロトム','フロストロトム','スピンロトム','カットロトム'];
+const officialMcRosterKnownForms=['ロトム','ヒートロトム','ウォッシュロトム','フロストロトム','スピンロトム','カットロトム','ウインディ','ヤドキング','ラムパルド','トリデプス','ダイケンキ','ミルホッグ','ニンフィア','キョジオーン','イッカネズミ','イキリンコ'];
+// The official M-C eligibility list does not include these old convenience
+// suggestions. Keep manual input possible, but never present them as eligible.
+const officialMcExcludedCandidates=new Set(['イダイトウ','イエッサン','オノノクス','ガチグマ','キングドラ','ポリゴン２','ラッキー','ハピナス','クレセリア','ゼルネアス','ザシアン','モロバレル','ズガイドス','タテトプス','ニャオニクス']);
 // Official regulation Mega eligibility: M-A (2026-04-08), M-B (2026-08-05 update),
 // M-C (2026-09-09 update). A Mega-form autocomplete entry is NOT a reviewed matchup.
 // Sources: https://champions-news.pokemon-home.com/ja/page/751.html
@@ -152,8 +155,10 @@ const megaInputForms=officialMegaForms.flatMap(name=>
 const officialMegaBaseCandidates=[...new Set(officialMegaForms.map(name=>name.replace(/^メガ/,'').replace(/[XYZ]$/,'')))];
 {
  const options=$('#dex');
+ for(const opt of [...options.options])if(officialMcExcludedCandidates.has(opt.value))opt.remove();
  const seen=new Set(Array.from(options.options,o=>o.value.normalize('NFKC')));
  for(const name of [...officialMaSpecialRoster,...historicalMaTournamentCandidates,...historicalMaTournamentMoreCandidates,...officialMbAdditions,...officialMcAdditions,...officialMcRosterKnownForms,...megaInputForms,...officialMegaBaseCandidates,...separatelyDocumentedForms]){
+  if(officialMcExcludedCandidates.has(name))continue;
   if(seen.has(name.normalize('NFKC')))continue;
   const opt=document.createElement('option');opt.value=name;options.appendChild(opt);seen.add(name.normalize('NFKC'));
  }
@@ -291,6 +296,10 @@ const hasEvidenceCitation=r=>r && typeof r.source==='string' &&
 function requiredMatchupForms(opponent){
   const base=formKey(opponent);
   if(isMegaForm(opponent))return [base];
+  // Official M-C lists these without all visually distinct forms. A generic
+  // preview must not be treated as a single verified variant.
+  if(base==='イッカネズミ')return ['イッカネズミ(3びき)','イッカネズミ(4ひき)'];
+  if(base==='イキリンコ')return ['イキリンコ(グリーンフェザー)','イキリンコ(ブルーフェザー)','イキリンコ(イエローフェザー)','イキリンコ(ホワイトフェザー)'];
   const megaBranches=megaInputForms.filter(name=>{
     const megaBase=formKey(name).replace(/^メガ/,'').replace(/[XYZ]$/,'');
     // Only the Eternal Flower Floette can branch to Mega Floette.
@@ -513,7 +522,7 @@ const supportedNames=new Set(Array.from(document.querySelectorAll('#dex option')
 // never silently promoted to verified current M-C eligibility.
 const candidateSourceTiers=[
  {label:'公式M-C追加（2026-09-09）',source:'https://champions-news.pokemon-home.com/ja/page/821.html',names:officialMcAdditions.filter(n=>!isMegaForm(n))},
- {label:'公式M-C参加可能一覧・ロトム6形態（2026-09-09）',source:'https://web-view.app.pokemonchampions.jp/battle/pages/events/rs178713870219xeaaio/ja/pokemon.html',names:officialMcRosterKnownForms},
+ {label:'公式M-C参加可能一覧・追加確認16形態（2026-09-09）',source:'https://web-view.app.pokemonchampions.jp/battle/pages/events/rs178713870219xeaaio/ja/pokemon.html',names:officialMcRosterKnownForms},
  {label:'公式M-Cメガ追加（2026-09-09）',source:'https://news.pokemon-home.com/ja/page/816.html',names:officialMegaMc},
  {label:'公式M-B追加（現行M-C全件未照合）',source:'https://champions-news.pokemon-home.com/ja/page/777.html',names:officialMbAdditions},
  {label:'公式M-Bメガ（現行M-C全件未照合）',source:'https://champions-news.pokemon-home.com/ja/page/776.html',names:officialMegaMb},
@@ -576,7 +585,7 @@ function likelyRole(n){
 // Use exact form branches: Alolan Raichu, for example, cannot be treated
 // as a Mega Raichu X/Y candidate just because species-level names collide.
 const megaCandidatesFor=opponents=>opponents.filter(n=>
-  isMegaForm(n)||requiredMatchupForms(n).length>1);
+  isMegaForm(n)||requiredMatchupForms(n).some(isMegaForm));
 function buildDecisionExplanation(opponents,r){
  const team=r.team;
  const roleMap={
@@ -666,7 +675,7 @@ function analyze(){
  const unverifiedMegaForms=vals.filter(isMegaForm);
  // A normal-form entry may Mega evolve. No base/Mega branch has verified
  // matchups, so a six-name heuristic cannot establish a safe lead.
- const unverifiedMegaBases=vals.filter(n=>!isMegaForm(n) && requiredMatchupForms(n).length>1);
+ const unverifiedMegaBases=vals.filter(n=>!isMegaForm(n) && requiredMatchupForms(n).some(isMegaForm));
  // M-C high-tier Megas without a validated matchup answer are not safe to
  // infer from a small number of unrelated name-only coverage rules.
  // Normal Charizard / Gengar / Golisopod also require a Mega branch.
