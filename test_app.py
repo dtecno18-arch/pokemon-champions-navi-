@@ -308,7 +308,7 @@ def main():
             assert page.evaluate("() => document.querySelectorAll('#dex option').length") >= 229
             assert '対応する通常種候補76件（未指定・対象外形態2件除外）' in page.locator('#count + p').inner_text()
             for species in ('スピアー', 'ピジョット', 'ユキメノコ',
-                            'メガニウム', 'エンブオー', 'フラエッテ'):
+                            'メガニウム', 'エンブオー', 'フラエッテ(えいえんのはな)'):
                 assert page.locator('#dex option').evaluate_all(
                     "(els, name) => els.some(el => el.value === name)", species
                 ), f'Missing pre-Mega candidate: {species}'
