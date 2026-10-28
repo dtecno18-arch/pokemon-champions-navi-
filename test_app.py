@@ -793,7 +793,10 @@ def main():
 
             # Eternal Flower Floette is the only Floette form with this Mega
             # branch. Preserve the distinction in warnings and evidence gating.
-            page.locator('#foe0').fill('フラエッテ(えいえんのはな)')
+            for i, name in enumerate(('フラエッテ(えいえんのはな)', 'アシレーヌ',
+                                      'ドドゲザン', 'サーフゴー', 'ミミッキュ',
+                                      'カバルドン')):
+                page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
             assert page.locator('#result .mega-base-unverified').count() == 1
             assert 'フラエッテ(えいえんのはな)' in page.locator('#result .mega-base-unverified').inner_text()
