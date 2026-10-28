@@ -310,6 +310,13 @@ function reviewedPairRisksFor(opponents){
 // Future records require source-dated form/variant/lead-specific evidence.
 // A reviewed flag or a single team member name is never sufficient by itself.
 const verifiedMatchupEvidence=Object.freeze({});
+// Confirmed Ghost-type members of the registered six. Shadow Tag cannot trap
+// these leads, including Water/Ghost Basculegion. Do not infer a type from a
+// species substring or the type of a prospective switch-in.
+// Sources checked 2026-10-29:
+// https://champions.pokewiki.net/イダイトウ（オスのすがた）
+// https://pokemon.wingzero.tw/ja/data/ability/23
+const ghostTypeRosterLeads=new Set(['ミミッキュ','ギルガルド','イダイトウ♂']);
 const hasEvidenceCitation=r=>r && typeof r.source==='string' &&
  r.source.startsWith('https://') && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(r.updated);
 // A preview shows the ordinary species even when multiple Mega outcomes are
@@ -386,7 +393,7 @@ function isAuditedMatchupRecord(r){
      typeof c.lead!=='string' || !roster.some(p=>p[0]===c.lead) ||
      !['stay','switch','unsafe'].includes(c.response) ||
      (c.response==='switch' && (typeof c.switchTo!=='string' ||
-       !roster.some(p=>p[0]===c.switchTo))) ||
+       c.switchTo===c.lead || !roster.some(p=>p[0]===c.switchTo))) ||
      typeof c.reason!=='string' || !c.reason.trim() ||
      !hasEvidenceCitation(c)))return false;
   return true;
@@ -404,14 +411,14 @@ function hasVerifiedMatchupAnswer(record,opponent,team,lead){
   return record.variants.every(v=>{
     // Shadow Tag traps non-Ghost leads. Switching to a Ghost teammate does
     // not free the trapped lead; a documented switch is not a safe answer.
-    const trapped=v.ability==='かげふみ' && !['ミミッキュ','ギルガルド'].includes(lead);
+    const trapped=v.ability==='かげふみ' && !ghostTypeRosterLeads.has(lead);
     const safeAnswers=record.answers.filter(a=>
       a.variant===v.id && team.includes(a.pokemon)).map(a=>a.pokemon);
     return safeAnswers.length>0 && record.leadChecks.some(c=>
       c.variant===v.id && c.lead===lead && c.response!=='unsafe' &&
       !(trapped && c.response==='switch') &&
       (c.response==='stay'?safeAnswers.includes(lead):
-        team.includes(c.switchTo) && safeAnswers.includes(c.switchTo)));
+        c.switchTo!==lead && team.includes(c.switchTo) && safeAnswers.includes(c.switchTo)));
   });
 }
 // Keep opponent inputs on reload; clear explicitly with the reset button.
