@@ -350,9 +350,24 @@ function isAuditedMatchupRecord(r){
      typeof v.form!=='string' || !v.form || formKey(v.form)!==v.form ||
      typeof v.ability!=='string' || !v.ability ||
      !Number.isFinite(v.speedBase) || v.speedBase<1 ||
+     // Base speed alone cannot establish turn order; all branches need
+     // source-reviewed Lv50 speed ranges, relevant moves and held items.
+     v.speedRangeReviewed!==true ||
+     !Number.isInteger(v.speedMin) || !Number.isInteger(v.speedMax) ||
+     v.speedMin<1 || v.speedMax<v.speedMin || v.speedMax>999 ||
+     v.moveCoverageReviewed!==true || !Array.isArray(v.moves) ||
+     !v.moves.length || v.moves.some(move=>typeof move!=='string' || !move.trim()) ||
+     v.itemCoverageReviewed!==true || !Array.isArray(v.items) ||
+     !v.items.length || v.items.some(item=>typeof item!=='string' || !item.trim()) ||
      !Array.isArray(v.priorityMoves) ||
-     v.priorityMoves.some(move=>typeof move!=='string') ||
+     v.priorityMoves.some(move=>typeof move!=='string' || !v.moves.includes(move)) ||
      !hasEvidenceCitation(v)))return false;
+  // Reviewed coverage is counted only for an exhaustive set of known forms.
+  const required=requiredMatchupForms(r.form);
+  const covered=new Set(r.variants.map(v=>v.form));
+  if(formKey(r.form)!==r.form || !supportedNames.has(r.form) ||
+     covered.size!==required.length ||
+     !required.every(form=>covered.has(form)))return false;
   if(r.answers.some(a=>!a || a.reviewed!==true || typeof a.pokemon!=='string' ||
      !a.pokemon || !roster.some(p=>p[0]===a.pokemon) ||
      !ids.includes(a.variant) || typeof a.reason!=='string' || !a.reason.trim() ||
