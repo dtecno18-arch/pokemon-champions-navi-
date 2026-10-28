@@ -30,7 +30,8 @@ def extract_official(text):
     entries = []
     for i, marker in enumerate(markers):
         end = markers[i + 1].start() if i + 1 < len(markers) else len(text)
-        name = re.sub(r"\s+", " ", text[marker.end():end]).strip()
+        raw_name = text[marker.end():end].split("©")[0]
+        name = re.sub(r"\s+", " ", raw_name).strip()
         if name and len(name) < 100:
             entries.append((int(marker.group(1)), name))
     return entries
