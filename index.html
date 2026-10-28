@@ -316,7 +316,7 @@ function buildDecisionExplanation(opponents,r){
  const megaBaseNames=new Set(['アブソル','ガブリアス','ルカリオ','ボーマンダ','グソクムシャ','セグレイブ','カイリュー','ゲッコウガ','メタグロス','ギャラドス','カメックス','フシギバナ','ラグラージ','バシャーモ','ジュペッタ','ヤミラミ','ライチュウ','オーダイル'].map(normalize));
  const megaCandidates=opponents.filter(n=>/^メガ/.test(n.normalize('NFKC'))||megaBaseNames.has(normalize(n)));
  const megaCaution=megaCandidates.length?'<div class="warn mega-uncertainty"><b>メガシンカの分岐に注意</b><div>'+esc(megaCandidates.join('・'))+' が候補に含まれます。相手が実際にメガシンカするか、どの個体をメガシンカさせるかは選出段階では確定できません。通常形態とメガ形態の両方を想定して初手を判断してください。</div></div>':'';
- const warning=unrecognized.length?'<div class="warn"><b>重要：個別対面データが不足</b><div>'+esc(unrecognized.join('・'))+' の個別対策は未登録です。20通りの比較はこの相手を十分に評価できません。以下の選出は暫定案で、最適と断定できません。</div></div>':'<p class="ready">6匹とも既知の対策ルールに該当。ただし技・持ち物は未確定です。</p>';
+ const warning=unrecognized.length?'<div class="warn"><b>重要：個別対面データが不足</b><div>'+esc(unrecognized.join('・'))+' の個別対策は未登録です。20通りの比較はこの相手を十分に評価できません。以下の選出は暫定案で、最適と断定できません。</div></div>':'<div class="warn"><b>注意：6匹とも名前ベースの対面ルールに該当</b><div>型・技・持ち物・特性・素早さ・メガシンカ先は検証済みとは限りません。対面ルールの適用件数は対策精度や安全性を保証しません。</div></div>';
  const steps='<div class="line"><b>序盤｜先発 '+esc(r.lead)+'</b><div>'+esc(roleMap[r.lead]?.[0]||'相手の初手を見て対面を調整')+'</div></div>'+
  '<div class="line"><b>中盤｜突破の条件を作る</b><div>'+esc(team.includes('メガルカリオZ')?'メガルカリオZのわるだくみを安全に使える場面を作る。無理なら攻撃で削る。':team.includes('メガカイリュー')?'メガカイリューの技範囲で相手の受け先を削る。':'相手の受け先を削り、後続の先制技圏内に入れる。')+'</div></div>'+
  '<div class="line"><b>終盤｜勝ち切る</b><div>'+esc(team.includes('イダイトウ♂')?'倒れた味方の数と相手の残HPを見て、おはかまいりで締める。':team.includes('ミミッキュ')?'ミミッキュのばけのかわ・かげうちを残し、相手の高速エースを止める。':team.includes('ギルガルド')?'ギルガルドのタスキ・かげうちを温存して締める。':'先制技と残HPを確認して取り切る。')+'</div></div>';
