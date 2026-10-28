@@ -36,9 +36,21 @@ def main():
                     option => option.value).includes(name))""")
             assert page.evaluate("() => historicalMaTournamentCandidates.length") == 41
             assert page.evaluate("() => historicalMaTournamentMoreCandidates.length") == 63
-            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 355
+            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 348
             assert page.evaluate("""() => officialMcRosterKnownForms.every(name =>
                 Array.from(document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
+            assert page.evaluate("() => officialMcRosterKnownForms.length") == 14
+            assert page.evaluate("""() => Array.from(officialMcExcludedCandidates).every(name =>
+                !Array.from(document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
+            assert page.evaluate("() => officialMcExcludedCandidates.size") == 19
+            assert page.evaluate("() => requiredMatchupForms('イッカネズミ').length") == 2
+            assert page.evaluate("() => requiredMatchupForms('イキリンコ').length") == 4
+            assert page.evaluate("() => officialMcSpecialForms.length") == 2
+            assert page.evaluate("""() => officialMcSpecialForms.every(name =>
+                Array.from(document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
+            assert page.evaluate("() => requiredMatchupForms('ヤバソチャ').length") == 2
+            assert page.evaluate("() => !megaCandidatesFor(['イッカネズミ','イキリンコ']).length")
+
             assert page.evaluate("() => formKey('ロトム (フロストロトム)') === 'フロストロトム'")
             assert page.evaluate("() => formKey('ケンタロス (パルデアのすがた・コンバットしゅ)') === 'パルデアケンタロス(かくとう)'")
             assert '過去のM-A大会参加可能リスト由来104形態' in page.locator('#count + p').inner_text()
@@ -64,7 +76,7 @@ def main():
                 }
                 return {checked: options.length};
             }""")
-            assert audit == {'checked': 355}, audit
+            assert audit == {'checked': 348}, audit
             # Historical M-A regional forms share a species slot but retain
             # distinct form identities for any future matchup evidence.
             for regional, ordinary in (
@@ -103,9 +115,9 @@ def main():
             # M-A candidates; neither a catalog entry nor a source link is
             # evidence of a verified matchup.
             audit_text = page.locator('#catalog-audit').inner_text()
-            assert '355形態' in audit_text
+            assert '348形態' in audit_text
             assert '公式M-C全件照合未完了' in audit_text
-            assert '検証済み対面 0/355形態' in audit_text
+            assert '検証済み対面 0/348形態' in audit_text
             for name, label in (
                 ('グソクムシャ', '公式M-C追加'),
                 ('メガグソクムシャ', '公式M-Cメガ追加'),
@@ -291,17 +303,17 @@ def main():
             # Every eligible Mega needs its ordinary pre-Mega species available
             # as a distinct input candidate, without implying matchup evidence.
             assert page.evaluate("() => officialMegaBaseCandidates.length") == 76
-            assert page.evaluate("""() => officialMegaBaseCandidates.every(name =>
+            assert page.evaluate("""() => officialMegaBaseCandidates.every(name => officialMcExcludedCandidates.has(name) ||
                 Array.from(document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
             assert page.evaluate("() => document.querySelectorAll('#dex option').length") >= 229
-            assert '対応する通常種76件' in page.locator('#count + p').inner_text()
+            assert '対応する通常種候補76件（未指定・対象外形態2件除外）' in page.locator('#count + p').inner_text()
             for species in ('スピアー', 'ピジョット', 'ユキメノコ',
-                            'メガニウム', 'エンブオー', 'フラエッテ'):
+                            'メガニウム', 'エンブオー', 'フラエッテ(えいえんのはな)'):
                 assert page.locator('#dex option').evaluate_all(
                     "(els, name) => els.some(el => el.value === name)", species
                 ), f'Missing pre-Mega candidate: {species}'
             for i, name in enumerate(('スピアー', 'ピジョット', 'ユキメノコ',
-                                       'メガニウム', 'エンブオー', 'フラエッテ')):
+                                       'メガニウム', 'エンブオー', 'フラエッテ(えいえんのはな)')):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
             assert page.locator('#result .candidate-unverified').count() == 0
