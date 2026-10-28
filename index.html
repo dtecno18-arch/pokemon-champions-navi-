@@ -1,9 +1,9 @@
 <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Champions 選出ナビ｜カバルカミミ</title>
 <style>
-:root{font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;color:#192b42;background:#f3f6fb}*{box-sizing:border-box}body{margin:0}main{max-width:760px;margin:auto;padding:16px 14px 55px}h1{font-size:1.4rem;margin:8px 0}h2{font-size:1.08rem;margin:0 0 12px}p{line-height:1.65}.sub{color:#53657b;font-size:.88rem}.panel{background:white;border:1px solid #dbe3ef;border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 2px 9px #2137550a}.inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.slot label{display:block;font-size:.77rem;font-weight:700;margin-bottom:4px;color:#465a75}input{width:100%;font:inherit;padding:11px;border:1px solid #bdcbdb;border-radius:10px;min-width:0}input:focus{outline:2px solid #3774d5}button{border:0;border-radius:11px;padding:13px 18px;font:inherit;font-weight:750;cursor:pointer;min-height:45px}button.primary{background:#215db7;color:white;flex:1}button.secondary{background:#e9eff7;color:#23436b}.actions{display:flex;gap:9px;margin-top:16px}.hero{background:#eaf3ff;border:1px solid #a8c9f7;border-radius:14px;padding:15px}.pokemon{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.chip{background:#fff;border:1px solid #bad0ed;border-radius:30px;padding:7px 10px;font-weight:750;font-size:.9rem}.line{padding:10px 0;border-bottom:1px solid #e7edf5;line-height:1.6}.line:last-child{border:0}.warn{background:#fff6e9;border-left:4px solid #d78a2a;padding:10px 12px;margin-top:12px;border-radius:6px}.muted{color:#63748a;font-size:.82rem}.hidden{display:none}details{margin-top:12px}summary{cursor:pointer;font-weight:700}.tag{font-size:.76rem;font-weight:800;color:#205da9}.ready{font-size:.8rem;color:#19694b;font-weight:700}.error{color:#b43632}.moves{font-size:.84rem;color:#405b76;line-height:1.65}.roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.roster div{border:1px solid #e1e9f4;border-radius:10px;padding:10px}.roster b{display:block}@media(max-width:420px){.panel{padding:14px}.roster{grid-template-columns:1fr}h1{font-size:1.25rem}}
+:root{font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;color:#192b42;background:#f3f6fb}*{box-sizing:border-box}body{margin:0}main{max-width:760px;margin:auto;padding:16px 14px 55px}h1{font-size:1.4rem;margin:8px 0}h2{font-size:1.08rem;margin:0 0 12px}p{line-height:1.65}.sub{color:#53657b;font-size:.88rem}.panel{background:white;border:1px solid #dbe3ef;border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 2px 9px #2137550a}.inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.slot label{display:block;font-size:.77rem;font-weight:700;margin-bottom:4px;color:#465a75}input{width:100%;font:inherit;padding:11px;border:1px solid #bdcbdb;border-radius:10px;min-width:0}input:focus{outline:2px solid #3774d5}button{border:0;border-radius:11px;padding:13px 18px;font:inherit;font-weight:750;cursor:pointer;min-height:45px}button.primary{background:#215db7;color:white;flex:1}button.secondary{background:#e9eff7;color:#23436b}.actions{display:flex;gap:9px;margin-top:16px}.hero{background:#eaf3ff;border:1px solid #a8c9f7;border-radius:14px;padding:15px}.pokemon{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.chip{background:#fff;border:1px solid #bad0ed;border-radius:30px;padding:7px 10px;font-weight:750;font-size:.9rem}.line{padding:10px 0;border-bottom:1px solid #e7edf5;line-height:1.6}.line:last-child{border:0}.warn{background:#fff6e9;border-left:4px solid #d78a2a;padding:10px 12px;margin-top:12px;border-radius:6px}.muted{color:#63748a;font-size:.82rem}.hidden{display:none}details{margin-top:12px}summary{cursor:pointer;font-weight:700}.tag{font-size:.76rem;font-weight:800;color:#205da9}.ready{font-size:.8rem;color:#19694b;font-weight:700}.error{color:#b43632}.moves{font-size:.84rem;color:#405b76;line-height:1.65}.slot-source{display:block;font-size:.7rem;line-height:1.4;margin-top:5px;overflow-wrap:anywhere}.slot-source.source-uncertain{color:#925c14}.roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.roster div{border:1px solid #e1e9f4;border-radius:10px;padding:10px}.roster b{display:block}@media(max-width:420px){.panel{padding:14px}.roster{grid-template-columns:1fr}h1{font-size:1.25rem}}
 </style></head><body><main>
 <h1>⚔️ Champions 選出ナビ <span class="tag">v7.2 選出精度・警戒強化版</span></h1>
-<p class="sub">S6最終2位「波動一閃カバルカミミ対面構築」完全再現。相手6匹を入力すると、記事の基本選出・勝ち筋を基準に作戦を提案します。</p>
+<p class="sub">S6最終2位構築記事を参考にした試作版。現行M-Cの入力候補は全件未照合、個別対面は未検証です。選出3匹・先発の推奨は保留し、相手6匹の未検証リスクを確認できます。</p>
 <section class="panel"><h2>① 相手の6匹</h2><div class="inputs" id="inputs"></div><datalist id="dex"><option value="ミミッキュ"></option>
 <option value="グソクムシャ"></option>
 <option value="ガブリアス"></option>
@@ -84,7 +84,7 @@
 <option value="イエッサン(メス)"></option>
 <option value="アローラペルシアン"></option>
 <option value="メガリザードンX"></option>
-<option value="メガリザードンY"></option></datalist><p class="muted" id="count">0 / 6匹入力</p><div class="actions"><button class="primary" id="analyze">選出を決める</button><button class="secondary" id="clear">クリア</button></div><p id="status" class="muted" role="status"></p></section>
+<option value="メガリザードンY"></option></datalist><p class="muted" id="count">0 / 6匹入力</p><div class="actions"><button class="primary" id="analyze">リスクを確認</button><button class="secondary" id="clear">クリア</button></div><p id="status" class="muted" role="status"></p></section>
 <section class="panel hidden" id="result" tabindex="-1" aria-live="polite"></section>
 <section class="panel"><h2>自分の6匹・登録済みの構築データ</h2><div class="roster" id="roster"></div><details><summary>記事に基づく基本戦術</summary><p class="sub">カバルドンでステルスロック・あくびの起点を作り、メガルカリオZのわるだくみから崩す。ミミッキュ・ギルガルドの先制技で削り、スカーフイダイトウのおはかまいりで締める。メガカイリューは対面性能としんそくを活用。</p></details></section>
 <section class="panel"><h2>登録済みの素早さ目安（Lv.50）</h2><p class="sub">メガルカリオZ：201 ／ メガカイリュー：152 ／ ミミッキュ：131 ／ ギルガルド：112 ／ イダイトウ♂：143（スカーフ適用後214）／ カバルドン：67。先制技の優先度やサイコフィールドは別に考慮してください。</p></section><section class="panel"><h2>分析の前提</h2><p class="sub">これは記事の実戦方針に基づく暫定選出支援です。相手6匹全員の脅威を確認します。実際の選出3匹・技・持ち物は断定できません。記事の選出を参考にした条件分岐であり、勝率を保証するランキングや全対面のダメージ計算ではありません。</p><p class="sub">出典：<a href="https://eff4dckeqm1cwsf.hatenablog.com/entry/2026/10/10/081058" target="_blank" rel="noopener noreferrer">S6最終2位 構築記事</a></p></section>
@@ -100,7 +100,7 @@ const roster=[
 const $=q=>document.querySelector(q);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 $('#roster').innerHTML=roster.map(x=>'<div><b>'+x[0]+'</b><span class="tag">'+x[3]+'</span><div class="moves">'+x[1]+'<br>'+x[2]+'</div></div>').join('');
-$('#inputs').innerHTML=Array.from({length:6},(_,i)=>'<div class="slot"><label for="foe'+i+'">相手 '+(i+1)+'</label><input id="foe'+i+'" list="dex" autocomplete="off" placeholder="ポケモン名"></div>').join('');
+$('#inputs').innerHTML=Array.from({length:6},(_,i)=>'<div class="slot"><label for="foe'+i+'">相手 '+(i+1)+'</label><input id="foe'+i+'" list="dex" autocomplete="off" placeholder="ポケモン名"><small id="source'+i+'" class="slot-source muted">未入力</small></div>').join('');
 const fields=Array.from({length:6},(_,i)=>$('#foe'+i));
 // M-C additions: 29 normal/form entries from the official 2026-09-09 Select notice,
 // plus six newly enabled Megas verified against the 2026-10-27 GameWith M-C list.
@@ -172,6 +172,18 @@ const speciesAliases=Object.freeze({
 const formAliases=Object.freeze({
  'ペルシアン(アローラのすがた)':'アローラペルシアン',
  'キュウコン(アローラのすがた)':'アローラキュウコン',
+ // Official-style regional spellings are aliases, not new matchup evidence.
+ 'ライチュウ(アローラのすがた)':'アローラライチュウ',
+ 'ウインディ(ヒスイのすがた)':'ヒスイウインディ',
+ 'ヤドラン(ガラルのすがた)':'ガラルヤドラン',
+ 'ヤドキング(ガラルのすがた)':'ガラルヤドキング',
+ 'バクフーン(ヒスイのすがた)':'ヒスイバクフーン',
+ 'ダイケンキ(ヒスイのすがた)':'ヒスイダイケンキ',
+ 'ゾロアーク(ヒスイのすがた)':'ヒスイゾロアーク',
+ 'ヌメルゴン(ヒスイのすがた)':'ヒスイヌメルゴン',
+ 'マッギョ(ガラルのすがた)':'ガラルマッギョ',
+ 'クレベース(ヒスイのすがた)':'ヒスイクレベース',
+ 'ジュナイパー(ヒスイのすがた)':'ヒスイジュナイパー',
  'ストリンダー(ハイなすがた)':'ストリンダー(ハイ)',
  'ストリンダー(ローなすがた)':'ストリンダー(ロー)',
  'イエッサン(オスのすがた)':'イエッサン(オス)',
@@ -210,7 +222,7 @@ const verifiedMatchupEvidence=Object.freeze({});
 // Keep opponent inputs on reload; clear explicitly with the reset button.
 const INPUT_KEY='champions-navi-opponents-v1';
 try{const saved=JSON.parse(sessionStorage.getItem(INPUT_KEY)||'[]');if(Array.isArray(saved))fields.forEach((f,i)=>{if(typeof saved[i]==='string')f.value=saved[i]});}catch(e){}
-function update(){const n=fields.filter(f=>f.value.trim()).length;$('#count').textContent=n+' / 6匹入力';$('#status').textContent=n===6?'分析できます':'';$('#status').className='muted';$('#result').classList.add('hidden');}
+function update(){const n=fields.filter(f=>f.value.trim()).length;$('#count').textContent=n+' / 6匹入力';$('#status').textContent=n===6?'6匹入力済み。対面未検証のため選出推奨は保留します。':'';$('#status').className='muted';$('#result').classList.add('hidden');updateInputProvenance();}
 fields.forEach((f,i)=>{f.addEventListener('input',()=>{try{sessionStorage.setItem(INPUT_KEY,JSON.stringify(fields.map(x=>x.value)))}catch(e){}});f.addEventListener('input',update);f.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(i<5)fields[i+1].focus();else $('#analyze').click();}})});
 function recommend(names){
  const has=n=>names.some(x=>normalize(x)===normalize(n));
@@ -385,6 +397,16 @@ function candidateProvenance(name){
  if(!supportedNames.has(key))return {label:'候補外（現行M-C使用可否・表記未照合）',source:''};
  const tier=candidateSourceTiers.find(t=>t.keys.has(key));
  return tier?{label:tier.label,source:tier.source}:{label:'固定候補のみ（現行M-C全件未照合）',source:''};
+}
+// Form-aware, immediate provenance feedback during the 90-second preview.
+function updateInputProvenance(){
+ fields.forEach((field,i)=>{
+  const el=$('#source'+i),name=field.value.trim();
+  if(!name){el.textContent='未入力';el.className='slot-source muted';return;}
+  const provenance=candidateProvenance(name);
+  el.textContent=provenance.label;
+  el.className='slot-source muted'+(provenance.label.startsWith('公式M-C')?'':' source-uncertain');
+ });
 }
 const reviewedFormCount=Object.values(verifiedMatchupEvidence).filter(r=>
  r && r.reviewed===true && typeof r.source==='string' && /^https:\/\//.test(r.source) &&
