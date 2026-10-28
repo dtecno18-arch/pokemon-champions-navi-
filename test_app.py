@@ -602,7 +602,10 @@ def main():
                   'リザードン',team,'カバルドン'),
                 charizardBranches:requiredMatchupForms('リザードン'),
                 alolanRaichuBranches:requiredMatchupForms('アローラライチュウ'),
-                maleMeowsticBranches:requiredMatchupForms('ニャオニクス(オス)')
+                maleMeowsticBranches:requiredMatchupForms('ニャオニクス(オス)'),
+                eternalFloetteBranches:requiredMatchupForms('フラエッテ(えいえんのはな)'),
+                ordinaryFloetteBranches:requiredMatchupForms('フラエッテ'),
+                megaFloetteBranches:requiredMatchupForms('メガフラエッテ')
               };
             }""")
             assert gate == {'complete': True, 'oldNameOnly': False, 'wrongForm': False,
@@ -612,7 +615,10 @@ def main():
                             'missingLeadReason': False, 'missingMegaBranch': False,
                             'charizardBranches': ['リザードン','メガリザードンX','メガリザードンY'],
                             'alolanRaichuBranches': ['アローラライチュウ'],
-                            'maleMeowsticBranches': ['ニャオニクス(オス)','メガニャオニクス(オス)']}, gate
+                            'maleMeowsticBranches': ['ニャオニクス(オス)','メガニャオニクス(オス)'],
+                            'eternalFloetteBranches': ['フラエッテ(えいえんのはな)','メガフラエッテ'],
+                            'ordinaryFloetteBranches': ['フラエッテ'],
+                            'megaFloetteBranches': ['メガフラエッテ']}, gate
             # Regional variants must not inherit another form's Mega branch.
             # This is a threat-warning correctness check, NOT matchup clearance.
             regional_case = ['アローラライチュウ','ミミッキュ','ドドゲザン',
@@ -784,6 +790,32 @@ def main():
                 page.locator('#analyze').click()
                 assert 'メガシンカ確定ではありません' in page.locator('#result .extra-sourced-intel').inner_text()
                 assert page.locator('#result .hero').count() == 0
+
+            # Eternal Flower Floette is the only Floette form with this Mega
+            # branch. Preserve the distinction in warnings and evidence gating.
+            for i, name in enumerate(('フラエッテ(えいえんのはな)', 'アシレーヌ',
+                                      'ドドゲザン', 'サーフゴー', 'ミミッキュ',
+                                      'カバルドン')):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .mega-base-unverified').count() == 1
+            assert 'フラエッテ(えいえんのはな)' in page.locator('#result .mega-base-unverified').inner_text()
+            card = page.locator('#result .extra-sourced-intel')
+            assert card.count() == 1
+            assert 'フェアリーオーラ' in card.inner_text()
+            assert '102' in card.inner_text()
+            assert card.locator('a[href*="553325"]').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            page.locator('#foe0').fill('メガフラエッテ')
+            page.locator('#analyze').click()
+            assert page.locator('#result .mega-form-unverified').count() == 1
+            assert page.locator('#result .extra-sourced-intel').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            page.locator('#foe0').fill('フラエッテ')
+            page.locator('#analyze').click()
+            assert page.locator('#result .mega-base-unverified').count() == 0
+            assert page.locator('#result .extra-sourced-intel').count() == 0
+            assert page.locator('#result .hero').count() == 0
 
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
