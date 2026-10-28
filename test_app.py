@@ -59,6 +59,26 @@ def main():
             # NOT proof of a safe matchup or a completed 352-form audit.
             assert page.evaluate("() => [officialMegaMa.length, officialMegaMb.length, officialMegaMc.length]") == [59, 16, 6]
             assert page.evaluate("() => officialMegaForms.length") == 81
+            # Every eligible Mega needs its ordinary pre-Mega species available
+            # as a distinct input candidate, without implying matchup evidence.
+            assert page.evaluate("() => officialMegaBaseCandidates.length") == 76
+            assert page.evaluate("""() => officialMegaBaseCandidates.every(name =>
+                Array.from(document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
+            assert page.evaluate("() => document.querySelectorAll('#dex option').length") >= 229
+            assert '対応する通常種76件' in page.locator('#count + p').inner_text()
+            for species in ('スピアー', 'ピジョット', 'ユキメノコ',
+                            'メガニウム', 'エンブオー', 'フラエッテ'):
+                assert page.locator('#dex option').evaluate_all(
+                    "(els, name) => els.some(el => el.value === name)", species
+                ), f'Missing pre-Mega candidate: {species}'
+            for i, name in enumerate(('スピアー', 'ピジョット', 'ユキメノコ',
+                                       'メガニウム', 'エンブオー', 'フラエッテ')):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .candidate-unverified').count() == 0
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert page.evaluate("""() => new Set(officialMegaForms.map(formKey)).size === 81 &&
                 officialMegaForms.every(name => Array.from(
                     document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
