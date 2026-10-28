@@ -234,7 +234,7 @@ function recommend(names){
 
 // All six entered species are accepted; an autocomplete list is a suggestion, not a whitelist.
 const supportedNames=new Set(Array.from(document.querySelectorAll('#dex option'),o=>normalize(o.value)));
-const knownCoverage=new Set(['メガボーマンダ','ミミッキュ','ドドゲザン','ペリッパー','ヤミラミ','ジュペッタ','アシレーヌ','カバルドン','ボーマンダ','サーフゴー','アーマーガア','ゴリランダー','イエッサン','ドヒドイデ','ラッキー','ハピナス','ヘイラッシャ','ブラッキー','キョジオーン','クレセリア'].map(normalize));
+const knownCoverage=new Set(['ミミッキュ','ドドゲザン','ペリッパー','ヤミラミ','ジュペッタ','アシレーヌ','カバルドン','ボーマンダ','サーフゴー','アーマーガア','ゴリランダー','イエッサン','ドヒドイデ','ラッキー','ハピナス','ヘイラッシャ','ブラッキー','キョジオーン','クレセリア'].map(normalize));
 function likelyRole(n){
  const x=normalize(n);
  const roles={
