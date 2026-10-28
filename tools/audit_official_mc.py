@@ -20,14 +20,20 @@ MIN_EXPECTED = 200
 
 
 def extract_official(text):
-    """Return (national Dex number, exact official Japanese form label)."""
-    entries = []
-    for line in text.splitlines():
-        m = re.match(r"^\s*No\.?\s*(\d{3,4})\s+(.+?)\s*$", line, re.I)
-        if m:
-            entries.append((int(m.group(1)), m.group(2).strip()))
-    return entries
+    """Extract entries even when hidden DOM text has no newline separators.
 
+    The official page currently keeps the full roster in hidden DOM nodes:
+    body.inner_text() returns only its heading, while body.text_content()
+    concatenates the individual No.XXXX entries. Split on each No. marker.
+    """
+    markers = list(re.finditer(r"No\\.?\\s*(\\d{3,4})\\s*", text, re.I))
+    entries = []
+    for i, marker in enumerate(markers):
+        end = markers[i + 1].start() if i + 1 < len(markers) else len(text)
+        name = re.sub(r"\\s+", " ", text[marker.end():end]).strip()
+        if name and len(name) < 100:
+            entries.append((int(marker.group(1)), name))
+    return entries
 
 def audit():
     from playwright.sync_api import sync_playwright
