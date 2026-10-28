@@ -23,6 +23,33 @@ def main():
             page.on('pageerror', lambda e: errors.append(str(e)))
             page.goto(url, wait_until='domcontentloaded')
             assert page.locator('#analyze').count()==1
+
+            # The official M-C delta must be complete, including four Squawkabilly
+            # feather forms. Do not confuse the 35 additions with all 352 forms.
+            assert page.evaluate("() => officialMcAdditions.length") == 35
+            assert page.evaluate("""() => officialMcAdditions.every(
+                name => Array.from(document.querySelectorAll('#dex option'),
+                    option => option.value).includes(name))""")
+            for form in ('イキリンコ(グリーンフェザー)', 'イキリンコ(ブルーフェザー)',
+                         'イキリンコ(イエローフェザー)', 'イキリンコ(ホワイトフェザー)'):
+                assert page.locator('#dex option').evaluate_all(
+                    "(els, form) => els.some(el => el.value === form)", form
+                ), f'Missing M-C form: {form}'
+            assert page.evaluate("""() => new Set(officialMcAdditions.filter(
+                name => name.startsWith('イキリンコ')).map(formKey)).size""") == 4
+            assert 'M-C追加35形態' in page.locator('#count + p').inner_text()
+            assert '全352形態の網羅は未検証' in page.locator('#count + p').inner_text()
+            assert 'raw.githubusercontent.com/fanzeyi/pokemon.json' not in page.content(), (
+                'Unverified national Pokédex must not populate eligible suggestions'
+            )
+            # Newly added autocomplete entries are NOT automatically verified
+            # matchup rules. Unknown threats must remain visibly unknown.
+            unverified_mc = ['プクリン', 'マルノーム', 'オトスパス',
+                             'ニャイキング', 'ネギガナイト', 'バチンウニ']
+            for i, name in enumerate(unverified_mc):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert '0/6匹' in page.locator('#result .risk-banner').inner_text()
             for names in CASES:
                 for i,name in enumerate(names):
                     page.locator(f'#foe{i}').fill(name)
