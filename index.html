@@ -119,10 +119,22 @@ const officialMcAdditions=["プクリン","ペルシアン","アローラペル�
 }
 
 // Species-level grouping is only for duplicate detection and broad threat hints.
-const normalize=s=>s.normalize('NFKC').replace(/[\s　・･]/g,'').replace(/（.*?）|\(.*?\)/g,'').replace(/♂|♀/g,'').replace(/^メガ/,'').replace(/[XYZ]$/,'');
+const normalize=s=>{const n=String(s).normalize('NFKC').replace(/[\s　・･]/g,'').replace(/（.*?）|\(.*?\)/g,'').replace(/♂|♀/g,'');return n.startsWith('メガ')?n.replace(/^メガ/,'').replace(/[XYZ]$/,''):n;};
 // Preserve Mega X/Y/Z, sex and regional/form labels for matchup coverage.
 // Never use species-level normalization to claim a specific form is covered.
 const formKey=s=>String(s).normalize('NFKC').replace(/[\s　・･]/g,'');
+// Evidence is stored separately from name-only matchup heuristics. No win/loss claim.
+// GameWith updated 2026-10-28 12:55 JST; ranked usage sample: 2026-10-26 M-7.
+const sourcedThreatIntel=Object.freeze({
+ 'メガグソクムシャ':Object.freeze({
+  source:'https://gamewith.jp/pokemon-champions/575652',
+  sourceUpdated:'2026-10-28',usageAsOf:'2026-10-26',
+  types:'むし・はがね',ability:'かたいツメ',
+  speedBase:40,attackBase:150,defenseBase:175,
+  priority:'ふいうち・であいがしら・アクアジェット',
+  note:'メガ後は炎4倍。先制技の採用は型によって異なり、素早さ種族値だけで先制できるとは限りません。'
+ })
+});
 // Keep opponent inputs on reload; clear explicitly with the reset button.
 const INPUT_KEY='champions-navi-opponents-v1';
 try{const saved=JSON.parse(sessionStorage.getItem(INPUT_KEY)||'[]');if(Array.isArray(saved))fields.forEach((f,i)=>{if(typeof saved[i]==='string')f.value=saved[i]});}catch(e){}
@@ -169,11 +181,13 @@ function recommend(names){
   plan='初手ミミッキュでアシレーヌへの圧力をかけ、カバルドンのあくび・ステロからルカリオで突破を狙う。';
   cautions.push('相手のルカリオZとの素早さ勝負は安定しない。ミミッキュのばけのかわを使うタイミングを見極める。');
  }
+ if(has('グソクムシャ'))cautions.push('【重要】グソクムシャはメガシンカ候補。メガ後は虫・鋼で炎4倍、かたいツメ・素早さ種族値40。ふいうち・であいがしら・アクアジェットの採用可能性を確認し、先制技の読み違いを避ける。通常形態は虫・水で相性が異なります。');
  if(has('サーフゴー'))cautions.push('サーフゴーにはルカリオのあくのはどう、ギルガルドのゴースト技などを検討。');
  if(has('イエッサン'))cautions.push('イエッサンは厳しい相手。サイコフィールド下では接地した相手への先制技が失敗するため、先制技だけに頼らない。');
  if(has('アーマーガア')&&bulky.length<2)cautions.push('アーマーガアなど受け駒には、メガルカリオZのわるだくみを通す展開を検討。');
  // Priority and lead-risk checks: these are warnings, not unverified damage calculations.
  const threats=[];
+ if(has('グソクムシャ'))threats.push({name:'グソクムシャ／メガグソクムシャ候補',why:'メガ後は虫・鋼／攻撃150・防御175・素早さ40。ふいうち等の先制技とつるぎのまいが負け筋。通常形態は虫・水。',answer:'炎4倍はメガ後のみ。相手のメガ選択・技を確認し、先制技を含めて行動を決める。確定有利とは扱わない'});
  if(has('イエッサン'))threats.push({name:'サイコフィールド',why:'しんそく・かげうち・しんくうは等の先制技が、接地した相手には通らない',answer:'先制技に依存せず通常技で削る。フィールドの残りターンを確認'});
  if(has('アシレーヌ'))threats.push({name:'アシレーヌ',why:'カバルドン先発は水技の圧力が大きい',answer:'初手ミミッキュを検討。ウッドハンマーの反動も計算'});
  if(has('カバルドン'))threats.push({name:'相手カバルドン',why:'あくび・ステルスロックで展開を阻まれやすい',answer:'スカーフイダイトウの水技・クイックターンを選択肢に'});
@@ -370,11 +384,17 @@ function analyze(){
  const r=recommend(vals);
  const uncovered=vals.filter(n=>!knownCoverage.has(formKey(n)));
  const knownCount=6-uncovered.length;
+ const sourcedCount=vals.filter(n=>Object.prototype.hasOwnProperty.call(sourcedThreatIntel,formKey(n))).length;
+ const evidenceSummary='<p class="muted evidence-summary">入力候補 '+supportedNames.size+'/352形態（暫定・全件照合未完了）／出典付き個別脅威情報 '+sourcedCount+'/6匹。名前ベースの対面ルール登録件数とは別指標です。</p>';
+ const megaGoliPresent=vals.some(n=>normalize(n)==='グソクムシャ');
+ const megaGoliExact=vals.some(n=>formKey(n)==='メガグソクムシャ');
+ const intel=sourcedThreatIntel['メガグソクムシャ'];
+ const sourcedWarning=megaGoliPresent?'<div class="warn sourced-intel"><b>重要：グソクムシャのメガ分岐・先制技</b><div>'+ (megaGoliExact?'メガ形態で入力されています。':'通常形態で入力されています。メガシンカするかは未確定です。') +' メガ後は'+esc(intel.types)+'／特性'+esc(intel.ability)+'／攻撃'+intel.attackBase+'・防御'+intel.defenseBase+'・素早さ'+intel.speedBase+'（種族値）。先制技候補：'+esc(intel.priority)+'。'+esc(intel.note)+'</div><div class="muted">使用率データ集計：'+intel.usageAsOf+'／記事確認：'+intel.sourceUpdated+'。<a href="'+intel.source+'" target="_blank" rel="noopener noreferrer">出典・型の確認（GameWith）</a>。個別対面の勝敗は未検証。</div></div>':'';
  const confidenceBanner=uncovered.length
   ?'<div class="warn risk-banner" role="status"><b>⚠️ 対策データ不足：'+knownCount+'/6匹のみ登録</b><div>未登録：'+esc(uncovered.join('・'))+'</div><div>この選出は暫定案です。未登録の相手への有利不利は評価できないため、先発・交代先を必ず確認してください。</div></div>'
   :'<div class="warn risk-banner" role="status"><b>注意：対策ルール登録6/6匹</b><div>名前ベースの登録件数であり、型・技・持ち物・特性・素早さ・メガ候補の対策精度は未検証です。安全性を保証しません。</div></div>';
  $('#result').classList.remove('hidden');
- $('#result').innerHTML='<h2>② おすすめ選出</h2><div class="hero"><div class="tag">登録済みの戦術ルールに基づく推奨（暫定）</div><div class="pokemon">'+r.team.map(x=>'<span class="chip">'+esc(x)+'</span>').join('')+'</div><p><b>先発：'+esc(r.lead)+'</b></p><p>'+esc(r.reason)+'</p></div>'+confidenceBanner+'<div class="line"><b>立ち回り</b><p>'+esc(r.plan)+'</p></div><div class="line"><b>注意点</b>'+r.cautions.map(x=>'<div class="warn">'+esc(x)+'</div>').join('')+'</div><div class="line"><b>相手6匹の脅威チェック</b>'+r.threats.map(t=>'<div class="line"><b>'+esc(t.name)+'</b><div>'+esc(t.why)+'</div><div class="tag">対策：'+esc(t.answer)+'</div></div>').join('')+'</div><div class="line"><b>3匹比較（20通り）</b><p class="muted">'+esc(r.comparisonSummary.mode)+'。既知の対策がある相手 '+r.comparisonSummary.total+'匹中、基本選出 '+r.comparisonSummary.baseline+'匹 → 推奨 '+r.comparisonSummary.chosen+'匹。個別データがない相手は比較に反映できません。</p></div><div class="line"><b>選出3匹の対応範囲（暫定）</b><p class="muted">既知の対策候補だけを照合。要確認は相性不利の断定ではありません。</p>'+r.coverage.map(c=>'<div class="line"><b>'+esc(c.name)+' ｜ '+esc(c.status)+'</b><div class="muted">'+esc(c.answer)+'</div></div>').join('')+'</div><div class="line"><b>初手の行動分岐</b>'+r.leadBranches.map(b=>'<div class="line"><b>'+esc(b.when)+'</b><div>'+esc(b.action)+'</div></div>').join('')+'</div><details><summary>別の選出を考える条件</summary><p>相手の初手に不利で、控えの後出しも難しい場合は、メガカイリューの対面性能、ギルガルドのタスキ＋先制技、イダイトウのスカーフを軸に組み直してください。相手の選出3匹は決め打ちしません。</p></details>';
+ $('#result').innerHTML='<h2>② おすすめ選出</h2><div class="hero"><div class="tag">登録済みの戦術ルールに基づく推奨（暫定）</div><div class="pokemon">'+r.team.map(x=>'<span class="chip">'+esc(x)+'</span>').join('')+'</div><p><b>先発：'+esc(r.lead)+'</b></p><p>'+esc(r.reason)+'</p></div>'+confidenceBanner+evidenceSummary+sourcedWarning+'<div class="line"><b>立ち回り</b><p>'+esc(r.plan)+'</p></div><div class="line"><b>注意点</b>'+r.cautions.map(x=>'<div class="warn">'+esc(x)+'</div>').join('')+'</div><div class="line"><b>相手6匹の脅威チェック</b>'+r.threats.map(t=>'<div class="line"><b>'+esc(t.name)+'</b><div>'+esc(t.why)+'</div><div class="tag">対策：'+esc(t.answer)+'</div></div>').join('')+'</div><div class="line"><b>3匹比較（20通り）</b><p class="muted">'+esc(r.comparisonSummary.mode)+'。既知の対策がある相手 '+r.comparisonSummary.total+'匹中、基本選出 '+r.comparisonSummary.baseline+'匹 → 推奨 '+r.comparisonSummary.chosen+'匹。個別データがない相手は比較に反映できません。</p></div><div class="line"><b>選出3匹の対応範囲（暫定）</b><p class="muted">既知の対策候補だけを照合。要確認は相性不利の断定ではありません。</p>'+r.coverage.map(c=>'<div class="line"><b>'+esc(c.name)+' ｜ '+esc(c.status)+'</b><div class="muted">'+esc(c.answer)+'</div></div>').join('')+'</div><div class="line"><b>初手の行動分岐</b>'+r.leadBranches.map(b=>'<div class="line"><b>'+esc(b.when)+'</b><div>'+esc(b.action)+'</div></div>').join('')+'</div><details><summary>別の選出を考える条件</summary><p>相手の初手に不利で、控えの後出しも難しい場合は、メガカイリューの対面性能、ギルガルドのタスキ＋先制技、イダイトウのスカーフを軸に組み直してください。相手の選出3匹は決め打ちしません。</p></details>';
 
  // The original coverage model is sparse. Show the gaps rather than claiming exhaustive optimization.
  const detail=buildDecisionExplanation(vals,r);
