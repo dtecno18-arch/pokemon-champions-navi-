@@ -276,15 +276,15 @@ def main():
             assert page.evaluate("""() => new Set(megaInputForms.map(formKey)).size === 82 &&
                 megaInputForms.every(name => Array.from(
                     document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
-            assert page.evaluate("() => megaBaseNames.has(normalize('ユキメノコ'))")
-            assert page.evaluate("() => megaBaseNames.has(normalize('スピアー'))")
+            assert page.evaluate("() => requiredMatchupForms('ユキメノコ').length > 1")
+            assert page.evaluate("() => requiredMatchupForms('スピアー').length > 1")
             assert '公式M-A/B/Cメガ81名称・性差込み82形態' in page.locator('#count + p').inner_text()
             # Meganium is a NORMAL species whose name begins with "メガ".
             # Only the cataloged "メガメガニウム" is a Mega form.
             assert page.evaluate("() => normalize('メガニウム') === 'メガニウム'")
             assert page.evaluate("() => normalize('メガメガニウム') === 'メガニウム'")
             assert page.evaluate("() => !isMegaForm('メガニウム') && isMegaForm('メガメガニウム')")
-            assert page.evaluate("() => megaBaseNames.has(normalize('メガニウム'))")
+            assert page.evaluate("() => requiredMatchupForms('メガニウム').length > 1")
             meganium_foes = ['メガニウム','カバルドン','サーフゴー',
                              'ドドゲザン','アシレーヌ','ミミッキュ']
             for i, name in enumerate(meganium_foes):
