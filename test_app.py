@@ -121,8 +121,13 @@ def main():
                     page.locator(f'#foe{i}').fill(name)
                 page.locator('#analyze').click()
                 assert page.locator('#result').is_visible(), f'No result: {names}'
-                assert len(page.locator('#result .hero .chip').all())==3, 'Must select 3'
-                assert '先発' in page.locator('#result').inner_text()
+                selected = page.evaluate('(names) => recommend(names).comparisonSummary.chosen', names)
+                if selected < 2:
+                    assert page.locator('#result .abstention-banner').count() == 1
+                    assert page.locator('#result .hero').count() == 0
+                else:
+                    assert len(page.locator('#result .hero .chip').all())==3, 'Must select 3'
+                    assert '先発' in page.locator('#result').inner_text()
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'), 'Horizontal overflow'
 
             # A recommendation must use only the six configured team members.
@@ -132,8 +137,13 @@ def main():
                     page.locator(f'#foe{i}').fill(name)
                 page.locator('#analyze').click()
                 chosen = page.locator('#result .hero .chip').all_inner_texts()
-                assert len(chosen) == 3 and len(set(chosen)) == 3, f'Duplicate or missing picks: {chosen}'
-                assert all(name.strip() in roster for name in chosen), f'Outside configured roster: {chosen}'
+                selected = page.evaluate('(names) => recommend(names).comparisonSummary.chosen', names)
+                if selected < 2:
+                    assert chosen == [], 'Must not display an unsafe trio'
+                    assert page.locator('#result .abstention-banner').count() == 1
+                else:
+                    assert len(chosen) == 3 and len(set(chosen)) == 3, f'Duplicate or missing picks: {chosen}'
+                    assert all(name.strip() in roster for name in chosen), f'Outside configured roster: {chosen}'
                 result_text = page.locator('#result').inner_text()
                 assert all(name in result_text for name in names), 'Opponent coverage must mention all six inputs'
             # Lead safety regression: do not recommend Hippowdon into obvious
