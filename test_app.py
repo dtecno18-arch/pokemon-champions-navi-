@@ -186,6 +186,37 @@ def main():
             # The official M-C delta must be complete, including four Squawkabilly
             # feather forms. Do not confuse the 35 additions with all 352 forms.
             assert page.evaluate("() => officialMcAdditions.length") == 35
+            # Independent snapshot from the official M-C standard select (29)
+            # and M-C Mega regulation update (6), both dated 2026-09-09.
+            # Exact set equality catches missing, duplicated and spurious names;
+            # it does NOT certify the complete M-C eligible roster.
+            official_mc_delta = [
+                'プクリン','ペルシアン','アローラペルシアン','カモネギ',
+                'バリヤード','マルノーム','ボーマンダ','ゴーゴート',
+                'グソクムシャ','ゴリランダー','エースバーン','インテレオン',
+                'フォクスライ','ストリンダー(ハイ)','ストリンダー(ロー)',
+                'オトスパス','ニャイキング','ネギガナイト','バチンウニ',
+                'イエッサン(オス)','イエッサン(メス)','パーモット',
+                'オリーヴァ','イキリンコ(グリーンフェザー)',
+                'イキリンコ(ブルーフェザー)','イキリンコ(イエローフェザー)',
+                'イキリンコ(ホワイトフェザー)','マフィティフ','セグレイブ',
+                'メガアブソルZ','メガボーマンダ','メガガブリアスZ',
+                'メガルカリオZ','メガグソクムシャ','メガセグレイブ',
+            ]
+            actual_mc_delta = page.evaluate("() => officialMcAdditions")
+            assert len(actual_mc_delta) == len(set(actual_mc_delta)) == 35
+            assert set(actual_mc_delta) == set(official_mc_delta), (
+                'Official M-C delta differs: missing=' +
+                str(sorted(set(official_mc_delta) - set(actual_mc_delta))) +
+                ', unexpected=' +
+                str(sorted(set(actual_mc_delta) - set(official_mc_delta)))
+            )
+            assert '公式M-C追加分 35/35形態を候補登録' in page.locator('#catalog-audit').inner_text()
+            assert '公式M-C全件照合未完了' in page.locator('#catalog-audit').inner_text()
+            assert page.locator('#catalog-audit a').get_attribute('href') == (
+                'https://web-view.app.pokemonchampions.jp/battle/pages/'
+                'events/rs178713870219xeaaio/ja/pokemon.html'
+            )
             assert page.evaluate("""() => officialMcAdditions.every(
                 name => Array.from(document.querySelectorAll('#dex option'),
                     option => option.value).includes(name))""")
