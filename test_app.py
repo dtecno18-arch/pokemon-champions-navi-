@@ -36,7 +36,11 @@ def main():
                     option => option.value).includes(name))""")
             assert page.evaluate("() => historicalMaTournamentCandidates.length") == 41
             assert page.evaluate("() => historicalMaTournamentMoreCandidates.length") == 63
-            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 351
+            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 355
+            assert page.evaluate("""() => officialMcRosterKnownForms.every(name =>
+                Array.from(document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
+            assert page.evaluate("() => formKey('ロトム (フロストロトム)') === 'フロストロトム'")
+            assert page.evaluate("() => formKey('ケンタロス (パルデアのすがた・コンバットしゅ)') === 'パルデアケンタロス(かくとう)'")
             assert '過去のM-A大会参加可能リスト由来104形態' in page.locator('#count + p').inner_text()
             assert '現行M-C未照合' in page.locator('#count + p').inner_text()
             # Exhaustive catalog smoke: every listed form must be accepted as
@@ -60,7 +64,7 @@ def main():
                 }
                 return {checked: options.length};
             }""")
-            assert audit == {'checked': 351}, audit
+            assert audit == {'checked': 355}, audit
             # Historical M-A regional forms share a species slot but retain
             # distinct form identities for any future matchup evidence.
             for regional, ordinary in (
@@ -84,7 +88,7 @@ def main():
             assert page.evaluate("() => formKey('イエッサン♀') === formKey('イエッサン(メス)')")
             assert page.evaluate("() => formKey('パルデアケンタロス(炎)') === formKey('パルデアケンタロス(ほのお)')")
             assert '公式M-A特別セレクト31形態' in page.locator('#count + p').inner_text()
-            assert '全352形態の網羅は未検証' in page.locator('#count + p').inner_text()
+            assert '公式M-C全参加可能形態の網羅は未検証' in page.locator('#count + p').inner_text()
             ma_new = ['アローラキュウコン','コータス','エルフーン',
                       'ニャオニクス(メス)','イダイトウ(オス)','イッカネズミ(3びき)']
             for i, name in enumerate(ma_new):
@@ -99,9 +103,9 @@ def main():
             # M-A candidates; neither a catalog entry nor a source link is
             # evidence of a verified matchup.
             audit_text = page.locator('#catalog-audit').inner_text()
-            assert '351/352形態' in audit_text
+            assert '355形態' in audit_text
             assert '公式M-C全件照合未完了' in audit_text
-            assert '検証済み対面 0/351形態' in audit_text
+            assert '検証済み対面 0/355形態' in audit_text
             for name, label in (
                 ('グソクムシャ', '公式M-C追加'),
                 ('メガグソクムシャ', '公式M-Cメガ追加'),
