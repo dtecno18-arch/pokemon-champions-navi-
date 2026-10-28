@@ -224,13 +224,11 @@ function recommend(names){
  const choices=[];
  for(let a=0;a<pool.length;a++)for(let b=a+1;b<pool.length;b++)for(let c=b+1;c<pool.length;c++){
   const trio=[pool[a],pool[b],pool[c]];
-  const hits=coverageRules.map(rule=>{
-   const present=names.some(n=>ruleMatches(n,rule));
-   return present?rule.answers.filter(x=>trio.includes(x)).length:0;
-  });
-  const matched=coverageRules.map((rule,i)=>names.some(n=>ruleMatches(n,rule))&&rule.answers.length>0?i:-1).filter(i=>i>=0);
-  const covered=matched.filter(i=>hits[i]>0).length;
-  const missing=matched.length-covered;
+  // Score each opposing slot, not each shared rule group.
+  // ヤミラミ and ジュペッタ share a rule but count as two threats.
+  const matchedOpponents=names.map(name=>coverageRules.find(rule=>ruleMatches(name,rule))).filter(rule=>rule&&rule.answers.length>0);
+  const covered=matchedOpponents.filter(rule=>rule.answers.some(x=>trio.includes(x))).length;
+  const missing=matchedOpponents.length-covered;
   // Preserve a coherent win condition: one Mega attacker, an opener, and a cleaner/check.
   const megaCount=trio.filter(x=>x==='メガルカリオZ'||x==='メガカイリュー').length;
   const hasSetup=trio.includes('カバルドン');
@@ -252,7 +250,7 @@ function recommend(names){
   reason+=' '+comparison+'。';
   plan='初手'+lead+'で対面を確認し、'+team.filter(x=>x!==lead).join('・')+'を控えに置く。相手の実際の選出と技を見て、攻撃・交代・積みの優先度を判断する。';
  }
- const comparisonSummary={mode:comparison,baseline:baseline.covered,chosen:choices.find(x=>x.trio.every(t=>team.includes(t))).covered,total:coverageRules.filter(rule=>rule.answers.length&&names.some(n=>ruleMatches(n,rule))).length,alternatives:choices.slice(0,3)};
+ const comparisonSummary={mode:comparison,baseline:baseline.covered,chosen:choices.find(x=>x.trio.every(t=>team.includes(t))).covered,total:names.filter(name=>coverageRules.some(rule=>rule.answers.length&&ruleMatches(name,rule))).length,alternatives:choices.slice(0,3)};
  const coverage=names.map(name=>{
   const rule=coverageRules.find(rule=>ruleMatches(name,rule));
   if(!rule)return {name,status:'要確認',answer:'個別対面の検証データが未登録'};
