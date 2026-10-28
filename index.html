@@ -392,7 +392,7 @@ const reviewedFormCount=Object.values(verifiedMatchupEvidence).filter(r=>
 const auditStatus=document.createElement('p');
 auditStatus.id='catalog-audit';auditStatus.className='muted';
 auditStatus.textContent='入力候補 '+supportedNames.size+'/352形態（参考値・公式M-C全件照合未完了）／出典・日付・回答付き検証済み対面 '+reviewedFormCount+'/'+supportedNames.size+'形態。入力可能率と対策検証率は別指標です。';
-$('#count').after(auditStatus);
+$('#count').nextElementSibling.after(auditStatus);
 const knownCoverage=new Set(['ミミッキュ','ドドゲザン','ペリッパー','ヤミラミ','ジュペッタ','アシレーヌ','カバルドン','ボーマンダ','メガボーマンダ','サーフゴー','アーマーガア','ゴリランダー','イエッサン','ドヒドイデ','ラッキー','ハピナス','ヘイラッシャ','ブラッキー','キョジオーン','クレセリア'].map(formKey));
 function likelyRole(n){
  const x=normalize(n);
