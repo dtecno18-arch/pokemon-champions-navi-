@@ -175,6 +175,41 @@ def main():
             assert '相手のルカリオZとアシレーヌ' not in base_reason, base_reason
             assert '相手のルカリオZとアシレーヌ' in z_reason, z_reason
 
+            # Regression: Porygon-Z is a species name, not a Mega suffix.
+            assert page.evaluate("() => normalize('ポリゴンZ') === 'ポリゴンZ'")
+            assert page.evaluate("() => normalize('ポリゴンZ') !== normalize('ポリゴン')")
+            assert page.evaluate("() => normalize('メガリザードンY') === 'リザードン'")
+
+            # GameWith-sourced Mega Golisopod threat intelligence must be visible
+            # without falsely promoting a provisional matchup into a safe verdict.
+            goli_mega = ['メガグソクムシャ','サーフゴー','ガブリアス',
+                         'ドドゲザン','ペリッパー','アシレーヌ']
+            for i, name in enumerate(goli_mega):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            intel_card = page.locator('#result .sourced-intel')
+            assert intel_card.count() == 1
+            intel_text = intel_card.inner_text()
+            for term in ('むし・はがね','かたいツメ','素早さ40','ふいうち',
+                         'であいがしら','アクアジェット','2026-10-26','未検証'):
+                assert term in intel_text, (term, intel_text)
+            assert page.locator('#result .evidence-summary').count() == 1
+            assert '1/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert 'メガグソクムシャ' in page.locator('#result .risk-banner').inner_text()
+            assert intel_card.locator('a[href="https://gamewith.jp/pokemon-champions/575652"]').count() == 1
+
+            # A normal-form Golisopod is only a *possible* Mega.
+            page.locator('#foe0').fill('グソクムシャ')
+            page.locator('#analyze').click()
+            assert 'メガシンカするかは未確定' in page.locator('#result .sourced-intel').inner_text()
+            assert '0/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert 'グソクムシャ' in page.locator('#result .risk-banner').inner_text()
+
+            # Unrelated opponents must not inherit this form-specific profile.
+            page.locator('#foe0').fill('エースバーン')
+            page.locator('#analyze').click()
+            assert page.locator('#result .sourced-intel').count() == 0
+
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):
