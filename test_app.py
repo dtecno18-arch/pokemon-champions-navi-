@@ -276,15 +276,15 @@ def main():
             assert page.evaluate("""() => new Set(megaInputForms.map(formKey)).size === 82 &&
                 megaInputForms.every(name => Array.from(
                     document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
-            assert page.evaluate("() => megaBaseNames.has(normalize('ユキメノコ'))")
-            assert page.evaluate("() => megaBaseNames.has(normalize('スピアー'))")
+            assert page.evaluate("() => requiredMatchupForms('ユキメノコ').length > 1")
+            assert page.evaluate("() => requiredMatchupForms('スピアー').length > 1")
             assert '公式M-A/B/Cメガ81名称・性差込み82形態' in page.locator('#count + p').inner_text()
             # Meganium is a NORMAL species whose name begins with "メガ".
             # Only the cataloged "メガメガニウム" is a Mega form.
             assert page.evaluate("() => normalize('メガニウム') === 'メガニウム'")
             assert page.evaluate("() => normalize('メガメガニウム') === 'メガニウム'")
             assert page.evaluate("() => !isMegaForm('メガニウム') && isMegaForm('メガメガニウム')")
-            assert page.evaluate("() => megaBaseNames.has(normalize('メガニウム'))")
+            assert page.evaluate("() => requiredMatchupForms('メガニウム').length > 1")
             meganium_foes = ['メガニウム','カバルドン','サーフゴー',
                              'ドドゲザン','アシレーヌ','ミミッキュ']
             for i, name in enumerate(meganium_foes):
@@ -571,11 +571,12 @@ def main():
               const cited={source,updated};
               const record={...cited,form:'ドヒドイデ',reviewed:true,formReviewed:true,
                 branchScope:'all-known',
-                variants:[{...cited,id:'normal',reviewed:true,ability:'さいせいりょく',
-                  speedBase:35,priorityMoves:[]}],
-                answers:[{...cited,pokemon:'カバルドン',reviewed:true}],
+                variants:[{...cited,id:'normal',form:'ドヒドイデ',reviewed:true,
+                  ability:'さいせいりょく',speedBase:35,priorityMoves:[]}],
+                answers:[{...cited,variant:'normal',pokemon:'カバルドン',
+                  reason:'synthetic schema fixture, not a real matchup',reviewed:true}],
                 leadChecks:[{...cited,variant:'normal',lead:'カバルドン',
-                  response:'stay',reviewed:true}]};
+                  response:'stay',reason:'synthetic schema fixture',reviewed:true}]};
               const team=['カバルドン','ミミッキュ','メガルカリオZ'];
               const check=r=>hasVerifiedMatchupAnswer(r,'ドヒドイデ',team,'カバルドン');
               return {
@@ -588,12 +589,42 @@ def main():
                   {...record.variants[0],id:'mega'}]}),
                 badSwitch:check({...record,leadChecks:[{...record.leadChecks[0],
                   response:'switch',switchTo:'アシレーヌ'}]}),
-                badCitation:check({...record,answers:[{...record.answers[0],source:''}]})
+                badCitation:check({...record,answers:[{...record.answers[0],source:''}]}),
+                unrelatedLeadAnswer:check({...record,answers:[{
+                  ...record.answers[0],pokemon:'ミミッキュ'}]}),
+                missingVariantAnswer:check({...record,variants:[
+                  ...record.variants,{...record.variants[0],id:'otherAbility'}]}),
+                missingLeadReason:check({...record,leadChecks:[{
+                  ...record.leadChecks[0],reason:''}]}),
+                missingMegaBranch:hasVerifiedMatchupAnswer(
+                  {...record,form:'リザードン',variants:[{
+                    ...record.variants[0],form:'リザードン'}]},
+                  'リザードン',team,'カバルドン'),
+                charizardBranches:requiredMatchupForms('リザードン'),
+                alolanRaichuBranches:requiredMatchupForms('アローラライチュウ'),
+                maleMeowsticBranches:requiredMatchupForms('ニャオニクス(オス)')
               };
             }""")
             assert gate == {'complete': True, 'oldNameOnly': False, 'wrongForm': False,
                             'wrongLead': False, 'unsafe': False, 'missingBranch': False,
-                            'badSwitch': False, 'badCitation': False}, gate
+                            'badSwitch': False, 'badCitation': False,
+                            'unrelatedLeadAnswer': False, 'missingVariantAnswer': False,
+                            'missingLeadReason': False, 'missingMegaBranch': False,
+                            'charizardBranches': ['リザードン','メガリザードンX','メガリザードンY'],
+                            'alolanRaichuBranches': ['アローラライチュウ'],
+                            'maleMeowsticBranches': ['ニャオニクス(オス)','メガニャオニクス(オス)']}, gate
+            # Regional variants must not inherit another form's Mega branch.
+            # This is a threat-warning correctness check, NOT matchup clearance.
+            regional_case = ['アローラライチュウ','ミミッキュ','ドドゲザン',
+                             'ペリッパー','アシレーヌ','サーフゴー']
+            for i, name in enumerate(regional_case):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .mega-base-unverified').count() == 0
+            assert page.locator('#result .mega-uncertainty').count() == 0
+            assert page.evaluate("() => megaCandidatesFor(['アローラライチュウ']).length") == 0
+            assert page.evaluate("() => megaCandidatesFor(['ライチュウ']).length") == 1
             # Name coverage 6/6 does not validate base-to-Mega branching.
             # Banette, Sableye and Salamence previously bypassed the explicit
             # Mega-form gate when entered in their normal forms.
