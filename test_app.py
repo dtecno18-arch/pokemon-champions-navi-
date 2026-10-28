@@ -32,8 +32,9 @@ def main():
                 name => Array.from(document.querySelectorAll('#dex option'),
                     option => option.value).includes(name))""")
             assert page.evaluate("() => historicalMaTournamentCandidates.length") == 41
-            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 286
-            assert '過去のM-A大会参加可能リスト由来41形態' in page.locator('#count + p').inner_text()
+            assert page.evaluate("() => historicalMaTournamentMoreCandidates.length") == 64
+            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 350
+            assert '過去のM-A大会参加可能リスト由来105形態' in page.locator('#count + p').inner_text()
             assert '現行M-C未照合' in page.locator('#count + p').inner_text()
             # Exhaustive catalog smoke: every listed form must be accepted as
             # one of six distinct species, never silently unlock a trio/lead.
@@ -56,7 +57,7 @@ def main():
                 }
                 return {checked: options.length};
             }""")
-            assert audit == {'checked': 286}, audit
+            assert audit == {'checked': 350}, audit
             # Historical M-A regional forms share a species slot but retain
             # distinct form identities for any future matchup evidence.
             for regional, ordinary in (
@@ -67,6 +68,11 @@ def main():
                 ('ヒスイバクフーン', 'バクフーン'),
                 ('ヒスイダイケンキ', 'ダイケンキ'),
                 ('パルデアケンタロス(かくとう)', 'ケンタロス'),
+                ('ヒスイゾロアーク', 'ゾロアーク'),
+                ('ヒスイヌメルゴン', 'ヌメルゴン'),
+                ('ガラルマッギョ', 'マッギョ'),
+                ('ヒスイクレベース', 'クレベース'),
+                ('ヒスイジュナイパー', 'ジュナイパー'),
             ):
                 assert page.evaluate("(pair) => normalize(pair[0]) === normalize(pair[1])",
                                      [regional, ordinary]), regional
