@@ -23,6 +23,9 @@ def main():
             page.on('pageerror', lambda e: errors.append(str(e)))
             page.goto(url, wait_until='domcontentloaded')
             assert page.locator('#analyze').count()==1
+            assert page.locator('#analyze').inner_text() == 'リスクを確認'
+            assert page.locator('.slot-source').count() == 6
+            assert '選出3匹・先発の推奨は保留' in page.locator('.sub').first.inner_text()
 
             # Official 2026 M-A Global Challenge roster: 31 distinct forms,
             # including region, sex and family-size variants (historical
@@ -118,6 +121,43 @@ def main():
             assert page.locator('#result .candidate-provenance').count() == 6
             assert '過去M-A大会由来' in page.locator('#result .candidate-provenance').all_inner_texts()[2]
             assert '候補外' in page.locator('#result .candidate-provenance').all_inner_texts()[5]
+
+            # Full regional names must map to the same exact form, not to
+            # a different form or an automatically validated matchup.
+            for full, short in (
+                ('ライチュウ（アローラのすがた）','アローラライチュウ'),
+                ('ウインディ（ヒスイのすがた）','ヒスイウインディ'),
+                ('ヤドラン（ガラルのすがた）','ガラルヤドラン'),
+                ('ヤドキング（ガラルのすがた）','ガラルヤドキング'),
+                ('バクフーン（ヒスイのすがた）','ヒスイバクフーン'),
+                ('ダイケンキ（ヒスイのすがた）','ヒスイダイケンキ'),
+                ('ゾロアーク（ヒスイのすがた）','ヒスイゾロアーク'),
+                ('ヌメルゴン（ヒスイのすがた）','ヒスイヌメルゴン'),
+                ('マッギョ（ガラルのすがた）','ガラルマッギョ'),
+                ('クレベース（ヒスイのすがた）','ヒスイクレベース'),
+                ('ジュナイパー（ヒスイのすがた）','ヒスイジュナイパー'),
+            ):
+                assert page.evaluate('(pair) => formKey(pair[0]) === formKey(pair[1])',
+                                     [full, short]), (full, short)
+                assert page.evaluate('(pair) => normalize(pair[0]) === normalize(pair[1])',
+                                     [full, short]), (full, short)
+            page.locator('#foe0').fill('ウインディ（ヒスイのすがた）')
+            assert '過去M-A大会由来' in page.locator('#source0').inner_text()
+            page.locator('#foe1').fill('グソクムシャ')
+            assert '公式M-C追加' in page.locator('#source1').inner_text()
+            page.locator('#foe2').fill('未照合ポケモン')
+            assert '候補外' in page.locator('#source2').inner_text()
+            page.reload(wait_until='domcontentloaded')
+            assert page.locator('#foe0').input_value() == 'ウインディ（ヒスイのすがた）'
+            assert '過去M-A大会由来' in page.locator('#source0').inner_text()
+            page.locator('#clear').click()
+            assert page.locator('#source0').inner_text() == '未入力'
+            for i, name in enumerate(('ヒスイウインディ','ウインディ（ヒスイのすがた）',
+                                      'カバルドン','サーフゴー','ミミッキュ','ドドゲザン')):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert '同じポケモンが重複' in page.locator('#status').inner_text()
+            assert page.locator('#result .hero').count() == 0
 
             # Form-aware lookup must remain distinct from species-level
             # duplicate detection. A regional or appliance form cannot
