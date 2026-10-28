@@ -395,6 +395,12 @@ function analyze(){
  // Normal Charizard / Gengar / Golisopod also require a Mega branch.
  const criticalUnverified=new Set(['リザードン','メガリザードンY','ゲンガー','メガゲンガー','グソクムシャ','メガグソクムシャ']);
  const criticalUnknown=vals.filter(n=>criticalUnverified.has(formKey(n)));
+ // Indeedee's Psychic Surge can invalidate priority-based cleanup. There is
+ // no validated form-specific answer for either sex, even if 5 other names
+ // have provisional answers. Abstain instead of treating the field as safe.
+ const terrainUnknown=vals.filter(n=>normalize(n)==='イエッサン');
+ const terrainWarning=terrainUnknown.length?
+  '<div class="warn terrain-uncertainty" role="alert"><b>⚠️ サイコフィールド対策未検証：'+esc(terrainUnknown.join('・'))+'</b><div>サイコメイカーによるサイコフィールド下では、接地した相手への先制技が無効です。ミミッキュ・ギルガルドのかげうちやメガカイリューのしんそく等を勝ち筋として保証できません。相手の性別・特性・フィールド状態と通常技の通りを確認してください。</div><div class="muted">出典：<a href="https://gamewith.jp/pokemon-champions/575639" target="_blank" rel="noopener noreferrer">GameWith イエッサン♂育成論（2026-10-28確認）</a>。♀を含む個別対面は未検証。</div></div>':'';
  const criticalWarning=criticalUnknown.length?
   '<div class="warn critical-uncertainty" role="alert"><b>⚠️ 未検証の重大メガ分岐：'+esc(criticalUnknown.join('・'))+'</b><div>環境上位のメガ候補ですが、この構築との個別対面・先発安全性は検証できていません。他の相手に対策候補があっても選出3匹・先発は推奨しません。通常形態の入力でもメガシンカの可能性を確認してください。</div><div class="muted">参考：<a href="https://gamewith.jp/pokemon-champions/546413" target="_blank" rel="noopener noreferrer">GameWith Tier表（2026-10-27更新）</a>。メガグソクムシャの詳細：<a href="https://gamewith.jp/pokemon-champions/575652" target="_blank" rel="noopener noreferrer">GameWith（2026-10-28確認）</a>。個別対面の有利不利は未検証。</div></div>':'';
 
@@ -411,13 +417,13 @@ function analyze(){
  // basis to rank three Pokémon or a lead. Do not present the default trio as a
  // recommendation just because the opponent's six names are syntactically valid.
  // Sourced threat facts alone are not validated matchup answers.
- if(actionableCount<2 || selectedCoverage<2 || criticalUnknown.length>0){
+ if(actionableCount<2 || selectedCoverage<2 || criticalUnknown.length>0 || terrainUnknown.length>0){
   $('#result').classList.remove('hidden');
   const megaCandidates=megaCandidatesFor(vals);
   const megaCaution=megaCandidates.length?'<div class="warn mega-uncertainty"><b>メガシンカの分岐に注意</b><div>'+esc(megaCandidates.join('・'))+' が候補に含まれます。実際のメガシンカ先は選出段階では確定できません。通常形態とメガ形態を両方警戒してください。</div></div>':'';
   $('#result').innerHTML=suggestionWarning+
-   '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対策候補付きルール '+actionableCount+'/6匹／選出3匹の対応 '+selectedCoverage+'/6匹：選出3匹・先発は推奨しません</b><div>相手6匹のうち名前ベースの対策候補は'+actionableCount+'匹、暫定選出3匹が実際に対応できる候補は'+selectedCoverage+'匹です。どちらかが2匹未満、または未検証の重大メガ分岐が含まれる場合は推奨を保留します。登録された対策も型・技・持ち物・素早さまで検証済みではありません。対戦画面でメガ候補・先制技も確認してください。</div></div>'+
-   confidenceBanner+criticalWarning+evidenceSummary+sourcedWarning+megaCaution+
+   '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対策候補付きルール '+actionableCount+'/6匹／選出3匹の対応 '+selectedCoverage+'/6匹：選出3匹・先発は推奨しません</b><div>相手6匹のうち名前ベースの対策候補は'+actionableCount+'匹、暫定選出3匹が実際に対応できる候補は'+selectedCoverage+'匹です。どちらかが2匹未満、または未検証の重大メガ分岐・サイコフィールド展開役が含まれる場合は推奨を保留します。登録された対策も型・技・持ち物・素早さまで検証済みではありません。対戦画面でメガ候補・先制技も確認してください。</div></div>'+
+   confidenceBanner+criticalWarning+terrainWarning+evidenceSummary+sourcedWarning+megaCaution+
    '<div class="line"><b>相手6匹（個別対面未検証）</b>'+vals.map(n=>'<div class="line">'+esc(n)+'</div>').join('')+'</div>';
   $('#result').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
   $('#result').focus({preventScroll:true});
