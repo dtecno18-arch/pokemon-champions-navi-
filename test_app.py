@@ -92,7 +92,7 @@ def main():
             assert page.evaluate("() => !isMegaForm('メガニウム') && isMegaForm('メガメガニウム')")
             assert page.evaluate("() => megaBaseNames.has(normalize('メガニウム'))")
             meganium_foes = ['メガニウム','カバルドン','サーフゴー',
-                             'ガブリアス','アシレーヌ','ミミッキュ']
+                             'ドドゲザン','アシレーヌ','ミミッキュ']
             for i, name in enumerate(meganium_foes):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
