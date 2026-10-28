@@ -571,11 +571,12 @@ def main():
               const cited={source,updated};
               const record={...cited,form:'ドヒドイデ',reviewed:true,formReviewed:true,
                 branchScope:'all-known',
-                variants:[{...cited,id:'normal',reviewed:true,ability:'さいせいりょく',
-                  speedBase:35,priorityMoves:[]}],
-                answers:[{...cited,pokemon:'カバルドン',reviewed:true}],
+                variants:[{...cited,id:'normal',form:'ドヒドイデ',reviewed:true,
+                  ability:'さいせいりょく',speedBase:35,priorityMoves:[]}],
+                answers:[{...cited,variant:'normal',pokemon:'カバルドン',
+                  reason:'synthetic schema fixture, not a real matchup',reviewed:true}],
                 leadChecks:[{...cited,variant:'normal',lead:'カバルドン',
-                  response:'stay',reviewed:true}]};
+                  response:'stay',reason:'synthetic schema fixture',reviewed:true}]};
               const team=['カバルドン','ミミッキュ','メガルカリオZ'];
               const check=r=>hasVerifiedMatchupAnswer(r,'ドヒドイデ',team,'カバルドン');
               return {
@@ -588,12 +589,30 @@ def main():
                   {...record.variants[0],id:'mega'}]}),
                 badSwitch:check({...record,leadChecks:[{...record.leadChecks[0],
                   response:'switch',switchTo:'アシレーヌ'}]}),
-                badCitation:check({...record,answers:[{...record.answers[0],source:''}]})
+                badCitation:check({...record,answers:[{...record.answers[0],source:''}]}),
+                unrelatedLeadAnswer:check({...record,answers:[{
+                  ...record.answers[0],pokemon:'ミミッキュ'}]}),
+                missingVariantAnswer:check({...record,variants:[
+                  ...record.variants,{...record.variants[0],id:'otherAbility'}]}),
+                missingLeadReason:check({...record,leadChecks:[{
+                  ...record.leadChecks[0],reason:''}]}),
+                missingMegaBranch:hasVerifiedMatchupAnswer(
+                  {...record,form:'リザードン',variants:[{
+                    ...record.variants[0],form:'リザードン'}]},
+                  'リザードン',team,'カバルドン'),
+                charizardBranches:requiredMatchupForms('リザードン'),
+                alolanRaichuBranches:requiredMatchupForms('アローラライチュウ'),
+                maleMeowsticBranches:requiredMatchupForms('ニャオニクス(オス)')
               };
             }""")
             assert gate == {'complete': True, 'oldNameOnly': False, 'wrongForm': False,
                             'wrongLead': False, 'unsafe': False, 'missingBranch': False,
-                            'badSwitch': False, 'badCitation': False}, gate
+                            'badSwitch': False, 'badCitation': False,
+                            'unrelatedLeadAnswer': False, 'missingVariantAnswer': False,
+                            'missingLeadReason': False, 'missingMegaBranch': False,
+                            'charizardBranches': ['リザードン','メガリザードンX','メガリザードンY'],
+                            'alolanRaichuBranches': ['アローラライチュウ'],
+                            'maleMeowsticBranches': ['ニャオニクス(オス)','メガニャオニクス(オス)']}, gate
             # Name coverage 6/6 does not validate base-to-Mega branching.
             # Banette, Sableye and Salamence previously bypassed the explicit
             # Mega-form gate when entered in their normal forms.
