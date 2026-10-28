@@ -100,7 +100,7 @@ def main():
             assert page.evaluate("() => formKey('イエッサン♀') === formKey('イエッサン(メス)')")
             assert page.evaluate("() => formKey('パルデアケンタロス(炎)') === formKey('パルデアケンタロス(ほのお)')")
             assert '公式M-A特別セレクト31形態' in page.locator('#count + p').inner_text()
-            assert '公式M-C全参加可能形態の網羅は未検証' in page.locator('#count + p').inner_text()
+            assert '公式M-C全件監査2026-10-29成功' in page.locator('#count + p').inner_text()
             ma_new = ['アローラキュウコン','コータス','エルフーン',
                       'ニャオニクス(メス)','イダイトウ(オス)','イッカネズミ(3びき)']
             for i, name in enumerate(ma_new):
@@ -116,7 +116,7 @@ def main():
             # evidence of a verified matchup.
             audit_text = page.locator('#catalog-audit').inner_text()
             assert '348形態' in audit_text
-            assert '公式M-C全件照合未完了' in audit_text
+            assert '公式M-C全件照合2026-10-29成功' in audit_text
             assert '検証済み対面 0/348形態' in audit_text
             for name, label in (
                 ('グソクムシャ', '公式M-C追加'),
@@ -228,7 +228,7 @@ def main():
                 str(sorted(set(actual_mc_delta) - set(official_mc_delta)))
             )
             assert '公式M-C追加分 35/35形態を候補登録' in page.locator('#catalog-audit').inner_text()
-            assert '公式M-C全件照合未完了' in page.locator('#catalog-audit').inner_text()
+            assert '公式M-C全件照合2026-10-29成功' in page.locator('#catalog-audit').inner_text()
             assert page.locator('#catalog-audit a').get_attribute('href') == (
                 'https://web-view.app.pokemonchampions.jp/battle/pages/'
                 'events/rs178713870219xeaaio/ja/pokemon.html'
@@ -244,7 +244,7 @@ def main():
             assert page.evaluate("""() => new Set(officialMcAdditions.filter(
                 name => name.startsWith('イキリンコ')).map(formKey)).size""") == 4
             assert 'M-C追加35形態' in page.locator('#count + p').inner_text()
-            assert '公式M-C全参加可能形態の網羅は未検証' in page.locator('#count + p').inner_text()
+            assert '公式M-C全件監査2026-10-29成功' in page.locator('#count + p').inner_text()
             assert 'raw.githubusercontent.com/fanzeyi/pokemon.json' not in page.content(), (
                 'Unverified national Pokédex must not populate eligible suggestions'
             )
@@ -259,7 +259,7 @@ def main():
                 document.querySelectorAll('#dex option').length""")
             assert '公式M-B追加22種' in page.locator('#count + p').inner_text()
             assert '2026-08-05' in page.locator('#count + p').inner_text()
-            assert '現行M-C使用可否の全件照合は未完了' in page.locator('#count + p').inner_text()
+            assert '公式M-C全件監査2026-10-29成功' in page.locator('#count + p').inner_text()
             # All Mega forms listed by the official M-A/M-B/M-C regulations
             # must be independently selectable. These are catalog entries,
             # NOT proof of a safe matchup or a completed official M-C audit.
@@ -774,7 +774,7 @@ def main():
             # The abstention view shows the separate candidate-coverage metric
             # instead of the expanded recommendation-only detail section.
             assert '入力候補' in page.locator('#result .evidence-summary').inner_text()
-            assert '全件照合未完了' in page.locator('#result .evidence-summary').inner_text()
+            assert '全件照合2026-10-29成功' in page.locator('#result .evidence-summary').inner_text()
 
             # Normal Lucario is not proof that Mega Lucario Z is selected.
             base_lucario = ['ルカリオ', 'アシレーヌ', 'サーフゴー',
