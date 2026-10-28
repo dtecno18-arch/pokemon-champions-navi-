@@ -95,6 +95,30 @@ def main():
             assert page.locator('#result .hero .chip').count() == 3
             assert '2/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert '暫定' in page.locator('#result .hero').inner_text()
+            # A manual name outside the incomplete M-C candidate catalog must
+            # not inherit a recommendation from the other five known names.
+            high_coverage = ['アシレーヌ','ドドゲザン','サーフゴー',
+                             'ミミッキュ','カバルドン']
+            unknown_input = ['未照合ポケモン', *high_coverage]
+            assert page.evaluate('(names) => recommend(names).comparisonSummary.total', unknown_input) >= 4
+            for i, name in enumerate(unknown_input):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .candidate-unverified').count() == 1
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            # Mega X and even name-registered Mega Salamence are not verified
+            # matchups; a high name-only score must not imply a safe trio.
+            for mega in ('メガリザードンX', 'メガボーマンダ'):
+                mega_case = [mega, *high_coverage]
+                assert page.evaluate('(names) => recommend(names).comparisonSummary.total', mega_case) >= 4
+                for i, name in enumerate(mega_case):
+                    page.locator(f'#foe{i}').fill(name)
+                page.locator('#analyze').click()
+                assert page.locator('#result .mega-form-unverified').count() == 1, mega
+                assert page.locator('#result .abstention-banner').count() == 1, mega
+                assert page.locator('#result .hero').count() == 0, mega
+                assert all(name in page.locator('#result').inner_text() for name in mega_case)
             # Regression: two registered opponent rules do not imply that the
             # actually chosen trio answers two threats. Prima + Hippo has
             # separate answers; the article-based trio only includes Mimikyu.
@@ -164,7 +188,7 @@ def main():
                 page.locator('#analyze').click()
                 assert page.locator('#result').is_visible(), f'No result: {names}'
                 selected = page.evaluate('(names) => recommend(names).comparisonSummary.chosen', names)
-                if selected < 2 or any(name.startswith('イエッサン') for name in names):
+                if selected < 2 or any(name.startswith(('イエッサン', 'メガ')) for name in names):
                     assert page.locator('#result .abstention-banner').count() == 1
                     assert page.locator('#result .hero').count() == 0
                 else:
@@ -180,7 +204,7 @@ def main():
                 page.locator('#analyze').click()
                 chosen = page.locator('#result .hero .chip').all_inner_texts()
                 selected = page.evaluate('(names) => recommend(names).comparisonSummary.chosen', names)
-                if selected < 2 or any(name.startswith('イエッサン') for name in names):
+                if selected < 2 or any(name.startswith(('イエッサン', 'メガ')) for name in names):
                     assert chosen == [], 'Must not display an unsafe trio'
                     assert page.locator('#result .abstention-banner').count() == 1
                 else:
@@ -286,7 +310,10 @@ def main():
             form_banner = page.locator('#result .risk-banner').inner_text()
             assert '5/6匹' in form_banner and 'メガジュペッタ' in form_banner, form_banner
             assert page.evaluate("(names) => recommend(names).coverage[0].status", form_case) == '要確認'
-            assert 'M-C全352種類の入力候補網羅：未検証' in page.locator('#result').inner_text()
+            # The abstention view shows the separate candidate-coverage metric
+            # instead of the expanded recommendation-only detail section.
+            assert '入力候補' in page.locator('#result .evidence-summary').inner_text()
+            assert '全件照合未完了' in page.locator('#result .evidence-summary').inner_text()
 
             # Normal Lucario is not proof that Mega Lucario Z is selected.
             base_lucario = ['ルカリオ', 'アシレーヌ', 'サーフゴー',
