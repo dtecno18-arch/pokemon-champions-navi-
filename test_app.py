@@ -36,9 +36,17 @@ def main():
                     option => option.value).includes(name))""")
             assert page.evaluate("() => historicalMaTournamentCandidates.length") == 41
             assert page.evaluate("() => historicalMaTournamentMoreCandidates.length") == 63
-            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 355
+            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 350
             assert page.evaluate("""() => officialMcRosterKnownForms.every(name =>
                 Array.from(document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
+            assert page.evaluate("() => officialMcRosterKnownForms.length") == 16
+            assert page.evaluate("""() => Array.from(officialMcExcludedCandidates).every(name =>
+                !Array.from(document.querySelectorAll('#dex option'), o => o.value).includes(name))""")
+            assert page.evaluate("() => officialMcExcludedCandidates.size") == 15
+            assert page.evaluate("() => requiredMatchupForms('イッカネズミ').length") == 2
+            assert page.evaluate("() => requiredMatchupForms('イキリンコ').length") == 4
+            assert page.evaluate("() => !megaCandidatesFor(['イッカネズミ','イキリンコ']).length")
+
             assert page.evaluate("() => formKey('ロトム (フロストロトム)') === 'フロストロトム'")
             assert page.evaluate("() => formKey('ケンタロス (パルデアのすがた・コンバットしゅ)') === 'パルデアケンタロス(かくとう)'")
             assert '過去のM-A大会参加可能リスト由来104形態' in page.locator('#count + p').inner_text()
@@ -64,7 +72,7 @@ def main():
                 }
                 return {checked: options.length};
             }""")
-            assert audit == {'checked': 355}, audit
+            assert audit == {'checked': 350}, audit
             # Historical M-A regional forms share a species slot but retain
             # distinct form identities for any future matchup evidence.
             for regional, ordinary in (
@@ -103,9 +111,9 @@ def main():
             # M-A candidates; neither a catalog entry nor a source link is
             # evidence of a verified matchup.
             audit_text = page.locator('#catalog-audit').inner_text()
-            assert '355形態' in audit_text
+            assert '350形態' in audit_text
             assert '公式M-C全件照合未完了' in audit_text
-            assert '検証済み対面 0/355形態' in audit_text
+            assert '検証済み対面 0/350形態' in audit_text
             for name, label in (
                 ('グソクムシャ', '公式M-C追加'),
                 ('メガグソクムシャ', '公式M-Cメガ追加'),
