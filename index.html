@@ -111,6 +111,12 @@ const fields=Array.from({length:6},(_,i)=>$('#foe'+i));
 // distinct forms, not proof of current M-C eligibility. Source:
 // https://champions-news.pokemon-home.com/en/page/759.html
 const officialMaSpecialRoster=["フシギバナ","リザードン","キュウコン","アローラキュウコン","メガニウム","オーダイル","ニョロトノ","バンギラス","ペリッパー","コータス","カバルドン","ユキノオー","エンブオー","ドリュウズ","エルフーン","バイバニラ","ウルガモス","ファイアロー","ニャオニクス(オス)","ニャオニクス(メス)","アマルルガ","ガオガエン","ルガルガン(まひる)","ヤレユータン","サダイジャ","イダイトウ(オス)","イダイトウ(メス)","イッカネズミ(3びき)","イッカネズミ(4ひき)","リキキリン","ブリジュラス"];
+// Historical M-A tournament eligibility, independently curated from the
+// 2026 Warm-up Challenge M-A eligible roster (GameWith, checked 2026-10-28).
+// This secondary historical evidence does NOT complete the current M-C audit.
+// Only entries absent from the existing catalog are listed here.
+// https://gamewith.jp/pokemon-champions/555416
+const historicalMaTournamentCandidates=["アーボック","アローラライチュウ","ヒスイウインディ","カイリキー","ガラルヤドラン","ケンタロス","パルデアケンタロス(かくとう)","パルデアケンタロス(ほのお)","パルデアケンタロス(みず)","メタモン","シャワーズ","サンダース","ブースター","カビゴン","バクフーン","ヒスイバクフーン","アリアドス","エーフィ","ガラルヤドキング","フォレトス","ミロカロス","ポワルン","ドダイトス","ゴウカザル","エンペルト","レントラー","ロズレイド","ズガイドス","タテトプス","ミカルゲ","ドクロッグ","マニューラ","ドサイドン","リーフィア","グレイシア","グライオン","マンムー","ジャローダ","ヒスイダイケンキ","レパルダス","ヤナッキー"];
 const officialMbAdditions=["ラフレシア","ハリーセン","ジュカイン","バシャーモ","ラグラージ","クチート","メタグロス","ムクホーク","ムシャーナ","ペンドラー","ズルズキン","シビルドン","カエンジシ","カラマネロ","ガメノデス","ドラミドロ","オーロンゲ","タイレーツ","ハリーマン","ハカドッグ","コノヨザル","サーフゴー"];
 const officialMcAdditions=["プクリン","ペルシアン","アローラペルシアン","カモネギ","バリヤード","マルノーム","ボーマンダ","ゴーゴート","グソクムシャ","ゴリランダー","エースバーン","インテレオン","フォクスライ","ストリンダー(ハイ)","ストリンダー(ロー)","オトスパス","ニャイキング","ネギガナイト","バチンウニ","イエッサン(オス)","イエッサン(メス)","パーモット","オリーヴァ","イキリンコ(グリーンフェザー)","イキリンコ(ブルーフェザー)","イキリンコ(イエローフェザー)","イキリンコ(ホワイトフェザー)","マフィティフ","セグレイブ","メガアブソルZ","メガボーマンダ","メガガブリアスZ","メガルカリオZ","メガグソクムシャ","メガセグレイブ"];
 // Official regulation Mega eligibility: M-A (2026-04-08), M-B (2026-08-05 update),
@@ -129,12 +135,12 @@ const officialMegaBaseCandidates=[...new Set(officialMegaForms.map(name=>name.re
 {
  const options=$('#dex');
  const seen=new Set(Array.from(options.options,o=>o.value.normalize('NFKC')));
- for(const name of [...officialMaSpecialRoster,...officialMbAdditions,...officialMcAdditions,...officialMegaForms,...officialMegaBaseCandidates]){
+ for(const name of [...officialMaSpecialRoster,...historicalMaTournamentCandidates,...officialMbAdditions,...officialMcAdditions,...officialMegaForms,...officialMegaBaseCandidates]){
   if(seen.has(name.normalize('NFKC')))continue;
   const opt=document.createElement('option');opt.value=name;options.appendChild(opt);seen.add(name.normalize('NFKC'));
  }
  const note=document.createElement('p');note.className='muted';
- note.innerHTML='公式M-A特別セレクト31形態（2026-04-24確認）・公式M-B追加22種（2026-08-05更新）・M-C追加35形態（2026-10-28確認）・公式M-A/B/Cメガ形態81件と対応する通常種76件（2026-10-28照合）を候補に反映。固定候補 '+options.options.length+'件／全352形態の網羅は未検証。M-B掲載種を含め現行M-C使用可否の全件照合は未完了。候補外は手入力可。候補にあるだけで個別対策が検証済みとは限りません。出典：<a href="https://champions-news.pokemon-home.com/en/page/759.html" target="_blank" rel="noopener noreferrer">公式M-A特別セレクト（2026-04-24）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/777.html" target="_blank" rel="noopener noreferrer">公式M-B追加情報（2026-08-05更新）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/821.html" target="_blank" rel="noopener noreferrer">公式M-C追加情報</a>・<a href="https://champions-news.pokemon-home.com/ja/page/751.html" target="_blank" rel="noopener noreferrer">公式M-Aメガ一覧</a>・<a href="https://champions-news.pokemon-home.com/ja/page/776.html" target="_blank" rel="noopener noreferrer">公式M-Bメガ一覧</a>・<a href="https://news.pokemon-home.com/ja/page/816.html" target="_blank" rel="noopener noreferrer">公式M-Cメガ一覧</a>・<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith（2026-10-28更新）</a>。';
+ note.innerHTML='公式M-A特別セレクト31形態（2026-04-24確認）・過去のM-A大会参加可能リスト由来41形態（2026-10-28確認、現行M-C未照合）・公式M-B追加22種（2026-08-05更新）・M-C追加35形態（2026-10-28確認）・公式M-A/B/Cメガ形態81件と対応する通常種76件（2026-10-28照合）を候補に反映。固定候補 '+options.options.length+'件／全352形態の網羅は未検証。M-B掲載種を含め現行M-C使用可否の全件照合は未完了。候補外は手入力可。候補にあるだけで個別対策が検証済みとは限りません。出典：<a href="https://champions-news.pokemon-home.com/en/page/759.html" target="_blank" rel="noopener noreferrer">公式M-A特別セレクト（2026-04-24）</a>・<a href="https://gamewith.jp/pokemon-champions/555416" target="_blank" rel="noopener noreferrer">M-A大会参加可能リスト（2026-10-28確認、二次情報）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/777.html" target="_blank" rel="noopener noreferrer">公式M-B追加情報（2026-08-05更新）</a>・<a href="https://champions-news.pokemon-home.com/ja/page/821.html" target="_blank" rel="noopener noreferrer">公式M-C追加情報</a>・<a href="https://champions-news.pokemon-home.com/ja/page/751.html" target="_blank" rel="noopener noreferrer">公式M-Aメガ一覧</a>・<a href="https://champions-news.pokemon-home.com/ja/page/776.html" target="_blank" rel="noopener noreferrer">公式M-Bメガ一覧</a>・<a href="https://news.pokemon-home.com/ja/page/816.html" target="_blank" rel="noopener noreferrer">公式M-Cメガ一覧</a>・<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith（2026-10-28更新）</a>。';
  $('#count').after(note);
 }
 
@@ -147,6 +153,10 @@ const officialMegaBaseCandidates=[...new Set(officialMegaForms.map(name=>name.re
 const speciesAliases=Object.freeze({
  'アローラペルシアン':'ペルシアン',
  'アローラキュウコン':'キュウコン',
+ 'ヒスイウインディ':'ウインディ',
+ 'ガラルヤドラン':'ヤドラン','ガラルヤドキング':'ヤドキング',
+ 'ヒスイバクフーン':'バクフーン','ヒスイダイケンキ':'ダイケンキ',
+ 'パルデアケンタロス':'ケンタロス',
  'アローラライチュウ':'ライチュウ',
  'ウォッシュロトム':'ロトム','ヒートロトム':'ロトム',
  'フロストロトム':'ロトム','スピンロトム':'ロトム','カットロトム':'ロトム'
@@ -161,7 +171,11 @@ const formAliases=Object.freeze({
  'イエッサン(オスのすがた)':'イエッサン(オス)',
  'イエッサン(メスのすがた)':'イエッサン(メス)',
  'イダイトウ♂':'イダイトウ(オス)','イダイトウ♀':'イダイトウ(メス)',
- 'ニャオニクス♂':'ニャオニクス(オス)','ニャオニクス♀':'ニャオニクス(メス)'
+ 'ニャオニクス♂':'ニャオニクス(オス)','ニャオニクス♀':'ニャオニクス(メス)',
+ 'イエッサン♂':'イエッサン(オス)','イエッサン♀':'イエッサン(メス)',
+ 'パルデアケンタロス(闘)':'パルデアケンタロス(かくとう)',
+ 'パルデアケンタロス(炎)':'パルデアケンタロス(ほのお)',
+ 'パルデアケンタロス(水)':'パルデアケンタロス(みず)'
 });
 const formKey=s=>{const k=String(s).normalize('NFKC').replace(/[\s　・･]/g,'');return formAliases[k]||k;};
 const normalize=s=>{
