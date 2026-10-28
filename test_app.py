@@ -31,6 +31,24 @@ def main():
                 assert len(page.locator('#result .hero .chip').all())==3, 'Must select 3'
                 assert '先発' in page.locator('#result').inner_text()
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'), 'Horizontal overflow'
+
+            # A recommendation must use only the six configured team members.
+            roster = {'カバルドン','メガルカリオZ','メガカイリュー','ミミッキュ','ギルガルド','イダイトウ♂'}
+            for names in CASES:
+                for i, name in enumerate(names):
+                    page.locator(f'#foe{i}').fill(name)
+                page.locator('#analyze').click()
+                chosen = page.locator('#result .hero .chip').all_inner_texts()
+                assert len(chosen) == 3 and len(set(chosen)) == 3, f'Duplicate or missing picks: {chosen}'
+                assert all(name.strip() in roster for name in chosen), f'Outside configured roster: {chosen}'
+                result_text = page.locator('#result').inner_text()
+                assert all(name in result_text for name in names), 'Opponent coverage must mention all six inputs'
+            # Unknown Pokémon must not crash the app or inject markup.
+            page.locator('#foe0').fill('<img src=x onerror=alert(1)>')
+            page.locator('#analyze').click()
+            assert page.locator('#result').is_visible()
+            assert page.locator('#result img').count() == 0, 'User input injected an HTML image'
+            assert not errors, errors
             page.locator('#clear').click()
             assert not page.locator('#result').is_visible()
             assert all(page.locator(f'#foe{i}').input_value()=='' for i in range(6))
