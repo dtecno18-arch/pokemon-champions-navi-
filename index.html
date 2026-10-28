@@ -135,10 +135,14 @@ const officialMegaBaseCandidates=[...new Set(officialMegaForms.map(name=>name.re
 }
 
 // Species-level grouping is only for duplicate detection and broad threat hints.
-const normalize=s=>{const n=String(s).normalize('NFKC').replace(/[\s　・･]/g,'').replace(/（.*?）|\(.*?\)/g,'').replace(/♂|♀/g,'');return n.startsWith('メガ')?n.replace(/^メガ/,'').replace(/[XYZ]$/,''):n;};
+// Match against the official Mega catalog: メガニウム is a NORMAL species,
+// while メガメガニウム is its Mega form. Prefix matching is unsafe.
+const normalize=s=>{const n=String(s).normalize('NFKC').replace(/[\s　・･]/g,'').replace(/（.*?）|\(.*?\)/g,'').replace(/♂|♀/g,'');return isMegaForm(s)?n.replace(/^メガ/,'').replace(/[XYZ]$/,''):n;};
 // Preserve Mega X/Y/Z, sex and regional/form labels for matchup coverage.
 // Never use species-level normalization to claim a specific form is covered.
 const formKey=s=>String(s).normalize('NFKC').replace(/[\s　・･]/g,'');
+const megaFormKeys=new Set(officialMegaForms.map(formKey));
+const isMegaForm=s=>megaFormKeys.has(formKey(s));
 // Evidence is stored separately from name-only matchup heuristics. No win/loss claim.
 // GameWith updated 2026-10-28 12:55 JST; ranked usage sample: 2026-10-26 M-7.
 const sourcedThreatIntel=Object.freeze({
@@ -334,7 +338,7 @@ function likelyRole(n){
 // Confirmed Mega-capable base forms (GameWith Champions Mega list, checked 2026-10-28).
 // A base-form name is NOT proof that the opponent holds a Mega Stone.
 const megaBaseNames=new Set(officialMegaForms.map(normalize));
-const megaCandidatesFor=opponents=>opponents.filter(n=>/^メガ/.test(n.normalize('NFKC'))||megaBaseNames.has(normalize(n)));
+const megaCandidatesFor=opponents=>opponents.filter(n=>isMegaForm(n)||megaBaseNames.has(normalize(n)));
 function buildDecisionExplanation(opponents,r){
  const team=r.team;
  const roleMap={
@@ -421,10 +425,10 @@ function analyze(){
  const notInSuggestions=vals.filter(n=>!supportedNames.has(formKey(n)));
  // A displayed Mega form is not a verified matchup. Even the existing
  // Mega Salamence name-only rule cannot establish a safe lead or trio.
- const unverifiedMegaForms=vals.filter(n=>/^メガ/.test(formKey(n)));
+ const unverifiedMegaForms=vals.filter(isMegaForm);
  // A normal-form entry may Mega evolve. No base/Mega branch has verified
  // matchups, so a six-name heuristic cannot establish a safe lead.
- const unverifiedMegaBases=vals.filter(n=>!/^メガ/.test(formKey(n)) && megaBaseNames.has(normalize(n)));
+ const unverifiedMegaBases=vals.filter(n=>!isMegaForm(n) && megaBaseNames.has(normalize(n)));
  // M-C high-tier Megas without a validated matchup answer are not safe to
  // infer from a small number of unrelated name-only coverage rules.
  // Normal Charizard / Gengar / Golisopod also require a Mega branch.
