@@ -36,7 +36,7 @@ def main():
                     option => option.value).includes(name))""")
             assert page.evaluate("() => historicalMaTournamentCandidates.length") == 41
             assert page.evaluate("() => historicalMaTournamentMoreCandidates.length") == 63
-            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 350
+            assert page.evaluate("() => document.querySelectorAll('#dex option').length") == 351
             assert '過去のM-A大会参加可能リスト由来104形態' in page.locator('#count + p').inner_text()
             assert '現行M-C未照合' in page.locator('#count + p').inner_text()
             # Exhaustive catalog smoke: every listed form must be accepted as
@@ -60,7 +60,7 @@ def main():
                 }
                 return {checked: options.length};
             }""")
-            assert audit == {'checked': 350}, audit
+            assert audit == {'checked': 351}, audit
             # Historical M-A regional forms share a species slot but retain
             # distinct form identities for any future matchup evidence.
             for regional, ordinary in (
@@ -99,9 +99,9 @@ def main():
             # M-A candidates; neither a catalog entry nor a source link is
             # evidence of a verified matchup.
             audit_text = page.locator('#catalog-audit').inner_text()
-            assert '350/352形態' in audit_text
+            assert '351/352形態' in audit_text
             assert '公式M-C全件照合未完了' in audit_text
-            assert '検証済み対面 0/350形態' in audit_text
+            assert '検証済み対面 0/351形態' in audit_text
             for name, label in (
                 ('グソクムシャ', '公式M-C追加'),
                 ('メガグソクムシャ', '公式M-Cメガ追加'),
@@ -222,6 +222,21 @@ def main():
             assert page.evaluate("() => new Set(megaInputForms.map(formKey)).size") == 82
             assert page.evaluate("() => !megaInputForms.includes('メガニャオニクス')")
             assert page.evaluate("() => megaMeowsticSexForms.length") == 2
+            assert page.evaluate("() => separatelyDocumentedForms.length") == 1
+            assert page.evaluate("() => formKey('フラエッテ(えいえんのはな)') !== formKey('フラエッテ')")
+            assert page.evaluate("() => formKey('フラエッテ(えいえんのはな)') !== formKey('メガフラエッテ')")
+            assert page.evaluate("() => normalize('フラエッテ(えいえんのはな)') === normalize('メガフラエッテ')")
+            assert page.locator('#dex option').evaluate_all(
+                "(els) => els.some(el => el.value === 'フラエッテ(えいえんのはな)')")
+            page.locator('#foe0').fill('フラエッテ(えいえんのはな)')
+            assert 'GameWith個別掲載' in page.locator('#source0').inner_text()
+            for i, name in enumerate(('フラエッテ(えいえんのはな)','カバルドン',
+                                      'サーフゴー','ミミッキュ','ドドゲザン','アシレーヌ')):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert 'GameWith個別掲載' in page.locator('#result .candidate-provenance').first.inner_text()
             assert page.evaluate("() => formKey('メガニャオニクス♂') === formKey('メガニャオニクス(オス)')")
             assert page.evaluate("() => formKey('メガニャオニクス♀') === formKey('メガニャオニクス(メス)')")
             assert page.evaluate("() => formKey('メガニャオニクス(オス)') !== formKey('メガニャオニクス(メス)')")
