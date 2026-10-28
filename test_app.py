@@ -113,6 +113,41 @@ def main():
             page.locator('#analyze').click()
             assert page.locator('#result .mega-uncertainty').count() == 0
 
+            # Form identity must not collapse Mega variants, sex or named forms
+            # into a generic matchup rule. Species grouping is a separate concern.
+            assert page.evaluate("() => formKey('メガリザードンX') !== formKey('メガリザードンY')")
+            assert page.evaluate("() => formKey('イダイトウ♂') !== formKey('イダイトウ♀')")
+            assert page.evaluate("() => formKey('ストリンダー(ハイ)') !== formKey('ストリンダー(ロー)')")
+            assert page.evaluate("() => formKey('メガルカリオZ') !== formKey('ルカリオ')")
+            assert page.evaluate("() => normalize('メガリザードンX') === normalize('メガリザードンY')")
+            for form in ('メガアブソルZ', 'メガガブリアスZ', 'メガグソクムシャ',
+                         'メガセグレイブ', 'ストリンダー(ハイ)', 'ストリンダー(ロー)',
+                         'イエッサン(オス)', 'イエッサン(メス)',
+                         'メガリザードンX', 'メガリザードンY'):
+                assert page.locator('#dex option').evaluate_all(
+                    "(els, form) => els.some(el => el.value === form)", form
+                ), f'Missing form autocomplete: {form}'
+
+            # A rule for base-form Banette must NOT silently validate Mega Banette.
+            form_case = ['メガジュペッタ', 'ミミッキュ', 'ドドゲザン',
+                         'ペリッパー', 'ヤミラミ', 'アシレーヌ']
+            for i, name in enumerate(form_case):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            form_banner = page.locator('#result .risk-banner').inner_text()
+            assert '5/6匹' in form_banner and 'メガジュペッタ' in form_banner, form_banner
+            assert page.evaluate("(names) => recommend(names).coverage[0].status", form_case) == '要確認'
+            assert 'M-C全352種類の入力候補網羅：未検証' in page.locator('#result').inner_text()
+
+            # Normal Lucario is not proof that Mega Lucario Z is selected.
+            base_lucario = ['ルカリオ', 'アシレーヌ', 'サーフゴー',
+                            'ドドゲザン', 'ミミッキュ', 'ペリッパー']
+            z_lucario = ['メガルカリオZ', *base_lucario[1:]]
+            base_reason = page.evaluate("(names) => recommend(names).reason", base_lucario)
+            z_reason = page.evaluate("(names) => recommend(names).reason", z_lucario)
+            assert '相手のルカリオZとアシレーヌ' not in base_reason, base_reason
+            assert '相手のルカリオZとアシレーヌ' in z_reason, z_reason
+
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):

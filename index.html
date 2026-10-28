@@ -74,7 +74,17 @@
 <option value="サーナイト"></option>
 <option value="メガルカリオZ"></option>
 <option value="メガカイリュー"></option>
-<option value="メガボーマンダ"></option></datalist><p class="muted" id="count">0 / 6匹入力</p><div class="actions"><button class="primary" id="analyze">選出を決める</button><button class="secondary" id="clear">クリア</button></div><p id="status" class="muted" role="status"></p></section>
+<option value="メガボーマンダ"></option><option value="メガアブソルZ"></option>
+<option value="メガガブリアスZ"></option>
+<option value="メガグソクムシャ"></option>
+<option value="メガセグレイブ"></option>
+<option value="ストリンダー(ハイ)"></option>
+<option value="ストリンダー(ロー)"></option>
+<option value="イエッサン(オス)"></option>
+<option value="イエッサン(メス)"></option>
+<option value="アローラペルシアン"></option>
+<option value="メガリザードンX"></option>
+<option value="メガリザードンY"></option></datalist><p class="muted" id="count">0 / 6匹入力</p><div class="actions"><button class="primary" id="analyze">選出を決める</button><button class="secondary" id="clear">クリア</button></div><p id="status" class="muted" role="status"></p></section>
 <section class="panel hidden" id="result" tabindex="-1" aria-live="polite"></section>
 <section class="panel"><h2>自分の6匹・登録済みの構築データ</h2><div class="roster" id="roster"></div><details><summary>記事に基づく基本戦術</summary><p class="sub">カバルドンでステルスロック・あくびの起点を作り、メガルカリオZのわるだくみから崩す。ミミッキュ・ギルガルドの先制技で削り、スカーフイダイトウのおはかまいりで締める。メガカイリューは対面性能としんそくを活用。</p></details></section>
 <section class="panel"><h2>登録済みの素早さ目安（Lv.50）</h2><p class="sub">メガルカリオZ：201 ／ メガカイリュー：152 ／ ミミッキュ：131 ／ ギルガルド：112 ／ イダイトウ♂：143（スカーフ適用後214）／ カバルドン：67。先制技の優先度やサイコフィールドは別に考慮してください。</p></section><section class="panel"><h2>分析の前提</h2><p class="sub">これは記事の実戦方針に基づく暫定選出支援です。相手6匹全員の脅威を確認します。実際の選出3匹・技・持ち物は断定できません。記事の選出を参考にした条件分岐であり、勝率を保証するランキングや全対面のダメージ計算ではありません。</p><p class="sub">出典：<a href="https://eff4dckeqm1cwsf.hatenablog.com/entry/2026/10/10/081058" target="_blank" rel="noopener noreferrer">S6最終2位 構築記事</a></p></section>
@@ -92,7 +102,11 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 $('#roster').innerHTML=roster.map(x=>'<div><b>'+x[0]+'</b><span class="tag">'+x[3]+'</span><div class="moves">'+x[1]+'<br>'+x[2]+'</div></div>').join('');
 $('#inputs').innerHTML=Array.from({length:6},(_,i)=>'<div class="slot"><label for="foe'+i+'">相手 '+(i+1)+'</label><input id="foe'+i+'" list="dex" autocomplete="off" placeholder="ポケモン名"></div>').join('');
 const fields=Array.from({length:6},(_,i)=>$('#foe'+i));
+// Species-level grouping is only for duplicate detection and broad threat hints.
 const normalize=s=>s.normalize('NFKC').replace(/[\s　・･]/g,'').replace(/（.*?）|\(.*?\)/g,'').replace(/♂|♀/g,'').replace(/^メガ/,'').replace(/[XYZ]$/,'');
+// Preserve Mega X/Y/Z, sex and regional/form labels for matchup coverage.
+// Never use species-level normalization to claim a specific form is covered.
+const formKey=s=>String(s).normalize('NFKC').replace(/[\s　・･]/g,'');
 // Keep opponent inputs on reload; clear explicitly with the reset button.
 const INPUT_KEY='champions-navi-opponents-v1';
 try{const saved=JSON.parse(sessionStorage.getItem(INPUT_KEY)||'[]');if(Array.isArray(saved))fields.forEach((f,i)=>{if(typeof saved[i]==='string')f.value=saved[i]});}catch(e){}
@@ -100,6 +114,7 @@ function update(){const n=fields.filter(f=>f.value.trim()).length;$('#count').te
 fields.forEach((f,i)=>{f.addEventListener('input',()=>{try{sessionStorage.setItem(INPUT_KEY,JSON.stringify(fields.map(x=>x.value)))}catch(e){}});f.addEventListener('input',update);f.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();if(i<5)fields[i+1].focus();else $('#analyze').click();}})});
 function recommend(names){
  const has=n=>names.some(x=>normalize(x)===normalize(n));
+ const hasExact=n=>names.some(x=>formKey(x)===formKey(n));
  let team=['カバルドン','メガルカリオZ','ミミッキュ'],lead='カバルドン';
  let plan='カバルドンでステルスロック・あくびの起点を作り、メガルカリオZのわるだくみで崩す。ミミッキュは先制技とばけのかわを終盤に残す。';
  let reason='記事の基本選出。起点作成→特殊エース→ストッパーの3段構え。';
@@ -132,7 +147,7 @@ function recommend(names){
   plan='カバルドンであくび・ステルスロックを展開。ルカリオのわるだくみ、ギルガルドのつるぎのまいのどちらを通すか相手の受け先で決める。';
   cautions.push('受け構築でもスカーフ持ち・状態異常・ちょうはつに注意。ギルガルドのタスキを無駄にしない。');
  }
- if(has('メガルカリオZ')&&has('アシレーヌ')){
+ if(hasExact('メガルカリオZ')&&has('アシレーヌ')){
   team=['ミミッキュ','メガルカリオZ','カバルドン'];lead='ミミッキュ';
   reason='相手のルカリオZとアシレーヌを両方意識し、記事で優先されている初手ミミッキュを採用。';
   plan='初手ミミッキュでアシレーヌへの圧力をかけ、カバルドンのあくび・ステロからルカリオで突破を狙う。';
@@ -156,6 +171,8 @@ function recommend(names){
  if(has('ゴリランダー'))threats.push({name:'ゴリランダー',why:'グラスフィールド中はじしんの威力が下がり、グラススライダーが強力',answer:'カバルドンのじしんに依存せず、メガカイリューのかえんほうしゃ等を検討'});
  if(threats.length===0)threats.push({name:'初手の不利対面',why:'相手の型・持ち物・選出3匹は不明',answer:'先発で大きく不利なら交代先と先制技の通りを確認'});
  // Coverage is a transparent heuristic, not a damage calculator. Only known threats are classified.
+ // A matchup rule applies only to explicitly named forms, not an entire species.
+ const ruleMatches=(name,rule)=>rule.match.some(m=>formKey(name)===formKey(m));
  const coverageRules=[
   {match:['アシレーヌ'],answers:['ミミッキュ'],note:'ウッドハンマーで削る。対面・反動に注意'},
   {match:['カバルドン'],answers:['イダイトウ♂'],note:'水技・クイックターンで圧力'},
@@ -178,10 +195,10 @@ function recommend(names){
  for(let a=0;a<pool.length;a++)for(let b=a+1;b<pool.length;b++)for(let c=b+1;c<pool.length;c++){
   const trio=[pool[a],pool[b],pool[c]];
   const hits=coverageRules.map(rule=>{
-   const present=names.some(n=>rule.match.some(m=>normalize(n)===normalize(m)));
+   const present=names.some(n=>ruleMatches(n,rule));
    return present?rule.answers.filter(x=>trio.includes(x)).length:0;
   });
-  const matched=coverageRules.map((rule,i)=>names.some(n=>rule.match.some(m=>normalize(n)===normalize(m)))&&rule.answers.length>0?i:-1).filter(i=>i>=0);
+  const matched=coverageRules.map((rule,i)=>names.some(n=>ruleMatches(n,rule))&&rule.answers.length>0?i:-1).filter(i=>i>=0);
   const covered=matched.filter(i=>hits[i]>0).length;
   const missing=matched.length-covered;
   // Preserve a coherent win condition: one Mega attacker, an opener, and a cleaner/check.
@@ -205,9 +222,9 @@ function recommend(names){
   reason+=' '+comparison+'。';
   plan='初手'+lead+'で対面を確認し、'+team.filter(x=>x!==lead).join('・')+'を控えに置く。相手の実際の選出と技を見て、攻撃・交代・積みの優先度を判断する。';
  }
- const comparisonSummary={mode:comparison,baseline:baseline.covered,chosen:choices.find(x=>x.trio.every(t=>team.includes(t))).covered,total:coverageRules.filter(rule=>rule.answers.length&&names.some(n=>rule.match.some(m=>normalize(n)===normalize(m)))).length,alternatives:choices.slice(0,3)};
+ const comparisonSummary={mode:comparison,baseline:baseline.covered,chosen:choices.find(x=>x.trio.every(t=>team.includes(t))).covered,total:coverageRules.filter(rule=>rule.answers.length&&names.some(n=>ruleMatches(n,rule))).length,alternatives:choices.slice(0,3)};
  const coverage=names.map(name=>{
-  const rule=coverageRules.find(rule=>rule.match.some(x=>normalize(x)===normalize(name)));
+  const rule=coverageRules.find(rule=>ruleMatches(name,rule));
   if(!rule)return {name,status:'要確認',answer:'個別対面の検証データが未登録'};
   const chosen=rule.answers.filter(x=>team.includes(x));
   return {name,status:chosen.length?'候補あり':'要注意',answer:chosen.length?chosen.join('・')+'：'+rule.note:rule.note+'（選出3匹に明確な対策枠なし）'};
@@ -250,8 +267,8 @@ function recommend(names){
 }
 
 // All six entered species are accepted; an autocomplete list is a suggestion, not a whitelist.
-const supportedNames=new Set(Array.from(document.querySelectorAll('#dex option'),o=>normalize(o.value)));
-const knownCoverage=new Set(['ミミッキュ','ドドゲザン','ペリッパー','ヤミラミ','ジュペッタ','アシレーヌ','カバルドン','ボーマンダ','サーフゴー','アーマーガア','ゴリランダー','イエッサン','ドヒドイデ','ラッキー','ハピナス','ヘイラッシャ','ブラッキー','キョジオーン','クレセリア'].map(normalize));
+const supportedNames=new Set(Array.from(document.querySelectorAll('#dex option'),o=>formKey(o.value)));
+const knownCoverage=new Set(['ミミッキュ','ドドゲザン','ペリッパー','ヤミラミ','ジュペッタ','アシレーヌ','カバルドン','ボーマンダ','メガボーマンダ','サーフゴー','アーマーガア','ゴリランダー','イエッサン','ドヒドイデ','ラッキー','ハピナス','ヘイラッシャ','ブラッキー','キョジオーン','クレセリア'].map(formKey));
 function likelyRole(n){
  const x=normalize(n);
  const roles={
@@ -287,8 +304,8 @@ function buildDecisionExplanation(opponents,r){
    'ばけのかわによる行動保証と先制技で終盤を補完するため';
   return '<div class="line"><b>'+esc((i+1)+'. '+name)+'</b><div><b>採用理由：</b>'+esc(why)+'</div><div><b>担当：</b>'+esc(job)+'</div><div class="muted"><b>注意：</b>'+esc(risk)+'</div></div>';
  }).join('');
- const recognized=opponents.filter(x=>knownCoverage.has(normalize(x)));
- const unrecognized=opponents.filter(x=>!knownCoverage.has(normalize(x)));
+ const recognized=opponents.filter(x=>knownCoverage.has(formKey(x)));
+ const unrecognized=opponents.filter(x=>!knownCoverage.has(formKey(x)));
  const groups={};opponents.forEach(n=>{const role=likelyRole(n)[0];(groups[role]??=[]).push(n)});
  // Explicit hypotheses, not fabricated probability percentages.
  const leadCandidates=opponents.filter(n=>['展開役','補助役','対面役'].includes(likelyRole(n)[0]));
@@ -323,7 +340,7 @@ function buildDecisionExplanation(opponents,r){
  return '<section class="line"><h2>③ なぜこの3匹なのか</h2><p class="sub">役割と採用理由を1匹ずつ表示。選出変更があった場合も実際の3匹に合わせます。</p>'+explain+'</section>'+
  '<section class="line"><h2>④ 相手6匹の役割・脅威</h2><p class="sub">相手の選出3匹を決め打ちせず、6匹全員への対応を確認します。役割は一般的な傾向であり、実際の技・持ち物は未確定です。</p>'+opponentRoles+'</section>'+
  '<section class="line"><h2>⑤ どう動かすか：序盤→終盤</h2>'+megaCaution+leadRisk+steps+'<details><summary>相手6匹それぞれが先発だった場合</summary>'+leadNotes+'</details></section>'+
- '<section class="line"><h2>⑥ データの信頼性</h2>'+warning+'<p class="muted">対面ルール適用：'+recognized.length+'/6匹。登録済みの名前一覧と、個別対策の検証状況は別物です。</p></section>';
+ '<section class="line"><h2>⑥ データの信頼性</h2>'+warning+'<p class="muted">対面ルール適用：'+recognized.length+'/6匹。登録済みの名前一覧と、個別対策の検証状況は別物です。</p><p class="muted">M-C全352種類の入力候補網羅：未検証（候補にない名前も手入力可）。参考：<a href="https://gamewith.jp/pokemon-champions/546414" target="_blank" rel="noopener noreferrer">GameWith内定一覧（2026-10-27更新）</a>。対策データの検証率とは別指標です。</p></section>';
 }
 // Best-effort online autocomplete; manual input always works offline.
 (async()=>{
@@ -333,10 +350,10 @@ function buildDecisionExplanation(opponents,r){
   const res=await fetch('https://raw.githubusercontent.com/fanzeyi/pokemon.json/master/pokedex.json',{signal:ctrl.signal});clearTimeout(timer);
   if(!res.ok)throw Error('HTTP '+res.status);
   const data=await res.json();if(!Array.isArray(data)||data.length<800)throw Error('図鑑件数不足');
-  const list=$('#dex');const present=new Set(Array.from(list.options,o=>normalize(o.value)));
+  const list=$('#dex');const present=new Set(Array.from(list.options,o=>formKey(o.value)));
   let added=0;
-  for(const entry of data){const n=entry?.name?.japanese;if(typeof n!=='string'||!n.trim()||present.has(normalize(n)))continue;
-   const option=document.createElement('option');option.value=n;list.appendChild(option);present.add(normalize(n));added++;
+  for(const entry of data){const n=entry?.name?.japanese;if(typeof n!=='string'||!n.trim()||present.has(formKey(n)))continue;
+   const option=document.createElement('option');option.value=n;list.appendChild(option);present.add(formKey(n));added++;
   }
   const note=document.createElement('p');note.className='ready';note.textContent='オンライン図鑑の候補を追加：'+added+'種類。メガ形態などは手入力も可能です。';$('#count').after(note);
  }catch(e){const note=document.createElement('p');note.className='muted';note.textContent='オンライン図鑑の取得不可（オフライン等）。候補にないポケモンも手入力できます。';$('#count').after(note);}
@@ -349,7 +366,7 @@ function analyze(){
  if(new Set(vals.map(normalize)).size!==6){$('#status').textContent='同じポケモンが重複しています。';$('#status').className='error';return;}
  $('#status').textContent='';$('#status').className='muted';
  const r=recommend(vals);
- const uncovered=vals.filter(n=>!knownCoverage.has(normalize(n)));
+ const uncovered=vals.filter(n=>!knownCoverage.has(formKey(n)));
  const knownCount=6-uncovered.length;
  const confidenceBanner=uncovered.length
   ?'<div class="warn risk-banner" role="status"><b>⚠️ 対策データ不足：'+knownCount+'/6匹のみ登録</b><div>未登録：'+esc(uncovered.join('・'))+'</div><div>この選出は暫定案です。未登録の相手への有利不利は評価できないため、先発・交代先を必ず確認してください。</div></div>'
