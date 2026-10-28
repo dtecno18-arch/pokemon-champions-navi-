@@ -196,7 +196,9 @@ function recommend(names){
  }
  choices.sort((a,b)=>b.score-a.score||b.covered-a.covered||a.trio.join('').localeCompare(b.trio.join('')));
  const baseline=choices.find(x=>x.trio.every(t=>initialTeam.includes(t)));
- const winner=choices[0];
+ // A battle selects one Mega Evolution at most; reject double-Mega combinations.
+ const validChoices=choices.filter(c=>c.trio.filter(x=>x==='メガルカリオZ'||x==='メガカイリュー').length<=1);
+ const winner=validChoices[0];
  let comparison='記事の基本選出を維持';
  if(winner.covered>baseline.covered && winner.score>baseline.score+0.5 && !has('アシレーヌ') && !has('カバルドン') && !has('メガボーマンダ') && !has('ボーマンダ')){
   team=winner.trio;
@@ -205,7 +207,7 @@ function recommend(names){
   reason+=' '+comparison+'。';
   plan='初手'+lead+'で対面を確認し、'+team.filter(x=>x!==lead).join('・')+'を控えに置く。相手の実際の選出と技を見て、攻撃・交代・積みの優先度を判断する。';
  }
- const comparisonSummary={mode:comparison,baseline:baseline.covered,chosen:choices.find(x=>x.trio.every(t=>team.includes(t))).covered,total:coverageRules.filter(rule=>rule.answers.length&&names.some(n=>rule.match.some(m=>normalize(n)===normalize(m)))).length,alternatives:choices.slice(0,3)};
+ const comparisonSummary={mode:comparison,baseline:baseline.covered,chosen:choices.find(x=>x.trio.every(t=>team.includes(t))).covered,total:coverageRules.filter(rule=>rule.answers.length&&names.some(n=>rule.match.some(m=>normalize(n)===normalize(m)))).length,alternatives:validChoices.slice(0,3)};
  const coverage=names.map(name=>{
   const rule=coverageRules.find(rule=>rule.match.some(x=>normalize(x)===normalize(name)));
   if(!rule)return {name,status:'要確認',answer:'個別対面の検証データが未登録'};
