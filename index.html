@@ -316,14 +316,24 @@ const hasEvidenceCitation=r=>r && typeof r.source==='string' &&
 // possible. The branch audit must include *each* possible form, not merely a
 // self-declared "all-known" label. Regional forms cannot Mega Evolve solely
 // because a different regional form of the species can.
+// A species-only preview does not identify a sex, size or battle form.
+// Never certify one form's matchup as covering its unspecified siblings.
+// Only expand ambiguous names; an explicitly named form stays exact.
+const ambiguousPreviewForms=Object.freeze({
+ 'イッカネズミ':['イッカネズミ(3びき)','イッカネズミ(4ひき)'],
+ 'イキリンコ':['イキリンコ(グリーンフェザー)','イキリンコ(ブルーフェザー)','イキリンコ(イエローフェザー)','イキリンコ(ホワイトフェザー)'],
+ 'ヤバソチャ':['ヤバソチャ(ボンサクのすがた)','ヤバソチャ(ケッサクのすがた)'],
+ 'イエッサン':['イエッサン(オス)','イエッサン(メス)'],
+ 'イダイトウ':['イダイトウ(オス)','イダイトウ(メス)'],
+ 'ストリンダー':['ストリンダー(ハイ)','ストリンダー(ロー)'],
+ 'ニャオニクス':['ニャオニクス(オス)','ニャオニクス(メス)'],
+ 'ルガルガン':['ルガルガン(まひる)','ルガルガン(まよなか)','ルガルガン(たそがれ)'],
+ 'パンプジン':['パンプジン(こだま)','パンプジン(ちゅうだま)','パンプジン(おおだま)','パンプジン(ギガだま)']
+});
 function requiredMatchupForms(opponent){
   const base=formKey(opponent);
   if(isMegaForm(opponent))return [base];
-  // Official M-C lists these without all visually distinct forms. A generic
-  // preview must not be treated as a single verified variant.
-  if(base==='イッカネズミ')return ['イッカネズミ(3びき)','イッカネズミ(4ひき)'];
-  if(base==='イキリンコ')return ['イキリンコ(グリーンフェザー)','イキリンコ(ブルーフェザー)','イキリンコ(イエローフェザー)','イキリンコ(ホワイトフェザー)'];
-  if(base==='ヤバソチャ')return ['ヤバソチャ(ボンサクのすがた)','ヤバソチャ(ケッサクのすがた)'];
+  const previewForms=ambiguousPreviewForms[base]||[base];
   const megaBranches=megaInputForms.filter(name=>{
     const megaBase=formKey(name).replace(/^メガ/,'').replace(/[XYZ]$/,'');
     // Only the Eternal Flower Floette can branch to Mega Floette.
@@ -332,7 +342,7 @@ function requiredMatchupForms(opponent){
     return megaBase===base ||
       (base==='ニャオニクス' && megaBase.startsWith('ニャオニクス('));
   }).map(formKey);
-  return [...new Set([base,...megaBranches])];
+  return [...new Set([...previewForms,...megaBranches])];
 }
 function isAuditedMatchupRecord(r){
   if(!r || r.reviewed!==true || r.formReviewed!==true || r.branchScope!=='all-known' ||
