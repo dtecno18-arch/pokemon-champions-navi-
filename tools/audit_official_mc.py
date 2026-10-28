@@ -41,14 +41,19 @@ def audit():
             response = official.goto(actual_source, wait_until="domcontentloaded", timeout=45000)
             official.wait_for_timeout(10000)
             page_text = official.locator("body").inner_text(timeout=20000)
+            raw_text = official.locator("body").text_content(timeout=20000) or ""
             entries = extract_official(page_text)
+            if len(entries) < MIN_EXPECTED:
+                entries = extract_official(raw_text)
             attempts.append({"url": actual_source, "entries": len(entries),
+                             "rawTextLength": len(raw_text), "htmlLength": len(official.content()),
+                             "htmlContainsDexNo": "No.0003" in official.content(),
                              "status": response.status if response else None,
                              "prefix": page_text[:160]})
             if len(entries) >= MIN_EXPECTED and {"プクリン", "セグレイブ"}.issubset(
                     {name for _, name in entries}):
                 break
-        Path("mc-official-body.txt").write_text(page_text, encoding="utf-8")
+        Path("mc-official-body.txt").write_text(page_text + "\n--- RAW TEXT CONTENT ---\\n" + raw_text, encoding="utf-8")
         Path("mc-official-network.json").write_text(json.dumps(network, ensure_ascii=False, indent=2), encoding="utf-8")
         official.screenshot(path="mc-official-snapshot.png", full_page=True)
         if len(entries) < MIN_EXPECTED or not {"プクリン", "セグレイブ"}.issubset(
