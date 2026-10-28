@@ -66,6 +66,35 @@ def main():
             assert '1/6匹' in page.locator('#result .evidence-summary').inner_text()
             mega_warning = page.locator('#result .mega-uncertainty').inner_text()
             assert all(name in mega_warning for name in unknown_mega), mega_warning
+            # One named matchup answer among five unknown threats is not enough.
+            one_answer = ['アシレーヌ','ガブリアス','ゲンガー',
+                          'エースバーン','ドラパルト','ゲッコウガ']
+            for i, name in enumerate(one_answer):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            assert '1/6匹' in page.locator('#result .abstention-banner').inner_text()
+            assert '対策候補付きルール 1/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert all(name in page.locator('#result').inner_text() for name in one_answer)
+            # Indeedee is registered, but its rule has no answer.
+            no_answer = ['イエッサン','ガブリアス','ゲンガー',
+                         'エースバーン','ドラパルト','ゲッコウガ']
+            for i, name in enumerate(no_answer):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert '1/6匹' in page.locator('#result .risk-banner').inner_text()
+            assert '0/6匹' in page.locator('#result .abstention-banner').inner_text()
+            assert page.locator('#result .hero').count() == 0
+            # Two independent answers still produce a clearly provisional pick.
+            two_answers = ['ゴリランダー','ドドゲザン','ガブリアス',
+                           'ゲンガー','エースバーン','ドラパルト']
+            for i, name in enumerate(two_answers):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .hero .chip').count() == 3
+            assert '2/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert '暫定' in page.locator('#result .hero').inner_text()
             for names in CASES:
                 for i,name in enumerate(names):
                     page.locator(f'#foe{i}').fill(name)
