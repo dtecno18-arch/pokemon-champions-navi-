@@ -95,13 +95,39 @@ def main():
             assert page.locator('#result .hero .chip').count() == 3
             assert '2/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert '暫定' in page.locator('#result .hero').inner_text()
+            # Regression: two registered opponent rules do not imply that the
+            # actually chosen trio answers two threats. Prima + Hippo has
+            # separate answers; the article-based trio only includes Mimikyu.
+            partial_coverage = ['アシレーヌ','カバルドン','ガブリアス',
+                                'ゲンガー','エースバーン','ドラパルト']
+            assert page.evaluate('(names) => recommend(names).comparisonSummary.total', partial_coverage) == 2
+            assert page.evaluate('(names) => recommend(names).comparisonSummary.chosen', partial_coverage) == 1
+            for i, name in enumerate(partial_coverage):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('#result .hero').count() == 0, 'One actual answer must not be a recommendation'
+            assert '対策候補付きルール 2/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert '選出3匹の対応 1/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert all(name in page.locator('#result').inner_text() for name in partial_coverage)
+            # Two actual answers remain eligible for a provisional suggestion.
+            for i, name in enumerate(two_answers):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .hero .chip').count() == 3
+            assert '選出3匹の対応 2/6匹' in page.locator('#result .evidence-summary').inner_text()
             for names in CASES:
                 for i,name in enumerate(names):
                     page.locator(f'#foe{i}').fill(name)
                 page.locator('#analyze').click()
                 assert page.locator('#result').is_visible(), f'No result: {names}'
-                assert len(page.locator('#result .hero .chip').all())==3, 'Must select 3'
-                assert '先発' in page.locator('#result').inner_text()
+                selected = page.evaluate('(names) => recommend(names).comparisonSummary.chosen', names)
+                if selected < 2:
+                    assert page.locator('#result .abstention-banner').count() == 1
+                    assert page.locator('#result .hero').count() == 0
+                else:
+                    assert len(page.locator('#result .hero .chip').all())==3, 'Must select 3'
+                    assert '先発' in page.locator('#result').inner_text()
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'), 'Horizontal overflow'
 
             # A recommendation must use only the six configured team members.
@@ -111,8 +137,13 @@ def main():
                     page.locator(f'#foe{i}').fill(name)
                 page.locator('#analyze').click()
                 chosen = page.locator('#result .hero .chip').all_inner_texts()
-                assert len(chosen) == 3 and len(set(chosen)) == 3, f'Duplicate or missing picks: {chosen}'
-                assert all(name.strip() in roster for name in chosen), f'Outside configured roster: {chosen}'
+                selected = page.evaluate('(names) => recommend(names).comparisonSummary.chosen', names)
+                if selected < 2:
+                    assert chosen == [], 'Must not display an unsafe trio'
+                    assert page.locator('#result .abstention-banner').count() == 1
+                else:
+                    assert len(chosen) == 3 and len(set(chosen)) == 3, f'Duplicate or missing picks: {chosen}'
+                    assert all(name.strip() in roster for name in chosen), f'Outside configured roster: {chosen}'
                 result_text = page.locator('#result').inner_text()
                 assert all(name in result_text for name in names), 'Opponent coverage must mention all six inputs'
             # Lead safety regression: do not recommend Hippowdon into obvious
