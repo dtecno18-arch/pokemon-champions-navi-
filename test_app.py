@@ -1832,6 +1832,9 @@ def main():
             assert gold['profileSpeeds']==[149,67], gold
             assert gold['goldItem']=='こだわりスカーフ' and gold['hippoItem']=='たべのこし', gold
             assert gold['noSafeMatchups'], gold
+            for i, name in enumerate(['サーフゴー','カバルドン','アシレーヌ','メガボーマンダ','ミミッキュ','ドドゲザン']):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
             assert page.locator('#result .verified-unsafe-action').count()==1
             assert 'ふうせん' in page.locator('#result .verified-unsafe-action').inner_text()
             assert page.locator('#result .hero').count()==0
