@@ -1186,6 +1186,7 @@ def main():
             page.locator('#foe0').fill('メガグソクムシャ')
             page.locator('#analyze').click()
             assert page.locator('#result .conditional-interactions .line').count() == 9
+            page.locator('#result .conditional-interactions summary').click()
             assert '素早さ等によって行動順が変わる' in page.locator('#result .conditional-interactions').inner_text()
             assert page.locator('#result .hero').count() == 0
 
