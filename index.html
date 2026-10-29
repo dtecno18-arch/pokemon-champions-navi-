@@ -384,6 +384,24 @@ const reviewedOpponentProfiles=Object.freeze([
   speedModifier:'こだわりスカーフ',effectiveSpeedMin:223,effectiveSpeedMax:223,
   priority:'掲載型に先制技なし。スカーフ有効時は素早さ149×1.5の切捨てで223。技固定・持ち物喪失等は別。',
   caveat:'M-B掲載スカーフ型のLv50実数値149のみ。ふうせん＋わるだくみ型は別個体・別持ち物であり、同時採用を断定しません。M-Cでの採用・対面安全性は未検証。'}),
+ Object.freeze({form:'ヒートロトム',title:'M-Cオボン型（同時採用未確定）',
+  regulation:'M-C',source:'https://gamewith.jp/pokemon-champions/554982',
+  updated:'2026-10-29',usageAsOf:'2026-10-28',usageRank:26,
+  item:'オボンのみ',ability:'ふゆう',
+  moves:['オーバーヒート','10まんボルト','おにび','でんじは'],
+  alternateMoves:['ボルトチェンジ','いたみわけ','トリック'],
+  speedMin:95,speedMax:151,sampleSpeed:106,
+  priority:'掲載型に先制攻撃なし。ふゆう有効時はじしん無効。スカーフ型は別の持ち物・素早さ。',
+  caveat:'M-7使用率26位と掲載オボン型・Lv50基準表。95〜151は掲載参考値で全個体の保証範囲ではない。技の同時採用・初手安全は未確定。'}),
+ Object.freeze({form:'フロストロトム',title:'M-C使用率技・オボン候補（同時採用未確認）',
+  regulation:'M-C',source:'https://gamewith.jp/pokemon-champions/556483',
+  updated:'2026-10-26',usageAsOf:'2026-10-26',usageRank:218,
+  item:'オボンのみ',ability:'ふゆう',
+  moves:['ふぶき','ボルトチェンジ','おにび','10まんボルト'],
+  alternateMoves:['トリック','いたみわけ','シャドーボール'],
+  speedMin:95,speedMax:151,sampleSpeed:106,
+  priority:'掲載技に先制攻撃なし。ふゆう有効時はじしん無効。スカーフ型は別の持ち物・素早さ。',
+  caveat:'M-7使用率技と持ち物候補は別々の統計。4技の同時採用は未確認。95〜151はLv50掲載参考値で全個体の保証範囲ではない。初手安全は未確定。'}),
  Object.freeze({form:'カバルドン',title:'M-Bたべのこしクッション型',
   regulation:'M-A/M-B（過去の参考型）',source:'https://gamewith.jp/pokemon-champions/554955',
   updated:'2026-10-29',usageAsOf:'未確認',usageRank:null,
@@ -394,8 +412,25 @@ const reviewedOpponentProfiles=Object.freeze([
   priority:'掲載型に先制技なし。あくびは相手の特性・みがわり・持ち物で無効になる場合あり。',
   caveat:'M-A/M-B掲載のLv50実数値67のみ。オボンのみ型は別の持ち物・技候補です。M-Cでの採用・先発安全性は未検証。'})
 ]);
+// M-C Rotom reference sets are not matchup answers. Reject source/date,
+// item, ability, speed, or move substitutions before displaying as reviewed.
+const rotomProfileSpecs=Object.freeze({
+ 'ヒートロトム':{source:'https://gamewith.jp/pokemon-champions/554982',updated:'2026-10-29',
+  usageAsOf:'2026-10-28',usageRank:26,moves:['オーバーヒート','10まんボルト','おにび','でんじは']},
+ 'フロストロトム':{source:'https://gamewith.jp/pokemon-champions/556483',updated:'2026-10-26',
+  usageAsOf:'2026-10-26',usageRank:218,moves:['ふぶき','ボルトチェンジ','おにび','10まんボルト']}
+});
+function isReviewedRotomProfile(p){
+ const spec=rotomProfileSpecs[p?.form];
+ return !spec || (p.source===spec.source && p.updated===spec.updated &&
+  p.usageAsOf===spec.usageAsOf && p.usageRank===spec.usageRank &&
+  p.regulation==='M-C' && p.item==='オボンのみ' && p.ability==='ふゆう' &&
+  p.speedMin===95 && p.speedMax===151 && p.sampleSpeed===106 &&
+  Array.isArray(p.moves) && p.moves.length===spec.moves.length &&
+  spec.moves.every((move,i)=>p.moves[i]===move));
+}
 function isReviewedOpponentProfile(p){
- return !!(p && typeof p.form==='string' && p.form &&
+ return !!(p && isReviewedRotomProfile(p) && typeof p.form==='string' && p.form &&
   typeof p.regulation==='string' && /^M-[ABC]/.test(p.regulation) &&
   hasEvidenceCitation(p) && typeof p.item==='string' && p.item &&
   typeof p.ability==='string' && p.ability &&
@@ -580,6 +615,15 @@ const groundImmuneTargets=Object.freeze([
   condition:'相手がウォッシュロトムで、特性ふゆうが有効な場合のみ。かたやぶり・じゅうりょく・特性変更等の例外は対象外。メガシンカ後の別タイプ・別特性には継承しない。'},
  {form:'ロトム',ability:'ふゆう',source:'https://gamewith.jp/pokemon-champions/558657',sourceUpdated:'2026-10-28',
   condition:'相手がロトムで、特性ふゆうが有効な場合のみ。かたやぶり・じゅうりょく・特性変更等の例外は対象外。メガシンカ後の別タイプ・別特性には継承しない。'},
+ // 2026-10-30: remaining four exact M-C Rotom forms; no universal immunity.
+ {form:'ヒートロトム',ability:'ふゆう',source:'https://gamewith.jp/pokemon-champions/553368',sourceUpdated:'2026-10-27',
+  condition:'相手がヒートロトムでふゆうが有効な場合のみ。かたやぶり・じゅうりょく・特性変更などで無効が失われる例外は対象外。他のロトム形態に継承しない。'},
+ {form:'フロストロトム',ability:'ふゆう',source:'https://gamewith.jp/pokemon-champions/554389',sourceUpdated:'2026-10-27',
+  condition:'相手がフロストロトムでふゆうが有効な場合のみ。かたやぶり・じゅうりょく・特性変更などで無効が失われる例外は対象外。他のロトム形態に継承しない。'},
+ {form:'スピンロトム',ability:'ふゆう',source:'https://gamewith.jp/pokemon-champions/554388',sourceUpdated:'2026-10-27',
+  condition:'相手がスピンロトムでふゆうが有効な場合のみ。かたやぶり・じゅうりょく・特性変更などで無効が失われる例外は対象外。他のロトム形態に継承しない。'},
+ {form:'カットロトム',ability:'ふゆう',source:'https://gamewith.jp/pokemon-champions/553370',sourceUpdated:'2026-10-27',
+  condition:'相手がカットロトムでふゆうが有効な場合のみ。かたやぶり・じゅうりょく・特性変更などで無効が失われる例外は対象外。他のロトム形態に継承しない。'},
  {form:'メガボーマンダ',ability:'スカイスキン',source:'https://gamewith.jp/pokemon-champions/575012',sourceUpdated:'2026-10-28',
   condition:'相手がメガボーマンダにメガシンカ済みで、ひこうタイプによる地面無効が維持される場合。じゅうりょく・はねやすめ等の例外は対象外。'},
  {form:'メガガブリアスZ',ability:'ふゆう',source:'https://gamewith.jp/pokemon-champions/574491',sourceUpdated:'2026-10-28',
