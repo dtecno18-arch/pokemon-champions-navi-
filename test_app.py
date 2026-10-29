@@ -2170,6 +2170,50 @@ def main():
                 'b':{'danger':2,'caution':0,'unknown':0},
                 'status':'danger','partial':True,'source':True,'noSafety':True
             }, branch_audit
+            # Five source-reviewed exact-form adverse lead/action scenarios.
+            # These are CONDITIONAL hazards, not five safe matchup answers.
+            adverse = page.evaluate("""() => {
+              const all=adverseLeadScenarios;
+              const hippo=adverseLeadScenariosFor(
+                ['グソクムシャ','リザードン','ゲンガー'],'カバルドン');
+              const lucario=adverseLeadScenariosFor(['ゲンガー'],'メガルカリオZ');
+              const dragonite=adverseLeadScenariosFor(['ゲンガー'],'メガカイリュー');
+              return {
+                total:all.length,valid:all.every(isReviewedAdverseLeadScenario),
+                hippo:hippo.map(s=>s.form+'|'+s.ownAction),
+                lucario:lucario.map(s=>s.ownAction),
+                dragonite:dragonite.map(s=>s.ownAction),
+                wrongMega:adverseLeadScenariosFor(['メガリザードンX'],'カバルドン').length,
+                baseOnly:adverseLeadScenariosFor(['ゲンガー'],'カバルドン').length,
+                tampered:isReviewedAdverseLeadScenario({...all[0],warning:'安全'}),
+                safeCount:Object.keys(verifiedMatchupEvidence).length
+              };
+            }""")
+            assert adverse == {
+                'total':5,'valid':True,
+                'hippo':['メガグソクムシャ|ステルスロック',
+                         'メガリザードンY|じしん',
+                         'メガゲンガー|manual-switch'],
+                'lucario':['しんくうは'],'dragonite':['しんそく'],
+                'wrongMega':0,'baseOnly':1,'tampered':False,'safeCount':0
+            }, adverse
+            for i,name in enumerate(['グソクムシャ','リザードン','ゲンガー',
+                                     'アシレーヌ','カバルドン','ドドゲザン']):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .adverse-lead-case').count()==3
+            assert '安全認定0件' in page.locator('#result .adverse-lead-cases').inner_text()
+            assert 'メガグソクムシャ' in page.locator('#result .adverse-lead-cases').inner_text()
+            assert page.locator('#result .hero').count()==0
+            page.locator('#lead-inspector-select').select_option('メガルカリオZ')
+            assert page.locator('#result .adverse-lead-case').count()==1
+            assert 'しんくうは' in page.locator('#result .adverse-lead-cases').inner_text()
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            page.locator('#lead-inspector-select').select_option('メガカイリュー')
+            assert page.locator('#result .adverse-lead-case').count()==1
+            assert 'しんそく' in page.locator('#result .adverse-lead-cases').inner_text()
+            assert page.locator('#result .abstention-banner').count()==1
+
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):

@@ -91,7 +91,7 @@
 <section class="panel hidden" id="result" tabindex="-1" aria-live="polite"></section>
 <section class="panel"><h2>自分の6匹・登録済みの構築データ</h2><div class="roster" id="roster"></div><details><summary>記事に基づく基本戦術</summary><p class="sub">カバルドンでステルスロック・あくびの起点を作り、メガルカリオZのわるだくみから崩す。ミミッキュ・ギルガルドの先制技で削り、スカーフイダイトウのおはかまいりで締める。メガカイリューは対面性能としんそくを活用。</p></details></section>
 <section class="panel"><h2>登録済みの素早さ目安（Lv.50）</h2><p class="sub">メガルカリオZ：201 ／ メガカイリュー：152 ／ ミミッキュ：131 ／ ギルガルド：112 ／ イダイトウ♂：143（スカーフ適用後214）／ カバルドン：67。先制技の優先度やサイコフィールドは別に考慮してください。</p></section><section class="panel"><h2>分析の前提</h2><p class="sub">これは記事の実戦方針に基づく暫定選出支援です。相手6匹全員の脅威を確認します。実際の選出3匹・技・持ち物は断定できません。記事の選出を参考にした条件分岐であり、勝率を保証するランキングや全対面のダメージ計算ではありません。</p><p class="sub">出典：<a href="https://eff4dckeqm1cwsf.hatenablog.com/entry/2026/10/10/081058" target="_blank" rel="noopener noreferrer">S6最終2位 構築記事</a></p></section>
-</main><script src="move_audit.js"></script>
+</main><script src="move_audit.js"></script><script src="lead_scenarios.js"></script>
 <script>
 const roster=[
  ['カバルドン','たべのこし','じしん／あくび／ステルスロック／なまける','起点作成・クッション'],
@@ -1654,6 +1654,7 @@ function buildLeadInspector(opponents){
   '<label for="lead-inspector-select">確認する自分の先発候補（選択3匹内）</label> '+
   '<select id="lead-inspector-select">'+roster.map(p=>
    '<option value="'+esc(p[0])+'"'+(p[0]===inspectedLead?' selected':'')+'>'+esc(p[0])+'</option>').join('')+'</select>'+
+  '<div id="adverse-lead-scenarios">'+renderAdverseLeadScenarios(opponents,inspectedLead)+'</div>'+ 
   '<div id="lead-inspector-rows">'+renderLeadInspectorRows(opponents,inspectedLead)+'</div>'+buildMoveAudit(opponents,inspectedTrio,inspectedLead)+'</section>';
 }
 $('#result').addEventListener('change',event=>{
@@ -1678,6 +1679,7 @@ $('#result').addEventListener('change',event=>{
   if(opponents.every(Boolean)){
    $('#trio-inspector-rows').innerHTML=renderTrioRiskRows(opponents,inspectedTrio);
    $('#lead-inspector-rows').innerHTML=renderLeadInspectorRows(opponents,inspectedLead);
+   $('#adverse-lead-scenarios').innerHTML=renderAdverseLeadScenarios(opponents,inspectedLead);
    refreshMoveAudit(opponents,inspectedTrio,inspectedLead);
   }
   return;
@@ -1698,6 +1700,7 @@ $('#result').addEventListener('change',event=>{
  const opponents=fields.map(f=>f.value.trim());
  if(opponents.every(Boolean)){
   $('#lead-inspector-rows').innerHTML=renderLeadInspectorRows(opponents,lead);
+  $('#adverse-lead-scenarios').innerHTML=renderAdverseLeadScenarios(opponents,lead);
   refreshMoveAudit(opponents,inspectedTrio,inspectedLead);
   $('#trio-inspector-rows').innerHTML=renderTrioRiskRows(opponents,inspectedTrio);
  }
