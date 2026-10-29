@@ -1811,7 +1811,7 @@ def main():
             assert move_audit.locator('.move-audit-foe').count()==6
             assert move_audit.locator('.move-audit-cell').count()==72
             assert move_audit.locator('[data-audit-status="safe"]').count()==0
-            assert '安全認定0件' in move_audit.inner_text()
+            assert '安全認定0件' in move_audit.text_content()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             # The current manual trio and lead survive reload; the audit follows.
             assert page.locator('#result .move-audit-cell').count()==72
