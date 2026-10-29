@@ -1515,6 +1515,7 @@ def main():
                 assert warning.locator('.line').count()==expected, (opponent,warning.inner_text())
                 assert needle in warning.inner_text(), (opponent,needle)
                 if opponent=='メガヤミラミ':
+                    page.locator('#result .risk-matrix summary').click()
                     assert 'ステルスロック反射' in page.locator('#result .risk-matrix').inner_text()
                     assert 'ステルスロック反射' in page.locator('#result .trio-inspector-details').inner_text()
                     assert 'ステルスロック：反射' in page.locator('#result .lead-inspector').inner_text()
