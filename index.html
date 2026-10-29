@@ -615,6 +615,7 @@ const furtherGhostImmunityTargets=Object.freeze([
 // 2026-10-30: exact Normal-type forms. This is negative move evidence,
 // not proof of a safe matchup. Never inherit from one Mega/form to another.
 const normalGhostImmunityTargets=Object.freeze([
+ {form:'ヒスイゾロアーク',source:'https://gamewith.jp/pokemon-champions/553385',sourceUpdated:'2026-10-27'},
  {form:'カビゴン',source:'https://gamewith.jp/pokemon-champions/554963',sourceUpdated:'2026-10-29'},
  {form:'ガルーラ',source:'https://gamewith.jp/pokemon-champions/553207',sourceUpdated:'2026-10-27'},
  {form:'メガガルーラ',source:'https://gamewith.jp/pokemon-champions/554826',sourceUpdated:'2026-10-30'},
@@ -767,9 +768,10 @@ const verifiedUnsafeActionEvidence=Object.freeze([
   moveSource:'https://gamewith.jp/pokemon-champions/554474',moveUpdated:'2026-10-27',
   mechanicSource:'https://gamewith.jp/pokemon-champions/546446',mechanicUpdated:'2026-10-28',
   updated:'2026-10-30',scope:'verified-unsafe-action',reviewed:true},
- // 2026-10-30: 5 Normal exact forms x 4 registered Ghost attacks.
+ // 2026-10-30: 5 Normal exact forms x 4 Ghost attacks, plus 3 new Hisuian Zoroark vetoes.
  // Conditional on ordinary type rules; does not certify safe leads.
- ...normalGhostImmunityTargets.flatMap(t=>ghostDamageRosterMoves.map(m=>({
+ ...normalGhostImmunityTargets.flatMap(t=>ghostDamageRosterMoves.filter(m=>
+  !(t.form==='ヒスイゾロアーク' && m.action==='ポルターガイスト')).map(m=>({
   form:t.form,ownLead:m.ownLead,heldItem:m.heldItem,ability:'type-only',
   action:m.action,outcome:'immune',
   when:'相手が'+t.form+'（ノーマルタイプ）で通常のタイプ相性が適用される場合。タイプ無効を変更する特殊な例外は未検証。別のメガ・形態に継承しない。',
