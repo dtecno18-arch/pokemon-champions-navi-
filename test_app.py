@@ -1514,6 +1514,10 @@ def main():
                 warning=page.locator('#result .verified-unsafe-action')
                 assert warning.locator('.line').count()==expected, (opponent,warning.inner_text())
                 assert needle in warning.inner_text(), (opponent,needle)
+                if opponent=='メガヤミラミ':
+                    assert 'ステルスロック反射' in page.locator('#result .risk-matrix').inner_text()
+                    assert 'ステルスロック反射' in page.locator('#result .trio-inspector-details').inner_text()
+                    assert 'ステルスロック：反射' in page.locator('#result .lead-inspector').inner_text()
                 assert page.locator('#result .hero').count()==0
                 assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
                 assert page.evaluate('() => document.documentElement.scrollWidth <= innerWidth + 2')
