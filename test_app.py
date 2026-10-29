@@ -1531,7 +1531,10 @@ def main():
 
             # Five exact negative move interactions; normal forms remain
             # uncertain until Mega evolution, and sibling Mega forms are distinct.
-            new_unsafe=page.evaluate("""() => verifiedUnsafeActionEvidence.slice(19,24).map(e=>({
+            new_unsafe=page.evaluate("""() => verifiedUnsafeActionEvidence.filter(e=>
+              e.form==='メガアブソルZ' ||
+              (['メガボーマンダ','メガガブリアスZ'].includes(e.form) && e.action==='じしん')
+            ).map(e=>({
               form:e.form,lead:e.ownLead,move:e.action,
               valid:isVerifiedUnsafeActionEvidence(e),
               wrongSource:isVerifiedUnsafeActionEvidence({...e,source:''}),
