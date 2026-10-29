@@ -9,6 +9,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -17,6 +18,14 @@ ALTERNATE_URL = "https://web-view.app.pokemonchampions.jp/battle/pages/events/ic
 REPORT = Path(os.environ.get("MC_AUDIT_REPORT", "mc-roster-audit.json"))
 APP = Path(os.environ.get("MC_AUDIT_APP", "index.html"))
 MIN_EXPECTED = 262  # Official M-C has 262 battle-form entries (2026-10-29).
+# Independent, live Mega notices. Count-only checks can miss a swapped form.
+MEGA_NOTICES = {
+    "M-A": ("https://champions-news.pokemon-home.com/ja/page/751.html", 59),
+    "M-B": ("https://champions-news.pokemon-home.com/ja/page/776.html", 16),
+    "M-C": ("https://news.pokemon-home.com/ja/page/816.html", 6),
+}
+MEGA_SEX_EXPANSIONS = {"メガニャオニクス": ["メガニャオニクス(オス)", "メガニャオニクス(メス)"]}
+
 
 # Official eligible-list codes collapse some cosmetic forms to one battle entry.
 # Expand only with independently dated form-specific evidence.
@@ -77,6 +86,67 @@ def extract_official_payload(text):
     return out
 
 
+def extract_official_megas(text):
+    """Read only the Mega list between the official notice and item headings.
+
+    Normalize full-width X/Y/Z and reject a missing section instead of
+    accepting an unrelated article paragraph containing 'メガ'.
+    """
+    text = unicodedata.normalize("NFKC", text).replace("\u200b", "")
+    start = "下記のポケモンです。"
+    end = "ポケモンの持ち物"
+    if start not in text or end not in text.split(start, 1)[1]:
+        raise ValueError("Official Mega notice section missing")
+    section = text.split(start, 1)[1].split(end, 1)[0]
+    names = re.findall(r"メガ[ァ-ヶー]+(?:[XYZ])?", section)
+    if not names or len(names) != len(set(names)):
+        raise ValueError("Official Mega notice empty or duplicated")
+    return names
+
+
+def reconcile_official_megas(notices, app_buckets, app_inputs, candidates):
+    """Exact set equality, not merely 82 Megas by count."""
+    for regulation, (url, expected_count) in MEGA_NOTICES.items():
+        source = notices.get(regulation, [])
+        app = app_buckets.get(regulation, [])
+        if len(source) != expected_count or len(app) != expected_count:
+            raise ValueError(f"{regulation} Mega count changed: official={len(source)}, app={len(app)}")
+        if len(set(app)) != len(app):
+            raise ValueError(f"{regulation} app Mega list has duplicate entries")
+    official = {key: set(names) for key, names in notices.items()}
+    app = {key: set(names) for key, names in app_buckets.items()}
+    bucket_diff = {key: {
+        "missing": sorted(official[key] - app[key]),
+        "extra": sorted(app[key] - official[key]),
+    } for key in MEGA_NOTICES}
+    named = set().union(*official.values())
+    if sum(map(len, official.values())) != len(named):
+        raise ValueError("Same official Mega appears in multiple regulations")
+    expanded = set(named)
+    for base, forms in MEGA_SEX_EXPANSIONS.items():
+        if base not in expanded:
+            raise ValueError(f"Missing source for Mega sex expansion: {base}")
+        expanded.remove(base)
+        expanded.update(forms)
+    inputs = set(app_inputs)
+    actual = set(candidates)
+    return {
+        "officialNamed": len(named),
+        "officialExpanded": len(expanded),
+        "bucketDiff": bucket_diff,
+        "inputMissing": sorted(expanded - inputs),
+        "inputExtra": sorted(inputs - expanded),
+        "candidateMissing": sorted(expanded - actual),
+        "candidateExtra": sorted(actual - expanded),
+        "duplicateInputs": len(app_inputs) != len(inputs),
+        "duplicateCandidates": len(candidates) != len(actual),
+        "passed": all(not d["missing"] and not d["extra"] for d in bucket_diff.values())
+            and len(named) == 81 and len(expanded) == 82
+            and inputs == expanded and actual == expanded
+            and len(app_inputs) == len(inputs) and len(candidates) == len(actual),
+    }
+
+
 def audit():
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
@@ -118,6 +188,22 @@ def audit():
             raise RuntimeError("Cosmetic expansion missing a dated source")
         expanded = [(dex, name, code, FORM_EXPANSIONS.get(code, [name]))
                     for dex, name, code in entries]
+        mega_notices = {}
+        mega_sources = []
+        for regulation, (url, expected) in MEGA_NOTICES.items():
+            notice = browser.new_page(locale="ja-JP")
+            try:
+                response = notice.goto(url, wait_until="domcontentloaded", timeout=30000)
+                if response is None or response.status != 200:
+                    raise RuntimeError(f"{regulation} official Mega notice HTTP error")
+                names = extract_official_megas(notice.locator("body").inner_text(timeout=15000))
+                if len(names) != expected:
+                    raise RuntimeError(f"{regulation} official Mega notice changed: {len(names)} != {expected}")
+                mega_notices[regulation] = names
+                mega_sources.append({"regulation": regulation, "url": url,
+                                     "count": len(names), "httpStatus": response.status})
+            finally:
+                notice.close()
         app = browser.new_page(locale="ja-JP")
         app.goto(APP.resolve().as_uri(), wait_until="load")
         data = app.evaluate("""(official) => {
@@ -128,10 +214,18 @@ def audit():
                 nonMegaCount: normal.length,
                 megaCount: options.filter(isMegaForm).length,
                 official: official.map(([dex, name, code, forms]) => ({dex, name, code, keys: forms.map(formKey)})),
-                candidates: normal.map(name => ({name, key: formKey(name)}))
+                candidates: normal.map(name => ({name, key: formKey(name)})),
+                megaBuckets: {'M-A': officialMegaMa, 'M-B': officialMegaMb, 'M-C': officialMegaMc},
+                megaInputForms: megaInputForms.map(formKey),
+                // Independent prefix check catches unknown Mega entries even if
+                // isMegaForm() fails to recognize them.
+                actualMegaCandidates: options.filter(n => n.startsWith('メガ')).map(formKey)
             };
         }""", expanded)
         browser.close()
+    mega_audit = reconcile_official_megas(
+        mega_notices, data["megaBuckets"], data["megaInputForms"], data["actualMegaCandidates"]
+    )
     official_keys = {key for x in data["official"] for key in x["keys"]}
     official_labels = [(x["dex"], x["name"]) for x in data["official"]]
     ambiguous = [x for x in data["official"]
@@ -160,8 +254,10 @@ def audit():
         "unresolvedAmbiguities": unresolved_ambiguities,
         "documentedFormExpansions": [{"code": code, "forms": forms, "source": EXPANSION_SOURCES[code][0], "updated": EXPANSION_SOURCES[code][1], "basis": EXPANSION_SOURCES[code][2]} for code, forms in FORM_EXPANSIONS.items()],
         "megaInputForms": data["megaCount"],
-        "passed": not missing and not extra and not duplicate_keys and not unresolved_ambiguities and len(official_keys) == data["nonMegaCount"] and len(entries) >= MIN_EXPECTED and data["megaCount"] == 82,
-        "scope": "262 official M-C battle-form codes plus documented cosmetic expansions; 82 Mega input forms independently listed in official M-A/B/C notices."
+        "megaNoticeSources": mega_sources,
+        "megaExactAudit": mega_audit,
+        "passed": not missing and not extra and not duplicate_keys and not unresolved_ambiguities and len(official_keys) == data["nonMegaCount"] and len(entries) >= MIN_EXPECTED and data["megaCount"] == 82 and mega_audit["passed"],
+        "scope": "262 official M-C battle-form codes plus documented cosmetic expansions; all 81 official Mega names (82 input forms) checked by exact set equality against live M-A/B/C notices."
     }
 
 
