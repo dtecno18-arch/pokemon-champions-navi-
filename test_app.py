@@ -1111,6 +1111,9 @@ def main():
             assert '検証済み対面率 0%' in page.locator('#result .evidence-summary').inner_text()
             assert '条件付き技相互作用 9件' in page.locator('#result .conditional-interactions').inner_text()
             assert page.locator('#result .conditional-interactions .line').count() == 9
+            assert page.locator('#result .conditional-interactions details').get_attribute('open') is None
+            page.locator('#result .conditional-interactions summary').click()
+            assert page.locator('#result .conditional-interactions details').get_attribute('open') is not None
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert page.locator('#result .hero').count() == 0
             page.locator('#foe0').fill('イエッサン(メス)')
