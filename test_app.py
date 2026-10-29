@@ -1918,24 +1918,42 @@ def main():
             assert ['シャンデラ',1] in expanded['megaBranch'], expanded
             assert ['メガシャンデラ',1] in expanded['megaBranch'], expanded
             assert expanded['noSafe'] and expanded['disguise']==[True,True], expanded
-            # Disguised leads are a separate visible warning, never a safe
-            # classification; the ordinary and Hisuian forms remain distinct.
-            for i, name in enumerate(['ゾロアーク','ヒスイゾロアーク','シャンデラ',
+            # Species clause: normal and Hisuian Zoroark cannot occupy
+            # two slots of the same opposing team. Test their warnings
+            # separately, while preserving exact-form immunity evidence.
+            for i, name in enumerate(['ゾロアーク','メガリザードンY','シャンデラ',
                                       'カバルドン','ニンフィア','ドドゲザン']):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
             assert page.locator('#result .disguise-uncertainty').count()==1
             warning=page.locator('#result .disguise-uncertainty').inner_text()
-            assert 'ゾロアーク' in warning and 'ヒスイゾロアーク' in warning
+            heading=page.locator('#result .disguise-uncertainty b').first.inner_text()
+            assert 'ゾロアーク' in heading and 'ヒスイゾロアーク' not in heading
             assert 'イリュージョン' in warning and '見た目' in warning
             assert page.locator('#result .hero').count()==0
             assert page.locator('#result .abstention-banner').count()==1
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
-            # A normal Zoroark preview cannot inherit the Normal/Ghost veto.
-            page.locator('#foe1').fill('メガリザードンY')
+            # Hisuian Zoroark must trigger the same disguise warning, but
+            # only the Hisuian form has the separate Normal/Ghost veto.
+            page.locator('#foe0').fill('ヒスイゾロアーク')
             page.locator('#analyze').click()
             assert page.locator('#result .disguise-uncertainty').count()==1
-            assert 'ヒスイゾロアーク' not in page.locator('#result .disguise-uncertainty').inner_text()
+            heading=page.locator('#result .disguise-uncertainty b').first.inner_text()
+            assert 'ヒスイゾロアーク' in heading
+            assert page.locator('#result .hero').count()==0
+            assert page.locator('#result .abstention-banner').count()==1
+            # Both forms in the same six-slot preview violate species
+            # uniqueness, not evidence validation. Reject before analysis.
+            page.locator('#foe1').fill('ゾロアーク')
+            page.locator('#analyze').click()
+            assert '同じポケモンが重複' in page.locator('#status').inner_text()
+            assert not page.locator('#result').is_visible()
+            # Restore a valid six before checking the ordinary form again.
+            page.locator('#foe1').fill('メガリザードンY')
+            page.locator('#foe0').fill('ゾロアーク')
+            page.locator('#analyze').click()
+            assert page.locator('#result .disguise-uncertainty').count()==1
+            assert 'ヒスイゾロアーク' not in page.locator('#result .disguise-uncertainty b').first.inner_text()
             assert page.locator('#result .hero').count()==0
             page.locator('#clear').click()
             # Unknown Pokémon must not crash the app or inject markup.
