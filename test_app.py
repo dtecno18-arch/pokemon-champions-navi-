@@ -961,6 +961,17 @@ def main():
                 assert risk.count() == 1
                 assert all(x in risk.inner_text() for x in (own, opponent, warning, '未検証'))
                 assert risk.locator('a[href*="'+source+'"]').count() == 1
+                # Reviewed M-7 observations are form-specific warning context,
+                # not proof of an advantageous lead or a complete move set.
+                observed = {
+                    'メガグソクムシャ': ('54〜101', 'ふいうち 80.2%', 'であいがしら', '優先度+2', '5位'),
+                    'メガリザードンY': ('108〜167', 'ソーラービーム 65.2%', '先制技候補', '未確認', '6位'),
+                    'メガゲンガー': ('135〜200', 'シャドーボール 81.4%', 'かげふみ', '未確認', '23位'),
+                }[opponent]
+                assert all(x in risk.inner_text() for x in observed), (opponent, risk.inner_text())
+                assert '全型の上下限ではありません' in risk.inner_text()
+                assert 'メガ型への採用を断定しません' in risk.inner_text()
+                assert '2026-10-28' in risk.inner_text()
                 assert '出典付き条件付き対面注意 1件' in page.locator('#result .evidence-summary').inner_text()
                 assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
                 assert page.locator('#result .hero').count() == 0
@@ -971,6 +982,22 @@ def main():
             page.locator('#foe0').fill('エースバーン')
             page.locator('#analyze').click()
             assert page.locator('#result .reviewed-pair-risks').count() == 0
+            # Badly sourced or structurally corrupt data must not appear
+            # as reviewed risks, nor be promoted to verified matchups.
+            risk_gate = page.evaluate("""() => {
+              const p=reviewedPairRisks[0];
+              return [
+                isReviewedPairRisk(p),
+                isReviewedPairRisk({...p,statsUpdated:'unknown'}),
+                isReviewedPairRisk({...p,usageRank:0}),
+                isReviewedPairRisk({...p,speedExampleMin:200,speedExampleMax:101}),
+                isReviewedPairRisk({...p,observedMoves:[{move:'ふいうち',percent:120}]}),
+                isReviewedPairRisk({...p,priorityMoves:[{move:'ふいうち',priority:0,condition:'always'}]}),
+                isReviewedPairRisk({...p,scope:'safe-lead'}),
+                Object.keys(verifiedMatchupEvidence).length
+              ];
+            }""")
+            assert risk_gate == [True, False, False, False, False, False, False, 0], risk_gate
 
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
