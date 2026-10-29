@@ -1931,13 +1931,6 @@ def main():
             assert 'ゾロアーク' in heading and 'ヒスイゾロアーク' not in heading
             assert 'イリュージョン' in warning and '見た目' in warning
             assert page.locator('#result .hero').count()==0
-            page.locator('#lead-inspector-select').select_option('ミミッキュ')
-            assert page.locator('#result .adverse-lead-case').count()==1
-            assert 'かげうち' in page.locator('#result .adverse-lead-cases').inner_text()
-            page.locator('#lead-inspector-select').select_option('ギルガルド')
-            assert page.locator('#result .adverse-lead-case').count()==1
-            assert 'インファイト' in page.locator('#result .adverse-lead-cases').inner_text()
-            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             assert page.locator('#result .abstention-banner').count()==1
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             # Hisuian Zoroark must trigger the same disguise warning, but
@@ -2234,6 +2227,13 @@ def main():
             page.locator('#lead-inspector-select').select_option('メガカイリュー')
             assert page.locator('#result .adverse-lead-case').count()==3
             assert 'しんそく' in page.locator('#result .adverse-lead-cases').inner_text()
+            page.locator('#lead-inspector-select').select_option('ミミッキュ')
+            assert page.locator('#result .adverse-lead-case').count()==1
+            assert 'かげうち' in page.locator('#result .adverse-lead-cases').inner_text()
+            page.locator('#lead-inspector-select').select_option('ギルガルド')
+            assert page.locator('#result .adverse-lead-case').count()==1
+            assert 'インファイト' in page.locator('#result .adverse-lead-cases').inner_text()
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             assert page.locator('#result .abstention-banner').count()==1
 
             # Unknown Pokémon must not crash the app or inject markup.
