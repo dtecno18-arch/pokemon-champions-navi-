@@ -1117,7 +1117,7 @@ def main():
             page.locator('#foe0').fill('メガグソクムシャ')
             page.locator('#analyze').click()
             assert page.locator('#result .conditional-interactions .line').count() == 4
-            page.locator('#foe0').fill('メガリザードンY')
+            page.locator('#foe0').fill('メガゲンガー')
             page.locator('#analyze').click()
             assert page.locator('#result .conditional-interactions').count() == 0
 
