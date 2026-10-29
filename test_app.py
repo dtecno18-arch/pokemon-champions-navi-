@@ -1153,9 +1153,44 @@ def main():
                 verifiedSafeCount:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
-            assert unsafe_gate == {'count':55,'valid':True,'wrongSource':False,
+            assert unsafe_gate == {'count':61,'valid':True,'wrongSource':False,
                 'wrongAbility':False,'ghostLead':False,'wrongItem':False,
                 'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
+
+            # Six source-dated exact-form Earthquake vetoes. The ordinary
+            # Charizard/Gyarados branch must not contaminate Mega X/Gyarados.
+            ground_audit = page.evaluate("""() => {
+              const expected=['ボーマンダ','リザードン','ギャラドス',
+                'アーマーガア','ウォッシュロトム','ロトム'];
+              const records=verifiedUnsafeActionEvidence.filter(e=>
+                expected.includes(e.form) && e.action==='じしん');
+              return {
+                newCount:records.length,
+                allVerified:records.every(isVerifiedUnsafeActionEvidence),
+                allDated:records.every(e=>e.sourceUpdated && e.moveUpdated &&
+                  e.mechanicUpdated && e.updated),
+                noMegaX:!verifiedUnsafeActionsFor(['メガリザードンX'])
+                  .some(e=>e.action==='じしん'),
+                noMegaGyarados:!verifiedUnsafeActionsFor(['メガギャラドス'])
+                  .some(e=>e.action==='じしん'),
+                normalCharizard:verifiedUnsafeActionsFor(['リザードン'])
+                  .filter(e=>e.action==='じしん').length,
+                normalGyarados:verifiedUnsafeActionsFor(['ギャラドス'])
+                  .filter(e=>e.action==='じしん').length,
+                washRotom:verifiedUnsafeActionsFor(['ウォッシュロトム'])
+                  .filter(e=>e.action==='じしん').length,
+                wrongSource:isVerifiedUnsafeActionEvidence({...records[0],
+                  source:'https://invalid.example'}),
+                safeCount:Object.keys(verifiedMatchupEvidence).length
+              };
+            }""")
+            assert ground_audit == {
+                'newCount':6,'allVerified':True,'allDated':True,
+                'noMegaX':True,'noMegaGyarados':True,
+                'normalCharizard':2,'normalGyarados':1,
+                'washRotom':1,'wrongSource':False,'safeCount':0
+            }, ground_audit
+
             # Reviewed interaction facts: 5 terrain-vs-priority moves and 4
             # Mega Golisopod First Impression (+2) vs roster priority (+1).
             # They must NEVER count as safe matchup answers.
