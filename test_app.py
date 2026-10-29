@@ -1139,7 +1139,7 @@ def main():
               item:p.item,ability:p.ability,moves:p.moves,
               speed:[p.speedMin,p.speedMax],sample:p.sampleSpeed
             }))""")
-            assert len(sample_profiles)==7
+            assert len(sample_profiles)==10
             assert sample_profiles[0]['form']=='メガグソクムシャ'
             assert sample_profiles[0]['regulation']=='M-C'
             assert sample_profiles[0]['speed']==[54,101]
@@ -1336,7 +1336,7 @@ def main():
             assert page.locator('#result .hero').count() == 0
 
             # Four new current M-C profiles (separate from verified safe matchups).
-            current_mc=page.evaluate("""() => reviewedOpponentProfiles.slice(3).map(p=>({
+            current_mc=page.evaluate("""() => reviewedOpponentProfiles.slice(3,7).map(p=>({
               form:p.form,regulation:p.regulation,source:p.source,updated:p.updated,
               item:p.item,ability:p.ability,speed:[p.speedMin,p.speedMax],
               moves:p.moves,priority:p.priority
@@ -1352,6 +1352,74 @@ def main():
             assert current_mc[2]['ability']=='はどうのぼうご'
             assert current_mc[3]['ability']=='きれあじ'
             assert page.evaluate("() => Object.keys(verifiedMatchupEvidence).length")==0
+            # Three new M-C sources, including the actual Shell Smash loss
+            # condition, are reference profiles rather than safe matchups.
+            expanded=page.evaluate("""() => reviewedOpponentProfiles.slice(7).map(p=>({
+              form:p.form,source:p.source,updated:p.updated,usageRank:p.usageRank,
+              item:p.item,ability:p.ability,moves:p.moves,
+              speed:[p.speedMin,p.speedMax],boost:boostedSpeedRange(p),
+              priority:p.priority,valid:isReviewedOpponentProfile(p)
+            }))""")
+            assert [x['form'] for x in expanded]==[
+                'メガカメックス','メガセグレイブ','メガゲッコウガ']
+            assert [x['speed'] for x in expanded]==[
+                [88,143],[96,152],[145,213]]
+            assert [x['boost'] for x in expanded]==[
+                [176,286],[144,228],None]
+            assert [x['usageRank'] for x in expanded]==[34,13,28]
+            assert all(x['valid'] and x['source'].startswith(
+                'https://gamewith.jp/pokemon-champions/') and
+                x['updated']=='2026-10-28' for x in expanded)
+            assert expanded[0]['item']=='カメックスナイト'
+            assert expanded[0]['ability']=='メガランチャー'
+            assert 'からをやぶる' in expanded[0]['moves']
+            assert expanded[1]['ability']=='ねつこうかん'
+            assert 'こおりのつぶて' in expanded[1]['moves']
+            assert expanded[2]['ability']=='へんげんじざい'
+            assert 'みずしゅりけん+1' in expanded[2]['priority']
+            bad_profile=page.evaluate("""() => {
+              const p=reviewedOpponentProfiles[7];
+              return {
+                source:isReviewedOpponentProfile({...p,source:''}),
+                date:isReviewedOpponentProfile({...p,updated:'unknown'}),
+                speed:isReviewedOpponentProfile({...p,speedMin:300,speedMax:143}),
+                boost:isReviewedOpponentProfile({...p,boostedSpeedStage:3}),
+                move:isReviewedOpponentProfile({...p,boostedSpeedMove:'未収録技'}),
+                invalidBoost:boostedSpeedRange({...p,boostedSpeedStage:3}),
+                reviewedCount:reviewedOpponentProfiles.filter(isReviewedOpponentProfile).length,
+                verifiedSafe:Object.keys(verifiedMatchupEvidence).length
+              };
+            }""")
+            assert bad_profile=={
+                'source':False,'date':False,'speed':False,'boost':False,
+                'move':False,'invalidBoost':None,'reviewedCount':10,
+                'verifiedSafe':0}, bad_profile
+            for i,name in enumerate(['カメックス','セグレイブ','ゲッコウガ',
+                                     'アシレーヌ','ガブリアス','ペリッパー']):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .hero').count()==0
+            assert page.locator('#result .reviewed-opponent-profile').count()==4
+            assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
+            page.locator('#result .reviewed-opponent-profiles summary').click()
+            assert page.locator('#result .boosted-speed-risk').count()==2
+            assert page.locator('#result .boosted-speed-comparison').count()==12
+            boost_text=page.locator('#result .reviewed-opponent-profiles').inner_text()
+            assert 'からをやぶる成功時のみ素早さ+2段階：176〜286' in boost_text
+            assert 'りゅうのまい成功時のみ素早さ+1段階：144〜228' in boost_text
+            assert 'みずしゅりけん+1' in boost_text
+            page.locator('#result .risk-matrix summary').click()
+            matrix=page.locator('#result .risk-matrix')
+            assert matrix.locator('.matrix-cell').count()==36
+            assert 'からをやぶる成功後の素早さ176〜286' in matrix.inner_text()
+            assert 'りゅうのまい成功後の素早さ144〜228' in matrix.inner_text()
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            # Exact Mega and pre-Mega branches both show a conditional boost.
+            page.locator('#foe0').fill('メガカメックス')
+            page.locator('#analyze').click()
+            assert page.locator('#result .boosted-speed-risk').count()==1
+            assert page.locator('#result .hero').count()==0
+
             # Five exact negative move interactions; normal forms remain
             # uncertain until Mega evolution, and sibling Mega forms are distinct.
             new_unsafe=page.evaluate("""() => verifiedUnsafeActionEvidence.slice(19).map(e=>({
