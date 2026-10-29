@@ -1777,6 +1777,44 @@ def main():
             assert page.locator('#lead-inspector-select').input_value()=='ギルガルド'
             assert page.locator('#result .trio-inspector-cell').count()==18
             assert page.locator('#result .hero').count()==0
+            # The 3 x 4 x 6 move audit is a negative-evidence inspection.
+            # Every branch is exact; unknown must NEVER render as safe.
+            audit=page.evaluate("""() => {
+              const normal=auditMoveAgainstOpponent('カバルドン','じしん','リザードン');
+              const x=auditMoveAgainstOpponent('カバルドン','じしん','メガリザードンX');
+              const ghost=auditMoveAgainstOpponent('メガカイリュー','しんそく','メガゲンガー');
+              const terrain=auditMoveAgainstOpponent('メガルカリオZ','しんくうは','イエッサン');
+              const priority=auditMoveAgainstOpponent('メガルカリオZ','しんくうは','メガグソクムシャ');
+              const bounce=auditMoveAgainstOpponent('カバルドン','ステルスロック','メガヤミラミ');
+              return {normal:normal.branches.map(b=>[b.form,b.vetoes.length]),
+                normalStatus:normal.status,x:x.status,ghost:ghost.status,
+                terrain:terrain.branches.map(b=>[b.form,b.cautions.length]),
+                terrainStatus:terrain.status,priority:priority.status,
+                bounce:bounce.status,
+                switchExcluded:ghost.branches.every(b=>b.vetoes.every(e=>e.action==='しんそく')),
+                stats:moveAuditStats(CASES[0],['カバルドン','メガルカリオZ','メガカイリュー'])};
+            }""")
+            assert audit['normalStatus']=='danger'
+            assert ['リザードン',1] in audit['normal']
+            assert ['メガリザードンY',1] in audit['normal']
+            assert ['メガリザードンX',0] in audit['normal']
+            assert audit['x']=='unknown'
+            assert audit['ghost']=='danger' and audit['switchExcluded']
+            assert audit['terrainStatus']=='caution'
+            assert len(audit['terrain'])==2
+            assert all(c>0 for _,c in audit['terrain'])
+            assert audit['priority']=='caution' and audit['bounce']=='danger'
+            assert audit['stats']['total']==72
+            assert sum(audit['stats'][key] for key in ('danger','caution','unknown'))==72
+            move_audit=page.locator('#result .move-audit-details')
+            assert move_audit.count()==1
+            assert move_audit.locator('.move-audit-foe').count()==6
+            assert move_audit.locator('.move-audit-cell').count()==72
+            assert move_audit.locator('[data-audit-status="safe"]').count()==0
+            assert '安全認定0件' in move_audit.inner_text()
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            # The current manual trio and lead survive reload; the audit follows.
+            assert page.locator('#result .move-audit-cell').count()==72
             page.locator('#clear').click()
             assert page.evaluate("sessionStorage.getItem(LEAD_INSPECTOR_KEY)") is None
             assert page.evaluate("sessionStorage.getItem(TRIO_INSPECTOR_KEY)") is None
