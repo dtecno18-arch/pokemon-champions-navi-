@@ -25,6 +25,7 @@ MEGA_NOTICES = {
     "M-C": ("https://news.pokemon-home.com/ja/page/816.html", 6),
 }
 MEGA_SEX_EXPANSIONS = {"メガニャオニクス": ["メガニャオニクス(オス)", "メガニャオニクス(メス)"]}
+MEGA_NOTICE_UPDATED = {"M-A": "2026-04-08", "M-B": "2026-08-05", "M-C": "2026-09-09"}
 
 
 # Official eligible-list codes collapse some cosmetic forms to one battle entry.
@@ -201,7 +202,8 @@ def audit():
                     raise RuntimeError(f"{regulation} official Mega notice changed: {len(names)} != {expected}")
                 mega_notices[regulation] = names
                 mega_sources.append({"regulation": regulation, "url": url,
-                                     "count": len(names), "httpStatus": response.status})
+                                     "count": len(names), "httpStatus": response.status,
+                                     "noticeUpdated": MEGA_NOTICE_UPDATED[regulation]})
             finally:
                 notice.close()
         app = browser.new_page(locale="ja-JP")
