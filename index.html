@@ -381,7 +381,8 @@ const reviewedOpponentProfiles=Object.freeze([
   moves:['ゴールドラッシュ','シャドーボール','パワージェム','トリック'],
   alternateMoves:['10まんボルト','わるだくみ','じこさいせい'],
   speedMin:149,speedMax:149,sampleSpeed:149,
-  priority:'掲載型に先制技なし。スカーフの行動順は持ち物・メガ前後・能力変化で変動。',
+  speedModifier:'こだわりスカーフ',effectiveSpeedMin:223,effectiveSpeedMax:223,
+  priority:'掲載型に先制技なし。スカーフ有効時は素早さ149×1.5の切捨てで223。技固定・持ち物喪失等は別。',
   caveat:'M-B掲載スカーフ型のLv50実数値149のみ。ふうせん＋わるだくみ型は別個体・別持ち物であり、同時採用を断定しません。M-Cでの採用・対面安全性は未検証。'}),
  Object.freeze({form:'カバルドン',title:'M-Bたべのこしクッション型',
   regulation:'M-A/M-B（過去の参考型）',source:'https://gamewith.jp/pokemon-champions/554955',
@@ -405,6 +406,10 @@ function isReviewedOpponentProfile(p){
   Array.isArray(p.moves) && p.moves.length>0 &&
   p.moves.every(m=>typeof m==='string' && m.length>0) &&
   Array.isArray(p.alternateMoves) &&
+  (p.item!=='こだわりスカーフ' ||
+   (p.speedModifier==='こだわりスカーフ' &&
+    p.effectiveSpeedMin===Math.floor(p.speedMin*1.5) &&
+    p.effectiveSpeedMax===Math.floor(p.speedMax*1.5))) &&
   (p.boostedSpeedStage===undefined ||
    ([1,2].includes(p.boostedSpeedStage) &&
     typeof p.boostedSpeedMove==='string' &&
@@ -420,8 +425,11 @@ function reviewedOpponentProfilesFor(opponents){
   opponents.some(n=>requiredMatchupForms(n).includes(p.form)));
 }
 function referenceSpeedComparison(ownSpeed,p){
- if(ownSpeed>p.speedMax)return '掲載最速例より速い（差+'+(ownSpeed-p.speedMax)+'）';
- if(ownSpeed<p.speedMin)return '掲載最遅例より遅い（差'+(ownSpeed-p.speedMin)+'）';
+ const min=p.item==='こだわりスカーフ'?p.effectiveSpeedMin:p.speedMin;
+ const max=p.item==='こだわりスカーフ'?p.effectiveSpeedMax:p.speedMax;
+ if(!Number.isInteger(min)||!Number.isInteger(max))return '持ち物込みの素早さ未検証';
+ if(ownSpeed>max)return '掲載最速例より速い（差+'+(ownSpeed-max)+'）';
+ if(ownSpeed<min)return '掲載最遅例より遅い（差'+(ownSpeed-min)+'）';
  return '掲載例の範囲内（型次第）';
 }
 function buildReviewedOpponentProfiles(opponents){
@@ -434,7 +442,8 @@ function buildReviewedOpponentProfiles(opponents){
  '<div>掲載主要技（4技確定ではありません）：'+p.moves.map(esc).join('／')+'</div>'+
  '<div class="muted">入替候補：'+p.alternateMoves.map(esc).join('／')+'</div>'+
  '<div class="muted">Lv50素早さ掲載基準 '+p.speedMin+'〜'+p.speedMax+
- (p.sampleSpeed===null?'':'／掲載型の実数値 '+p.sampleSpeed)+'</div>'+
+ (p.sampleSpeed===null?'':'／掲載型の実数値 '+p.sampleSpeed)+
+ (p.item==='こだわりスカーフ'?'／スカーフ有効時 '+p.effectiveSpeedMin+'〜'+p.effectiveSpeedMax:'')+'</div>'+
  (boostedSpeedRange(p)?'<div class="warn boosted-speed-risk" role="note"><b>⚠️ '+esc(p.boostedSpeedMove)+'成功時のみ素早さ+'+p.boostedSpeedStage+'段階：'+boostedSpeedRange(p).join('〜')+'</b><div class="muted">技の採用・成功は未確定です。比較は同じ優先度の通常行動のみ。</div>'+
   roster.map(own=>'<div class="speed-comparison boosted-speed-comparison">'+esc(own[0])+' '+ownLv50Speed[own[0]]+'：'+esc(referenceSpeedComparison(ownLv50Speed[own[0]],{speedMin:boostedSpeedRange(p)[0],speedMax:boostedSpeedRange(p)[1]}))+'</div>').join('')+'</div>':'')+
  '<div class="muted">先制技・特性：'+esc(p.priority)+'</div>'+
@@ -1248,9 +1257,10 @@ function reviewedSpeedReferencesFor(ownName,branches){
  return reviewedOpponentProfiles.filter(p=>isReviewedOpponentProfile(p) &&
    branches.includes(p.form)).map(p=>({
     form:p.form,regulation:p.regulation,updated:p.updated,source:p.source,
-    speedMin:p.speedMin,speedMax:p.speedMax,
-    fasterPossible:p.speedMax>=ownSpeed,
-    text:referenceSpeedComparison(ownSpeed,p)
+    speedMin:p.item==='こだわりスカーフ'?p.effectiveSpeedMin:p.speedMin,
+    speedMax:p.item==='こだわりスカーフ'?p.effectiveSpeedMax:p.speedMax,
+    fasterPossible:(p.item==='こだわりスカーフ'?p.effectiveSpeedMax:p.speedMax)>=ownSpeed,
+    text:referenceSpeedComparison(ownSpeed,p)+(p.item==='こだわりスカーフ'?'（スカーフ有効時）':'')
  }));
 }
 function buildLeadRiskMatrix(opponents){
