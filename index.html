@@ -371,7 +371,28 @@ const reviewedOpponentProfiles=Object.freeze([
  Object.freeze({"form":"メガリザードンX","title":"剣舞・ニトロチャージ物理積み候補","regulation":"M-A/M-B（過去の参考型）","source":"https://gamewith.jp/pokemon-champions/554795","updated":"2026-10-27","usageAsOf":"2026-10-28","usageRank":6,"item":"リザードナイトX","ability":"かたいツメ","moves":["つるぎのまい","ニトロチャージ","フレアドライブ","ドラゴンクロー"],"alternateMoves":["りゅうのまい","はねやすめ","かみなりパンチ"],"speedMin":108,"speedMax":167,"sampleSpeed":null,"boostedSpeedStage":1,"boostedSpeedMove":"ニトロチャージ","priority":"ニトロチャージ命中後は素早さ+1段階。りゅうのまいも入替候補。","caveat":"掲載の育成型はM-A/M-B。リザードン種族全体の使用率であり、メガX/Y選択・技・積み成功・M-Cでの採用は未確定。"}),
  Object.freeze({"form":"メガライチュウX","title":"エレキフィールド物理型","regulation":"M-B（過去の参考型）","source":"https://gamewith.jp/pokemon-champions/562861","updated":"2026-10-28","usageAsOf":"2026-10-28","usageRank":22,"item":"ライチュウナイトX","ability":"エレキメイカー","moves":["ボルテッカー","ボルトチェンジ","アンコール","じゃれつく"],"alternateMoves":["ねこだまし","みがわり","フェイント"],"speedMin":117,"speedMax":178,"sampleSpeed":null,"priority":"ねこだまし+3（登場後最初の技のみ）、フェイント+2は入替候補。","caveat":"掲載の育成型はM-B。ライチュウ全体のM-7シングル集計ではメガX用の石は2.8%。メガY分岐と混同せず、Xの実際の技は未確定。"}),
  Object.freeze({"form":"メガライチュウY","title":"ノーガード・でんじほう特殊型","regulation":"M-B（過去の参考型）","source":"https://gamewith.jp/pokemon-champions/562846","updated":"2026-10-29","usageAsOf":"2026-10-28","usageRank":22,"item":"ライチュウナイトY","ability":"ノーガード","moves":["でんじほう","きあいだま","くさむすび","ボルトチェンジ"],"alternateMoves":["ねこだまし","アンコール","みわくのボイス"],"speedMin":135,"speedMax":200,"sampleSpeed":null,"priority":"ねこだまし+3はダブル掲載候補。ノーガードで相互に技が必中になる。","caveat":"掲載の育成型はM-B。ライチュウ種族全体のM-7シングル集計ではメガY用の石は96.1%。ノーガードは相手の技も必中にする。M-Cでの4技は未確定。"})
-]); 
+ ,
+ // Reviewed M-B examples only; these are NOT confirmed current M-C sets.
+ // Two distinct Gholdengo items are alternatives, never simultaneous.
+ Object.freeze({form:'サーフゴー',title:'M-Bスカーフトリック特殊型',
+  regulation:'M-B（過去の参考型）',source:'https://gamewith.jp/pokemon-champions/564100',
+  updated:'2026-10-29',usageAsOf:'未確認',usageRank:null,
+  item:'こだわりスカーフ',ability:'おうごんのからだ',
+  moves:['ゴールドラッシュ','シャドーボール','パワージェム','トリック'],
+  alternateMoves:['10まんボルト','わるだくみ','じこさいせい'],
+  speedMin:149,speedMax:149,sampleSpeed:149,
+  priority:'掲載型に先制技なし。スカーフの行動順は持ち物・メガ前後・能力変化で変動。',
+  caveat:'M-B掲載スカーフ型のLv50実数値149のみ。ふうせん＋わるだくみ型は別個体・別持ち物であり、同時採用を断定しません。M-Cでの採用・対面安全性は未検証。'}),
+ Object.freeze({form:'カバルドン',title:'M-Bたべのこしクッション型',
+  regulation:'M-A/M-B（過去の参考型）',source:'https://gamewith.jp/pokemon-champions/554955',
+  updated:'2026-10-29',usageAsOf:'未確認',usageRank:null,
+  item:'たべのこし',ability:'すなおこし',
+  moves:['じしん','あくび','なまける','ステルスロック'],
+  alternateMoves:['ふきとばし','まもる'],
+  speedMin:67,speedMax:67,sampleSpeed:67,
+  priority:'掲載型に先制技なし。あくびは相手の特性・みがわり・持ち物で無効になる場合あり。',
+  caveat:'M-A/M-B掲載のLv50実数値67のみ。オボンのみ型は別の持ち物・技候補です。M-Cでの採用・先発安全性は未検証。'})
+]);
 function isReviewedOpponentProfile(p){
  return !!(p && typeof p.form==='string' && p.form &&
   typeof p.regulation==='string' && /^M-[ABC]/.test(p.regulation) &&
@@ -616,6 +637,26 @@ const verifiedUnsafeActionEvidence=Object.freeze([
   mechanicSource:'https://gamewith.jp/pokemon-champions/546446',mechanicUpdated:'2026-10-28',
   updated:'2026-10-29',scope:'verified-unsafe-action',reviewed:true
  }))),
+ // Source-checked, conditional negative 1v1 lead interactions:
+ // 2026-10-29 GameWith Gholdengo: Good as Gold blocks opposing status moves;
+ // Air Balloon set is a DIFFERENT held-item branch, not a universal immunity.
+ // Neither case certifies a safe lead, a KO, or a winning matchup.
+ {form:'サーフゴー',ownLead:'カバルドン',heldItem:'たべのこし',
+  ability:'おうごんのからだ',action:'あくび',outcome:'immune',
+  when:'相手がサーフゴーで特性おうごんのからだが有効な場合。相手を対象にするあくびは効かない。特性変更・かたやぶり等の例外は未検証。',
+  reason:'サーフゴーのおうごんのからだは相手からの変化技を無効化する。あくびを安全な起点作成として扱わない。',
+  source:'https://gamewith.jp/pokemon-champions/564100',sourceUpdated:'2026-10-29',
+  mechanicSource:'https://gamewith.jp/pokemon-champions/564233',mechanicUpdated:'2026-10-27',
+  moveSource:'https://gamewith.jp/pokemon-champions/554330',moveUpdated:'2026-10-27',
+  updated:'2026-10-30',scope:'verified-unsafe-action',reviewed:true},
+ {form:'サーフゴー',ownLead:'カバルドン',heldItem:'たべのこし',
+  ability:'ふうせん',action:'じしん',outcome:'immune',
+  when:'相手サーフゴーがふうせんを持ち、まだ攻撃で割られておらず、地面にいない状態の場合のみ。持ち物未確認、割れた後、じゅうりょく等の例外は未検証。',
+  reason:'GameWithのふうせん型では、ふうせんが有効な間はじしんが当たらない。全サーフゴーがふうせん持ちとは断定しない。',
+  source:'https://gamewith.jp/pokemon-champions/564100',sourceUpdated:'2026-10-29',
+  mechanicSource:'https://gamewith.jp/pokemon-champions/564100',mechanicUpdated:'2026-10-29',
+  moveSource:'https://gamewith.jp/pokemon-champions/554282',moveUpdated:'2026-10-20',
+  updated:'2026-10-30',scope:'verified-unsafe-action',reviewed:true},
  ...magicBounceTargets.flatMap(t=>magicBounceRosterMoves.map(m=>({
   form:t.form,ownLead:'カバルドン',heldItem:'たべのこし',
   ability:'マジックミラー',action:m.action,outcome:'reflected',
@@ -675,6 +716,22 @@ function isVerifiedUnsafeActionEvidence(e){
      e.ability==='マジックミラー' && e.outcome==='reflected' &&
      e.mechanicSource==='https://gamewith.jp/pokemon-champions/555053' &&
      e.mechanicUpdated==='2026-10-27') ||
+    (e.form==='サーフゴー' && e.ownLead==='カバルドン' &&
+     e.heldItem==='たべのこし' && e.outcome==='immune' &&
+     own[2].split('／').includes(e.action) &&
+     e.source==='https://gamewith.jp/pokemon-champions/564100' &&
+     e.sourceUpdated==='2026-10-29' &&
+     ((e.ability==='おうごんのからだ' && e.action==='あくび' &&
+       e.mechanicSource==='https://gamewith.jp/pokemon-champions/564233' &&
+       e.mechanicUpdated==='2026-10-27' &&
+       e.moveSource==='https://gamewith.jp/pokemon-champions/554330' &&
+       e.moveUpdated==='2026-10-27') ||
+      (e.ability==='ふうせん' && e.action==='じしん' &&
+       e.mechanicSource==='https://gamewith.jp/pokemon-champions/564100' &&
+       e.mechanicUpdated==='2026-10-29' &&
+       e.moveSource==='https://gamewith.jp/pokemon-champions/554282' &&
+       e.moveUpdated==='2026-10-20')) &&
+     e.updated==='2026-10-30') ||
     (groundImmuneTargets.some(t=>t.form===e.form && t.ability===e.ability &&
        t.source===e.source && t.sourceUpdated===e.sourceUpdated &&
        t.condition===e.when) &&
