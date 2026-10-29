@@ -1518,6 +1518,55 @@ def main():
             assert 'メガリザードンX：ニトロチャージ成功後の素早さ162〜250' in matrix_text
             assert '先制技・持ち物・メガ前の素早さ・実際の型は未確認' in matrix_text
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            # Interactive lead inspector: six opponents, every exact Mega/form
+            # branch, source-dated negative actions, no positive safety claim.
+            inspection_names=['ゲンガー','リザードン','グソクムシャ',
+                              'イエッサン(メス)','メガガブリアスZ','サーフゴー']
+            for i,name in enumerate(inspection_names):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            inspector=page.locator('#result .lead-inspector')
+            assert inspector.count()==1
+            assert inspector.locator('.lead-inspector-foe').count()==6
+            assert page.locator('#result .hero').count()==0
+            audit=page.evaluate("""() => {
+              const names=['ゲンガー','リザードン','グソクムシャ',
+                           'イエッサン(メス)','メガガブリアスZ','サーフゴー'];
+              const rows=leadRiskRows(names,'カバルドン');
+              return {
+                rows:rows.length,
+                gengar:rows[0].branches.map(b=>b.form),
+                trap:rows[0].branches.find(b=>b.form==='メガゲンガー').unsafe
+                  .some(e=>e.action==='manual-switch' && e.outcome==='blocked'),
+                charizard:rows[1].branches.map(b=>b.form),
+                quake:rows[1].branches.find(b=>b.form==='メガリザードンY').unsafe
+                  .some(e=>e.action==='じしん' && e.outcome==='immune'),
+                indeedee:rows[3].branches.map(b=>b.form),
+                noSafe:Object.keys(verifiedMatchupEvidence).length===0
+              };
+            }""")
+            assert audit=={
+                'rows':6,'gengar':['ゲンガー','メガゲンガー'],
+                'trap':True,'charizard':['リザードン','メガリザードンX','メガリザードンY'],
+                'quake':True,'indeedee':['イエッサン(メス)'],'noSafe':True
+            },audit
+            inspector.locator('#lead-inspector-select').select_option('メガカイリュー')
+            assert inspector.locator('.lead-inspector-foe').count()==6
+            assert inspector.locator('.lead-inspector-veto').count()>=1
+            assert inspector.locator('.lead-inspector-conditional').count()>=1
+            assert 'しんそく' in inspector.inner_text()
+            assert 'この分岐の勝敗・交代先・選出の安全性は未検証' in inspector.inner_text()
+            assert page.evaluate("sessionStorage.getItem(LEAD_INSPECTOR_KEY)")=='メガカイリュー'
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            page.reload(wait_until='domcontentloaded')
+            assert [page.locator(f'#foe{i}').input_value() for i in range(6)]==inspection_names
+            page.locator('#analyze').click()
+            assert page.locator('#lead-inspector-select').input_value()=='メガカイリュー'
+            assert page.locator('#result .hero').count()==0
+            page.locator('#clear').click()
+            assert page.evaluate("sessionStorage.getItem(LEAD_INSPECTOR_KEY)") is None
+            assert all(page.locator(f'#foe{i}').input_value()=='' for i in range(6))
+            assert not errors, errors
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):
