@@ -1164,6 +1164,7 @@ def main():
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
             assert page.locator('#result .reviewed-opponent-profile').count()==3
+            page.locator('#result .reviewed-opponent-profiles summary').click()
             assert page.locator('#result .speed-comparison').count()==18
             assert '出典付き主要型参考例 3件' in page.locator('#result .evidence-summary').inner_text()
             assert 'M-A/M-B（過去の参考型）' in page.locator('#result .reviewed-opponent-profiles').inner_text()
