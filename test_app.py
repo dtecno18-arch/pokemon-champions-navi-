@@ -1139,7 +1139,7 @@ def main():
               item:p.item,ability:p.ability,moves:p.moves,
               speed:[p.speedMin,p.speedMax],sample:p.sampleSpeed
             }))""")
-            assert len(sample_profiles)==10
+            assert len(sample_profiles)==14
             assert sample_profiles[0]['form']=='メガグソクムシャ'
             assert sample_profiles[0]['regulation']=='M-C'
             assert sample_profiles[0]['speed']==[54,101]
@@ -1164,17 +1164,17 @@ def main():
             for i,name in enumerate(profile_names):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==4
+            assert page.locator('#result .reviewed-opponent-profile').count()==5
             page.locator('#result .reviewed-opponent-profiles summary').click()
-            assert page.locator('#result .speed-comparison').count()==24
-            assert '出典付き主要型参考例 4件' in page.locator('#result .evidence-summary').inner_text()
+            assert page.locator('#result .speed-comparison').count()==36
+            assert '出典付き主要型参考例 5件' in page.locator('#result .evidence-summary').inner_text()
             assert 'M-A/M-B（過去の参考型）' in page.locator('#result .reviewed-opponent-profiles').inner_text()
             assert page.locator('#result .hero').count()==0
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             page.locator('#foe2').fill('メガリザードンX')
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==3
+            assert page.locator('#result .reviewed-opponent-profile').count()==4
             assert 'メガリザードンY' not in page.locator('#result .reviewed-opponent-profiles').inner_text()
             page.locator('#foe2').fill('メガリザードンY')
             page.locator('#analyze').click()
@@ -1354,7 +1354,7 @@ def main():
             assert page.evaluate("() => Object.keys(verifiedMatchupEvidence).length")==0
             # Three new M-C sources, including the actual Shell Smash loss
             # condition, are reference profiles rather than safe matchups.
-            expanded=page.evaluate("""() => reviewedOpponentProfiles.slice(7).map(p=>({
+            expanded=page.evaluate("""() => reviewedOpponentProfiles.slice(7,10).map(p=>({
               form:p.form,source:p.source,updated:p.updated,usageRank:p.usageRank,
               item:p.item,ability:p.ability,moves:p.moves,
               speed:[p.speedMin,p.speedMax],boost:boostedSpeedRange(p),
@@ -1392,7 +1392,7 @@ def main():
             }""")
             assert bad_profile=={
                 'source':False,'date':False,'speed':False,'boost':False,
-                'move':False,'invalidBoost':None,'reviewedCount':10,
+                'move':False,'invalidBoost':None,'reviewedCount':14,
                 'verifiedSafe':0}, bad_profile
             for i,name in enumerate(['カメックス','セグレイブ','ゲッコウガ',
                                      'アシレーヌ','ガブリアス','ペリッパー']):
@@ -1466,6 +1466,58 @@ def main():
             assert page.locator('#result .verified-unsafe-action').count()==0
             assert page.evaluate('() => document.documentElement.scrollWidth <= innerWidth + 2')
 
+            # Four historical M-B Mega examples: never promote to current
+            # M-C reviewed matchups. X/Y must stay distinct.
+            extra=page.evaluate("""() => reviewedOpponentProfiles.slice(10).map(p=>({
+              form:p.form,regulation:p.regulation,source:p.source,
+              updated:p.updated,item:p.item,ability:p.ability,
+              speed:[p.speedMin,p.speedMax],boost:boostedSpeedRange(p),
+              valid:isReviewedOpponentProfile(p)
+            }))""")
+            assert [p['form'] for p in extra]==[
+                'メガメタグロス','メガリザードンX',
+                'メガライチュウX','メガライチュウY'],extra
+            assert [p['speed'] for p in extra]==[
+                [117,178],[108,167],[117,178],[135,200]],extra
+            assert [p['boost'] for p in extra]==[
+                None,[162,250],None,None],extra
+            assert all(p['valid'] and 'M-B' in p['regulation'] and
+                p['source'].startswith('https://gamewith.jp/pokemon-champions/')
+                for p in extra)
+            assert extra[2]['ability']=='エレキメイカー'
+            assert extra[3]['ability']=='ノーガード'
+            speed_gate=page.evaluate("""() => ({
+              megaX:reviewedSpeedReferencesFor('メガカイリュー',['メガライチュウX']).map(p=>p.form),
+              megaY:reviewedSpeedReferencesFor('メガカイリュー',['メガライチュウY']).map(p=>p.form),
+              both:reviewedSpeedReferencesFor('カバルドン',requiredMatchupForms('ライチュウ')).map(p=>p.form),
+              unknown:reviewedSpeedReferencesFor('カバルドン',['未確認']).length,
+              missingOwn:reviewedSpeedReferencesFor('未登録',requiredMatchupForms('ライチュウ')).length,
+              safe:Object.keys(verifiedMatchupEvidence).length
+            })""")
+            assert speed_gate=={
+                'megaX':['メガライチュウX'],
+                'megaY':['メガライチュウY'],
+                'both':['メガライチュウX','メガライチュウY'],
+                'unknown':0,'missingOwn':0,'safe':0},speed_gate
+            for i,name in enumerate(['ライチュウ','リザードン','メタグロス',
+                                     'アシレーヌ','ガブリアス','ペリッパー']):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .hero').count()==0
+            assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert page.locator('#result .reviewed-opponent-profile').count()==6
+            page.locator('#result .reviewed-opponent-profiles summary').click()
+            assert 'M-B（過去の参考型）' in page.locator('#result .reviewed-opponent-profiles').inner_text()
+            page.locator('#result .risk-matrix summary').click()
+            matrix=page.locator('#result .risk-matrix')
+            assert matrix.locator('.matrix-cell').count()==36
+            assert matrix.locator('.speed-reference').count()>=18
+            matrix_text=matrix.inner_text()
+            assert 'メガライチュウX' in matrix_text
+            assert 'メガライチュウY' in matrix_text
+            assert 'メガリザードンX：ニトロチャージ成功後の素早さ162〜250' in matrix_text
+            assert '先制技・持ち物・メガ前の素早さ・実際の型は未確認' in matrix_text
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):
