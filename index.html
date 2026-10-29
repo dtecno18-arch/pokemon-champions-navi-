@@ -1371,7 +1371,7 @@ $('#result').addEventListener('change',event=>{
   if(opponents.every(Boolean)){
    $('#trio-inspector-rows').innerHTML=renderTrioRiskRows(opponents,inspectedTrio);
    $('#lead-inspector-rows').innerHTML=renderLeadInspectorRows(opponents,inspectedLead);
-   $('#move-audit-rows').innerHTML=renderMoveAuditRows(opponents,inspectedTrio,inspectedLead);
+   refreshMoveAudit(opponents,inspectedTrio,inspectedLead);
   }
   return;
  }
@@ -1391,7 +1391,7 @@ $('#result').addEventListener('change',event=>{
  const opponents=fields.map(f=>f.value.trim());
  if(opponents.every(Boolean)){
   $('#lead-inspector-rows').innerHTML=renderLeadInspectorRows(opponents,lead);
-  $('#move-audit-rows').innerHTML=renderMoveAuditRows(opponents,inspectedTrio,inspectedLead);
+  refreshMoveAudit(opponents,inspectedTrio,inspectedLead);
   $('#trio-inspector-rows').innerHTML=renderTrioRiskRows(opponents,inspectedTrio);
  }
 });
