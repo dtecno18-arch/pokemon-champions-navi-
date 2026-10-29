@@ -1822,6 +1822,10 @@ def main():
                           hippo && isReviewedOpponentProfile(hippo)],
                 profileSpeeds:[gholdengo?.sampleSpeed,hippo?.sampleSpeed],
                 goldItem:gholdengo?.item,hippoItem:hippo?.item,
+                scarfEffective:gholdengo?.effectiveSpeedMin,
+                scarfReference:referenceSpeedComparison(201,gholdengo),
+                scarfRisk:reviewedSpeedReferencesFor('メガルカリオZ',['サーフゴー']).some(r=>r.speedMax===223 && r.fasterPossible),
+                forgedScarf:isReviewedOpponentProfile({...gholdengo,effectiveSpeedMax:149}),
                 noSafeMatchups:Object.keys(verifiedMatchupEvidence).length===0
               };
             }""")
@@ -1832,6 +1836,9 @@ def main():
             assert gold['hasConditions'] and gold['profiles']==[True,True], gold
             assert gold['profileSpeeds']==[149,67], gold
             assert gold['goldItem']=='こだわりスカーフ' and gold['hippoItem']=='たべのこし', gold
+            assert gold['scarfEffective']==223 and gold['scarfRisk'], gold
+            assert '遅い（差-22）' in gold['scarfReference'], gold
+            assert gold['forgedScarf'] is False, gold
             assert gold['noSafeMatchups'], gold
             for i, name in enumerate(['サーフゴー','カバルドン','アシレーヌ','メガボーマンダ','ミミッキュ','ドドゲザン']):
                 page.locator(f'#foe{i}').fill(name)
