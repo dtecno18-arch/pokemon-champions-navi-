@@ -1271,21 +1271,21 @@ def main():
             for i,name in enumerate(profile_names):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==5
+            assert page.locator('#result .reviewed-opponent-profile').count()==6
             page.locator('#result .reviewed-opponent-profiles summary').click()
-            assert page.locator('#result .speed-comparison').count()==36
-            assert '出典付き主要型参考例 5件' in page.locator('#result .evidence-summary').inner_text()
+            assert page.locator('#result .speed-comparison').count()==42
+            assert '出典付き主要型参考例 6件' in page.locator('#result .evidence-summary').inner_text()
             assert 'M-A/M-B（過去の参考型）' in page.locator('#result .reviewed-opponent-profiles').inner_text()
             assert page.locator('#result .hero').count()==0
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             page.locator('#foe2').fill('メガリザードンX')
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==4
+            assert page.locator('#result .reviewed-opponent-profile').count()==5
             assert 'メガリザードンY' not in page.locator('#result .reviewed-opponent-profiles').inner_text()
             page.locator('#foe2').fill('メガリザードンY')
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==4
+            assert page.locator('#result .reviewed-opponent-profile').count()==5
             assert page.locator('#result .hero').count()==0
 
             unsafe_names=['メガゲンガー','ミミッキュ','サーフゴー',
@@ -1304,7 +1304,7 @@ def main():
             page.locator('#foe0').fill('メガグソクムシャ')
             page.locator('#analyze').click()
             # Other slots still contain Mimikyu and Gholdengo, both Ghost.
-            assert page.locator('#result .verified-unsafe-action .line').count() == 6
+            assert page.locator('#result .verified-unsafe-action .line').count() == 8
             assert page.locator('#result .hero').count() == 0
 
             # Ghost immunities: exact moves, items and sources, never a safe lead.
@@ -1349,7 +1349,7 @@ def main():
             # Remove the other Ghost opponents so each case has an exact count.
             page.locator('#foe1').fill('ドドゲザン')
             page.locator('#foe2').fill('エースバーン')
-            for opponent, expected in [('ミミッキュ',3),('サーフゴー',3),
+            for opponent, expected in [('ミミッキュ',3),('サーフゴー',5),
                                        ('ドラパルト',3),('ゲンガー',9)]:
                 page.locator('#foe0').fill(opponent)
                 page.locator('#analyze').click()
@@ -1645,7 +1645,7 @@ def main():
 
             # Four historical M-B Mega examples: never promote to current
             # M-C reviewed matchups. X/Y must stay distinct.
-            extra=page.evaluate("""() => reviewedOpponentProfiles.slice(10).map(p=>({
+            extra=page.evaluate("""() => reviewedOpponentProfiles.slice(10,14).map(p=>({
               form:p.form,regulation:p.regulation,source:p.source,
               updated:p.updated,item:p.item,ability:p.ability,
               speed:[p.speedMin,p.speedMax],boost:boostedSpeedRange(p),
