@@ -1132,6 +1132,53 @@ def main():
             page.locator('#analyze').click()
             assert page.locator('#result .conditional-interactions').count() == 0
 
+            # Reviewed M-C and historical Mega sample sets are reference data,
+            # never verified opponent adoption or an unlocked safe lead.
+            sample_profiles=page.evaluate("""() => reviewedOpponentProfiles.map(p=>({
+              form:p.form,regulation:p.regulation,source:p.source,
+              item:p.item,ability:p.ability,moves:p.moves,
+              speed:[p.speedMin,p.speedMax],sample:p.sampleSpeed
+            }))""")
+            assert len(sample_profiles)==3
+            assert sample_profiles[0]['form']=='メガグソクムシャ'
+            assert sample_profiles[0]['regulation']=='M-C'
+            assert sample_profiles[0]['speed']==[54,101]
+            assert sample_profiles[0]['moves']==['ビルドアップ','きゅうけつ','アイアンヘッド','ふいうち']
+            assert sample_profiles[1]['regulation'].startswith('M-A/M-B')
+            assert sample_profiles[1]['sample']==200
+            assert sample_profiles[2]['regulation'].startswith('M-A/M-B')
+            assert sample_profiles[2]['sample']==120
+            assert all(p['source'].startswith('https://gamewith.jp/pokemon-champions/') for p in sample_profiles)
+            assert page.evaluate("""() => [
+              referenceSpeedComparison(201,reviewedOpponentProfiles[1]),
+              referenceSpeedComparison(67,reviewedOpponentProfiles[2]),
+              referenceSpeedComparison(67,reviewedOpponentProfiles[0])
+            ]""")==[
+              '掲載最速例より速い（差+1）',
+              '掲載最遅例より遅い（差-41）',
+              '掲載例の範囲内（型次第）'
+            ]
+            profile_names=['グソクムシャ','ゲンガー','リザードン',
+                           'アシレーヌ','ガブリアス','カバルドン']
+            for i,name in enumerate(profile_names):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .reviewed-opponent-profile').count()==3
+            assert page.locator('#result .speed-comparison').count()==18
+            assert '出典付き主要型参考例 3件' in page.locator('#result .evidence-summary').inner_text()
+            assert 'M-A/M-B（過去の参考型）' in page.locator('#result .reviewed-opponent-profiles').inner_text()
+            assert page.locator('#result .hero').count()==0
+            assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            page.locator('#foe2').fill('メガリザードンX')
+            page.locator('#analyze').click()
+            assert page.locator('#result .reviewed-opponent-profile').count()==2
+            assert 'メガリザードンY' not in page.locator('#result .reviewed-opponent-profiles').inner_text()
+            page.locator('#foe2').fill('メガリザードンY')
+            page.locator('#analyze').click()
+            assert page.locator('#result .reviewed-opponent-profile').count()==3
+            assert page.locator('#result .hero').count()==0
+
             unsafe_names=['メガゲンガー','ミミッキュ','サーフゴー',
                           'アシレーヌ','ガブリアス','カバルドン']
             for i, name in enumerate(unsafe_names):
