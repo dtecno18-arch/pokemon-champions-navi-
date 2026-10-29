@@ -650,7 +650,7 @@ const verifiedUnsafeActionEvidence=Object.freeze([
   moveSource:'https://gamewith.jp/pokemon-champions/554330',moveUpdated:'2026-10-27',
   updated:'2026-10-30',scope:'verified-unsafe-action',reviewed:true},
  {form:'サーフゴー',ownLead:'カバルドン',heldItem:'たべのこし',
-  ability:'ふうせん',action:'じしん',outcome:'immune',
+  ability:'おうごんのからだ',opponentItem:'ふうせん',mechanic:'held-item',action:'じしん',outcome:'immune',
   when:'相手サーフゴーがふうせんを持ち、まだ攻撃で割られておらず、地面にいない状態の場合のみ。持ち物未確認、割れた後、じゅうりょく等の例外は未検証。',
   reason:'GameWithのふうせん型では、ふうせんが有効な間はじしんが当たらない。全サーフゴーがふうせん持ちとは断定しない。',
   source:'https://gamewith.jp/pokemon-champions/564100',sourceUpdated:'2026-10-29',
@@ -726,7 +726,8 @@ function isVerifiedUnsafeActionEvidence(e){
        e.mechanicUpdated==='2026-10-27' &&
        e.moveSource==='https://gamewith.jp/pokemon-champions/554330' &&
        e.moveUpdated==='2026-10-27') ||
-      (e.ability==='ふうせん' && e.action==='じしん' &&
+      (e.ability==='おうごんのからだ' && e.opponentItem==='ふうせん' &&
+       e.mechanic==='held-item' && e.action==='じしん' &&
        e.mechanicSource==='https://gamewith.jp/pokemon-champions/564100' &&
        e.mechanicUpdated==='2026-10-29' &&
        e.moveSource==='https://gamewith.jp/pokemon-champions/554282' &&
