@@ -1081,7 +1081,7 @@ def main():
                 verifiedSafeCount:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
-            assert unsafe_gate == {'count':24,'valid':True,'wrongSource':False,
+            assert unsafe_gate == {'count':55,'valid':True,'wrongSource':False,
                 'wrongAbility':False,'ghostLead':False,'wrongItem':False,
                 'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
             # Reviewed interaction facts: 5 terrain-vs-priority moves and 4
@@ -1424,7 +1424,7 @@ def main():
 
             # Five exact negative move interactions; normal forms remain
             # uncertain until Mega evolution, and sibling Mega forms are distinct.
-            new_unsafe=page.evaluate("""() => verifiedUnsafeActionEvidence.slice(19).map(e=>({
+            new_unsafe=page.evaluate("""() => verifiedUnsafeActionEvidence.slice(19,24).map(e=>({
               form:e.form,lead:e.ownLead,move:e.action,
               valid:isVerifiedUnsafeActionEvidence(e),
               wrongSource:isVerifiedUnsafeActionEvidence({...e,source:''}),
@@ -1465,6 +1465,73 @@ def main():
             page.locator('#analyze').click()
             assert page.locator('#result .verified-unsafe-action').count()==0
             assert page.evaluate('() => document.documentElement.scrollWidth <= innerWidth + 2')
+
+            # 2026-10-29: nine additional exact Ghost forms (27 negative moves)
+            # plus two Magic Bounce Mega forms x two Hippo setup moves.
+            # Neither batch counts as a safe matchup or unlocks recommendations.
+            extra_negative=page.evaluate("""() => {
+              const ghost=verifiedUnsafeActionEvidence.filter(e=>
+                additionalGhostImmunityTargets.some(t=>t.form===e.form) && e.ability==='type-only');
+              const bounce=verifiedUnsafeActionEvidence.filter(e=>
+                e.ability==='マジックミラー');
+              return {
+                ghostForms:additionalGhostImmunityTargets.length,
+                ghostCount:ghost.length,
+                bounceCount:bounce.length,
+                allValid:[...ghost,...bounce].every(isVerifiedUnsafeActionEvidence),
+                wrongType:isVerifiedUnsafeActionEvidence({...ghost[0],form:'メガグソクムシャ'}),
+                wrongGhostMove:isVerifiedUnsafeActionEvidence({...ghost[0],action:'じしん'}),
+                wrongGhostDate:isVerifiedUnsafeActionEvidence({...ghost[0],sourceUpdated:'不明'}),
+                wrongBounceAbility:isVerifiedUnsafeActionEvidence({...bounce[0],ability:'かげふみ'}),
+                wrongBounceMove:isVerifiedUnsafeActionEvidence({...bounce[0],action:'じしん'}),
+                wrongBounceForm:isVerifiedUnsafeActionEvidence({...bounce[0],form:'メガアブソルZ'}),
+                wrongBounceSource:isVerifiedUnsafeActionEvidence({...bounce[0],mechanicSource:''}),
+                safeCount:Object.keys(verifiedMatchupEvidence).length
+              };
+            }""")
+            assert extra_negative == {
+                'ghostForms':9,'ghostCount':27,'bounceCount':4,'allValid':True,
+                'wrongType':False,'wrongGhostMove':False,'wrongGhostDate':False,
+                'wrongBounceAbility':False,'wrongBounceMove':False,
+                'wrongBounceForm':False,'wrongBounceSource':False,'safeCount':0
+            }, extra_negative
+            # Use six distinct slots with no other Ghost type to isolate warnings.
+            for i,name in enumerate(['メガヤミラミ','アシレーヌ','ドドゲザン',
+                                     'ニンフィア','カバルドン','ペリッパー']):
+                page.locator(f'#foe{i}').fill(name)
+            for opponent,expected,needle in [
+                ('メガヤミラミ',5,'ステルスロック反射（条件付き）'),
+                ('メガジュペッタ',3,'しんそく無効（条件付き）'),
+                ('メガユキメノコ',3,'しんくうは無効（条件付き）'),
+                ('イダイトウ(オス)',3,'インファイト無効（条件付き）'),
+                ('イダイトウ(メス)',3,'しんそく無効（条件付き）'),
+                ('ミカルゲ',3,'しんそく無効（条件付き）'),
+                ('メガアブソル',2,'あくび反射（条件付き）'),
+                ('メガアブソルZ',3,'しんそく無効（条件付き）')
+            ]:
+                page.locator('#foe0').fill(opponent)
+                page.locator('#analyze').click()
+                warning=page.locator('#result .verified-unsafe-action')
+                assert warning.locator('.line').count()==expected, (opponent,warning.inner_text())
+                assert needle in warning.inner_text(), (opponent,needle)
+                if opponent=='メガヤミラミ':
+                    page.locator('#result .risk-matrix summary').click()
+                    assert 'ステルスロック反射' in page.locator('#result .risk-matrix').inner_text()
+                    assert 'ステルスロック反射' in page.locator('#result .trio-inspector-details').inner_text()
+                    assert 'ステルスロック：反射' in page.locator('#result .lead-inspector').inner_text()
+                assert page.locator('#result .hero').count()==0
+                assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
+                assert page.evaluate('() => document.documentElement.scrollWidth <= innerWidth + 2')
+            # Exact Mega Absol Z must NOT inherit Mega Absol's Magic Bounce.
+            page.locator('#foe0').fill('メガアブソルZ')
+            page.locator('#analyze').click()
+            assert '反射（条件付き）' not in page.locator('#result .verified-unsafe-action').inner_text()
+            # The base species must conservatively show BOTH possible Megas.
+            page.locator('#foe0').fill('アブソル')
+            page.locator('#analyze').click()
+            assert 'あくび反射（条件付き）' in page.locator('#result .verified-unsafe-action').inner_text()
+            assert 'しんそく無効（条件付き）' in page.locator('#result .verified-unsafe-action').inner_text()
+            assert page.locator('#result .hero').count()==0
 
             # Four historical M-B Mega examples: never promote to current
             # M-C reviewed matchups. X/Y must stay distinct.
