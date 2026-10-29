@@ -964,7 +964,7 @@ def main():
                 # Reviewed M-7 observations are form-specific warning context,
                 # not proof of an advantageous lead or a complete move set.
                 observed = {
-                    'メガグソクムシャ': ('54〜101', 'ふいうち 80.2%', 'であいがしら', '優先度+2', '5位'),
+                    'メガグソクムシャ': ('54〜101', 'ふいうち 80.2%', 'であいがしら', 'アクアジェット', '優先度+2', '5位'),
                     'メガリザードンY': ('108〜167', 'ソーラービーム 65.2%', '先制技候補', '未確認', '6位'),
                     'メガゲンガー': ('135〜200', 'シャドーボール 81.4%', 'かげふみ', '未確認', '23位'),
                 }[opponent]
