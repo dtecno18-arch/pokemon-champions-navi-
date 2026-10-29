@@ -2,6 +2,7 @@
 <style>
 :root{font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;color:#192b42;background:#f3f6fb}*{box-sizing:border-box}body{margin:0}main{max-width:760px;margin:auto;padding:16px 14px 55px}h1{font-size:1.4rem;margin:8px 0}h2{font-size:1.08rem;margin:0 0 12px}p{line-height:1.65}.sub{color:#53657b;font-size:.88rem}.panel{background:white;border:1px solid #dbe3ef;border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 2px 9px #2137550a}.inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.slot label{display:block;font-size:.77rem;font-weight:700;margin-bottom:4px;color:#465a75}input{width:100%;font:inherit;padding:11px;border:1px solid #bdcbdb;border-radius:10px;min-width:0}input:focus{outline:2px solid #3774d5}button{border:0;border-radius:11px;padding:13px 18px;font:inherit;font-weight:750;cursor:pointer;min-height:45px}button.primary{background:#215db7;color:white;flex:1}button.secondary{background:#e9eff7;color:#23436b}.actions{display:flex;gap:9px;margin-top:16px}.hero{background:#eaf3ff;border:1px solid #a8c9f7;border-radius:14px;padding:15px}.pokemon{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.chip{background:#fff;border:1px solid #bad0ed;border-radius:30px;padding:7px 10px;font-weight:750;font-size:.9rem}.line{padding:10px 0;border-bottom:1px solid #e7edf5;line-height:1.6}.line:last-child{border:0}.warn{background:#fff6e9;border-left:4px solid #d78a2a;padding:10px 12px;margin-top:12px;border-radius:6px}.muted{color:#63748a;font-size:.82rem}.hidden{display:none}details{margin-top:12px}summary{cursor:pointer;font-weight:700}.tag{font-size:.76rem;font-weight:800;color:#205da9}.ready{font-size:.8rem;color:#19694b;font-weight:700}.error{color:#b43632}.moves{font-size:.84rem;color:#405b76;line-height:1.65}.slot-source{display:block;font-size:.7rem;line-height:1.4;margin-top:5px;overflow-wrap:anywhere}.slot-source.source-uncertain{color:#925c14}.roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.roster div{border:1px solid #e1e9f4;border-radius:10px;padding:10px}.roster b{display:block}@media(max-width:420px){.panel{padding:14px}.roster{grid-template-columns:1fr}h1{font-size:1.25rem}}
 .risk-matrix h3{font-size:.92rem;margin:14px 0 4px}.matrix-foe{border-top:1px solid #dce5f0;padding:8px 0}.matrix-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.matrix-cell{min-width:0;overflow-wrap:anywhere;border:1px solid #dce5f0;border-radius:9px;padding:8px;background:#f8fafc;font-size:.81rem}.matrix-cell b{display:block}.matrix-status{font-weight:700;margin:3px 0}.risk-matrix details{max-width:100%}@media(max-width:560px){.matrix-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.lead-inspector select{width:100%;min-height:44px;margin:8px 0}.lead-inspector-foe summary{padding:10px 0;cursor:pointer}.lead-inspector-branch{overflow-wrap:anywhere}}.lead-inspector-foe{border-top:1px solid #64748b44;padding:8px 0}.lead-inspector-branch{margin:8px 0}.lead-inspector select{max-width:100%;padding:8px;border-radius:8px}
 </style></head><body><main>
 <h1>⚔️ Champions 選出ナビ <span class="tag">v7.2 選出精度・警戒強化版</span></h1>
 <p class="sub">S6最終2位構築記事を参考にした試作版。公式M-C一覧262フォームIDと出典付き形態差を照合し、入力候補348形態は2026-10-29の監査で差分0です。ただし個別対面は未検証です。選出3匹・先発の推奨は保留し、相手6匹の未検証リスクを確認できます。</p>
@@ -1133,6 +1134,84 @@ function buildLeadRiskMatrix(opponents){
   '<p class="muted">⛔は特定条件で無効・交代不可となる行動、⚠️は条件付き注意です。未検証＝安全ではありません。出典・適用条件は下の個別警告を確認してください。選出推奨は解禁しません。</p>'+
   blocks+'</details></section>';
 }
+// Tactical inspection is deliberately NOT a lead recommendation. All six
+// opponent inputs and their possible Mega/form branches remain visible.
+const LEAD_INSPECTOR_KEY='champions-navi-inspected-lead-v1';
+let inspectedLead=roster[0][0];
+try {
+ const saved=sessionStorage.getItem(LEAD_INSPECTOR_KEY);
+ if(roster.some(p=>p[0]===saved))inspectedLead=saved;
+} catch(e) {}
+function leadRiskRows(opponents,ownLead){
+ if(!roster.some(p=>p[0]===ownLead))return [];
+ return opponents.map(name=>({
+  name,
+  branches:requiredMatchupForms(name).map(form=>{
+   const unsafe=verifiedUnsafeActionEvidence.filter(e=>
+     isVerifiedUnsafeActionEvidence(e) && e.form===form && e.ownLead===ownLead);
+   const interactions=reviewedConditionalLeadInteractions.filter(e=>
+     isReviewedConditionalLeadInteraction(e) && e.own===ownLead && e.forms.includes(form));
+   const pairRisks=reviewedPairRisks.filter(e=>
+     isReviewedPairRisk(e) && e.own===ownLead && e.form===form);
+   const speed=reviewedSpeedReferencesFor(ownLead,[form]);
+   const boosted=reviewedOpponentProfiles.filter(p=>
+     isReviewedOpponentProfile(p) && p.form===form && boostedSpeedRange(p));
+   return {form,unsafe,interactions,pairRisks,speed,boosted};
+  })
+ }));
+}
+function renderLeadInspectorRows(opponents,ownLead){
+ return leadRiskRows(opponents,ownLead).map((row,i)=>{
+  const riskCount=row.branches.reduce((n,b)=>n+b.unsafe.length,0);
+  const cautionCount=row.branches.reduce((n,b)=>
+   n+b.interactions.length+b.pairRisks.length+
+   b.speed.filter(s=>s.fasterPossible).length+b.boosted.length,0);
+  const summary=riskCount?'⛔ 条件付き危険行動 '+riskCount+'件':
+   cautionCount?'⚠️ 条件付き注意 '+cautionCount+'件':'未検証';
+  return '<details class="lead-inspector-foe"'+(riskCount?' open':'')+'><summary>相手'+(i+1)+' '+esc(row.name)+'｜'+esc(summary)+'</summary>'+
+   row.branches.map(b=>{
+    const notes=b.unsafe.map(e=>
+      '<div class="warn lead-inspector-veto"><b>⛔ '+esc(e.action==='manual-switch'?'通常交代':e.action)+'：'+esc(e.outcome==='blocked'?'交代不可':'無効')+'</b>'+
+      '<div>'+esc(e.reason)+'</div><div class="muted">適用条件：'+esc(e.when)+'</div>'+
+      '<div class="muted">出典更新 '+esc(e.updated)+'：<a href="'+esc(e.source)+'" target="_blank" rel="noopener noreferrer">根拠</a></div></div>');
+    notes.push(...b.interactions.map(e=>
+      '<div class="warn lead-inspector-conditional"><b>⚠️ '+esc(e.move)+'：'+esc(e.mechanic)+'</b><div>'+esc(e.effect)+'</div>'+
+      '<div class="muted">条件：'+esc(e.condition)+'</div>'+
+      '<div class="muted">出典更新 '+esc(e.sourceUpdated)+'：<a href="'+esc(e.source)+'" target="_blank" rel="noopener noreferrer">根拠</a></div></div>'));
+    notes.push(...b.pairRisks.map(e=>
+      '<div class="warn lead-inspector-pair"><b>⚠️ 型・先制技の注意</b><div>'+esc(e.risk)+'</div>'+
+      '<div class="muted">出典更新 '+esc(e.updated)+'：<a href="'+esc(e.source)+'" target="_blank" rel="noopener noreferrer">根拠</a></div></div>'));
+    notes.push(...b.speed.map(s=>
+      '<div class="muted lead-inspector-speed">Lv50同優先度の参考：'+esc(ownLead)+' '+ownLv50Speed[ownLead]+
+      '／'+esc(s.form)+' '+s.speedMin+'〜'+s.speedMax+'：'+esc(s.text)+
+      '（'+esc(s.regulation)+'、先制技・持ち物・メガ前は別）</div>'));
+    notes.push(...b.boosted.map(p=>
+      '<div class="warn lead-inspector-boost">⚠️ '+esc(p.boostedSpeedMove)+'成功時のみ素早さ'+boostedSpeedRange(p).join('〜')+
+      '。採用・成功・同優先度は未確定。<a href="'+esc(p.source)+'" target="_blank" rel="noopener noreferrer">出典 '+esc(p.updated)+'</a></div>'));
+    return '<div class="line lead-inspector-branch"><b>'+esc(b.form)+'</b>'+
+     (notes.length?notes.join(''):'<div class="muted">個別の検証済み危険行動なし。安全性は未検証。</div>')+
+     '<div class="muted">この分岐の勝敗・交代先・選出の安全性は未検証。</div></div>';
+   }).join('')+'</details>';
+ }).join('');
+}
+function buildLeadInspector(opponents){
+ return '<section class="line lead-inspector"><h3>初手候補の危険行動を確認（推奨ではありません）</h3>'+
+  '<p class="muted">自分の登録6匹から1匹を選び、相手6匹の通常・メガ・性差分岐を個別に点検できます。⛔は条件付きの行動禁止、⚠️は注意、記載なしは安全を意味しません。相手の実際の先発・技・持ち物は不明です。</p>'+
+  '<label for="lead-inspector-select">確認する自分の先発候補</label> '+
+  '<select id="lead-inspector-select">'+roster.map(p=>
+   '<option value="'+esc(p[0])+'"'+(p[0]===inspectedLead?' selected':'')+'>'+esc(p[0])+'</option>').join('')+'</select>'+
+  '<div id="lead-inspector-rows">'+renderLeadInspectorRows(opponents,inspectedLead)+'</div></section>';
+}
+$('#result').addEventListener('change',event=>{
+ if(event.target.id!=='lead-inspector-select')return;
+ const lead=event.target.value;
+ if(!roster.some(p=>p[0]===lead))return;
+ inspectedLead=lead;
+ try{sessionStorage.setItem(LEAD_INSPECTOR_KEY,lead)}catch(e){}
+ const opponents=fields.map(f=>f.value.trim());
+ if(opponents.every(Boolean))$('#lead-inspector-rows').innerHTML=renderLeadInspectorRows(opponents,lead);
+});
+
 function analyze(){
  $('#result').classList.add('hidden');
  const vals=fields.map(f=>f.value.trim());
@@ -1218,7 +1297,7 @@ function analyze(){
   const megaCaution=megaCandidates.length?'<div class="warn mega-uncertainty"><b>メガシンカの分岐に注意</b><div>'+esc(megaCandidates.join('・'))+' が候補に含まれます。実際のメガシンカ先は選出段階では確定できません。通常形態とメガ形態を両方警戒してください。</div></div>':'';
   $('#result').innerHTML=suggestionWarning+
    '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対策候補付きルール '+actionableCount+'/6匹／選出3匹の対応 '+selectedCoverage+'/6匹／検証済み対面 '+verifiedMatchupCount+'/6匹：選出3匹・先発は推奨しません</b><div>相手6匹のうち名前ベースの対策候補は'+actionableCount+'匹、暫定選出3匹が実際に対応できる候補は'+selectedCoverage+'匹です。選出3匹で対応できない相手が1匹でもいる場合、または相手6匹の中に個別対策未登録・候補未照合の入力・個別対面未検証のメガ形態・メガシンカ可能な通常形態・重大メガ分岐・サイコフィールド展開役が1匹でも含まれる場合は推奨を保留します。さらに相手6匹全員について、出典・更新日付きの個別対面と選出3匹の回答が検証済みでなければ推奨しません。名前ベースの対策候補が6/6匹でも安全とは判定しません。対戦画面でメガ候補・先制技も確認してください。</div></div>'+
-   confidenceBanner+criticalWarning+terrainWarning+megaFormWarning+megaBaseWarning+evidenceSummary+buildReviewedOpponentProfiles(vals)+buildLeadRiskMatrix(vals)+unsafeActionWarning+conditionalActionWarning+sourcedWarning+extraThreatWarnings+pairRiskWarning+megaCaution+
+   confidenceBanner+criticalWarning+terrainWarning+megaFormWarning+megaBaseWarning+evidenceSummary+buildLeadInspector(vals)+buildReviewedOpponentProfiles(vals)+buildLeadRiskMatrix(vals)+unsafeActionWarning+conditionalActionWarning+sourcedWarning+extraThreatWarnings+pairRiskWarning+megaCaution+
    (missingVerifiedMatchups.length?'<div class="warn matchup-unverified" role="alert"><b>⚠️ 個別対面の検証不足：'+verifiedMatchupCount+'/6匹</b><div>未検証：'+esc(missingVerifiedMatchups.join('・'))+'。名前ベースの対策候補・出典付き脅威情報は、選出3匹で勝てる根拠ではありません。</div></div>':'')+
    '<div class="line abstention-coverage"><b>選出3匹で対応できない相手</b>'+ (unansweredByTrio.length?unansweredByTrio.map(c=>'<div class="line"><b>'+esc(c.name)+'</b>：'+esc(c.answer)+'</div>').join(''):'<p class="muted">名前ベースの対応候補はありますが、型・技・メガ分岐等の検証が不足しています。</p>')+'</div>'+
    '<div class="line"><b>相手6匹（入力候補の根拠／個別対面未検証）</b>'+vals.map(n=>{const p=candidateProvenance(n);return '<div class="line candidate-provenance"><b>'+esc(n)+'</b><div class="muted">'+esc(p.label)+(p.source?' ／ <a href="'+esc(p.source)+'" target="_blank" rel="noopener noreferrer">出典</a>':'')+'</div></div>';}).join('')+'</div>';
@@ -1236,6 +1315,6 @@ function analyze(){
  $('#result').focus({preventScroll:true});
 }
 $('#analyze').addEventListener('click',analyze);
-$('#clear').addEventListener('click',()=>{try{sessionStorage.removeItem(INPUT_KEY)}catch(e){}fields.forEach(f=>f.value='');$('#result').classList.add('hidden');update();fields[0].focus();});
+$('#clear').addEventListener('click',()=>{try{sessionStorage.removeItem(INPUT_KEY);sessionStorage.removeItem(LEAD_INSPECTOR_KEY)}catch(e){}inspectedLead=roster[0][0];fields.forEach(f=>f.value='');$('#result').classList.add('hidden');update();fields[0].focus();});
 update();
 </script></body></html>
