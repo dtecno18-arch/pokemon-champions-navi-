@@ -47,7 +47,16 @@ const adverseLeadScenarios=Object.freeze([
   exception:'タイプ相性無効を変更する特殊な効果は別分岐。',
   source:'https://gamewith.jp/pokemon-champions/554816',updated:'2026-10-28',
   reviewed:true,scope:'verified-adverse-lead',confidence:'mechanic-veto'
- })
+ }),
+ Object.freeze({"form":"メガグソクムシャ","ownLead":"カバルドン","ownAction":"じしん","opponentMove":"であいがしら","outcome":"priority-risk","condition":"メガグソクムシャが登場後最初の技として「であいがしら」(+2)を成功させ、こちらが通常優先度の「じしん」を選んだ場合。","warning":"であいがしらはじしんより先に行動します。ダメージ・行動不能・勝敗は未検証。","exception":"であいがしら未採用、初手以外、技が失敗する条件では異なる。","source":"https://gamewith.jp/pokemon-champions/575652","updated":"2026-10-28","reviewed":true,"scope":"verified-adverse-lead","confidence":"conditional-risk"}),
+ Object.freeze({"form":"メガグソクムシャ","ownLead":"カバルドン","ownAction":"あくび","opponentMove":"であいがしら","outcome":"priority-risk","condition":"メガグソクムシャが登場後最初の技として「であいがしら」(+2)を成功させ、こちらが通常優先度の「あくび」を選んだ場合。","warning":"あくびより先に攻撃され得ます。あくびの成功や次ターンの生存は未検証。ふいうちは変化技に失敗します。","exception":"であいがしら未採用、初手以外、技が失敗する条件では異なる。","source":"https://gamewith.jp/pokemon-champions/575652","updated":"2026-10-28","reviewed":true,"scope":"verified-adverse-lead","confidence":"conditional-risk"}),
+ Object.freeze({"form":"メガグソクムシャ","ownLead":"カバルドン","ownAction":"なまける","opponentMove":"であいがしら","outcome":"priority-risk","condition":"メガグソクムシャが登場後最初の技として「であいがしら」(+2)を成功させ、こちらが通常優先度の「なまける」を選んだ場合。","warning":"回復前に先制攻撃され得ます。回復が間に合うか、被ダメージ・勝敗は未検証。","exception":"であいがしら未採用、初手以外、技が失敗する条件では異なる。","source":"https://gamewith.jp/pokemon-champions/575652","updated":"2026-10-28","reviewed":true,"scope":"verified-adverse-lead","confidence":"conditional-risk"}),
+ Object.freeze({"form":"メガグソクムシャ","ownLead":"メガルカリオZ","ownAction":"しんくうは","opponentMove":"であいがしら","outcome":"priority-risk","condition":"メガグソクムシャが登場後最初の技として「であいがしら」(+2)、メガルカリオZが「しんくうは」(+1)を選ぶ場合。","warning":"+2のであいがしらが+1のしんくうはより先。命中・ダメージ・勝敗は未検証。","exception":"であいがしら未採用、初手以外、優先度を変更する特殊条件では異なる。","source":"https://gamewith.jp/pokemon-champions/575652","updated":"2026-10-28","reviewed":true,"scope":"verified-adverse-lead","confidence":"conditional-risk"}),
+ Object.freeze({"form":"メガグソクムシャ","ownLead":"ミミッキュ","ownAction":"かげうち","opponentMove":"であいがしら","outcome":"priority-risk","condition":"メガグソクムシャが登場後最初の技として「であいがしら」(+2)、ミミッキュが「かげうち」(+1)を選ぶ場合。","warning":"+2のであいがしらが+1のかげうちより先。ばけのかわ、ダメージ・勝敗は未検証。","exception":"であいがしら未採用、初手以外、優先度を変更する特殊条件では異なる。","source":"https://gamewith.jp/pokemon-champions/575652","updated":"2026-10-28","reviewed":true,"scope":"verified-adverse-lead","confidence":"conditional-risk"}),
+ Object.freeze({"form":"メガグソクムシャ","ownLead":"メガカイリュー","ownAction":"しんそく","opponentMove":"であいがしら","outcome":"priority-tie-risk","condition":"メガグソクムシャが登場後最初の技として「であいがしら」(+2)、メガカイリューが「しんそく」(+2)を選ぶ場合。","warning":"双方優先度+2。素早さやその他の行動順条件次第で相手が先に動き得ます。先手保証・勝敗は未検証。","exception":"であいがしら未採用、初手以外、行動順補正や優先度変更がある場合は異なる。","source":"https://gamewith.jp/pokemon-champions/575652","updated":"2026-10-28","reviewed":true,"scope":"verified-adverse-lead","confidence":"conditional-risk"}),
+ Object.freeze({"form":"メガゲンガー","ownLead":"メガルカリオZ","ownAction":"manual-switch","opponentMove":"かげふみ","outcome":"blocked","condition":"メガゲンガーがメガシンカ済みで「かげふみ」が有効、非ゴーストのメガルカリオZが場にいる場合。","warning":"メガルカリオZは通常交代できません。味方のゴーストタイプへの交代も通常は不可能です。","exception":"メガ前ゲンガー、かげふみ無効、交代技・特殊な例外は別分岐。","source":"https://gamewith.jp/pokemon-champions/554816","updated":"2026-10-28","reviewed":true,"scope":"verified-adverse-lead","confidence":"mechanic-veto"}),
+ Object.freeze({"form":"メガゲンガー","ownLead":"メガカイリュー","ownAction":"manual-switch","opponentMove":"かげふみ","outcome":"blocked","condition":"メガゲンガーがメガシンカ済みで「かげふみ」が有効、非ゴーストのメガカイリューが場にいる場合。","warning":"メガカイリューは通常交代できません。交代先のタイプではなく現在場にいる側のタイプを確認してください。","exception":"メガ前ゲンガー、かげふみ無効、交代技・特殊な例外は別分岐。","source":"https://gamewith.jp/pokemon-champions/554816","updated":"2026-10-28","reviewed":true,"scope":"verified-adverse-lead","confidence":"mechanic-veto"}),
+ Object.freeze({"form":"メガゲンガー","ownLead":"ギルガルド","ownAction":"インファイト","opponentMove":"ゴーストタイプ","outcome":"immune","condition":"メガゲンガーがゴースト・どくタイプで通常のタイプ相性が適用される場合。","warning":"ギルガルドのインファイトはメガゲンガーに無効。ギルガルド自身はゴーストのため通常交代制限を受けません。","exception":"みやぶる・きもったま等、タイプ無効を変更する特殊効果は別分岐。","source":"https://gamewith.jp/pokemon-champions/554816","updated":"2026-10-28","reviewed":true,"scope":"verified-adverse-lead","confidence":"mechanic-veto"})
 ]);
 function isReviewedAdverseLeadScenario(s){
  if(!adverseLeadScenarios.includes(s) || s.reviewed!==true ||
@@ -59,11 +68,24 @@ function isReviewedAdverseLeadScenario(s){
     !/^https:\/\/gamewith\.jp\/pokemon-champions\/\d+$/.test(s.source) ||
     !/^2026-10-\d{2}$/.test(s.updated) ||
     !s.condition || !s.warning || !s.exception || !s.opponentMove)return false;
- if(s.confidence==='conditional-risk')
-  return s.outcome==='priority-risk' &&
+ if(s.confidence==='conditional-risk'){
+  // A priority warning is source-backed only when the exact own move and
+  // opponent move have a reviewed priority relation. Equal priority is NOT
+  // a first-move guarantee, and non-damaging actions are still at risk.
+  const fromReviewedInteraction=reviewedConditionalLeadInteractions.some(e=>
+   isReviewedConditionalLeadInteraction(e) && e.form===s.form &&
+   e.own===s.ownLead && e.move===s.ownAction &&
+   e.opponentMove===s.opponentMove && e.source===s.source &&
+   ((s.outcome==='priority-risk' && e.mechanic==='priority-order') ||
+    (s.outcome==='priority-tie-risk' && e.mechanic==='priority-tie')));
+  const fromReviewedPair=s.outcome==='priority-risk' &&
+   s.ownLead==='カバルドン' &&
+   ['じしん','あくび','ステルスロック','なまける'].includes(s.ownAction) &&
    reviewedPairRisks.some(p=>isReviewedPairRisk(p) &&
-    p.form===s.form && p.own===s.ownLead &&
+    p.form===s.form && p.own===s.ownLead && p.source===s.source &&
     p.priorityMoves.some(m=>m.move===s.opponentMove && m.priority===2));
+  return fromReviewedInteraction || fromReviewedPair;
+ }
  return verifiedUnsafeActionEvidence.some(e=>
    isVerifiedUnsafeActionEvidence(e) && e.form===s.form &&
    e.ownLead===s.ownLead && e.action===s.ownAction &&

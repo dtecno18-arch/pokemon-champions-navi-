@@ -2178,40 +2178,62 @@ def main():
                 ['グソクムシャ','リザードン','ゲンガー'],'カバルドン');
               const lucario=adverseLeadScenariosFor(['ゲンガー'],'メガルカリオZ');
               const dragonite=adverseLeadScenariosFor(['ゲンガー'],'メガカイリュー');
+              const golisopod=adverseLeadScenariosFor(['グソクムシャ'],'メガカイリュー');
+              const mimikyu=adverseLeadScenariosFor(['グソクムシャ'],'ミミッキュ');
+              const aegislash=adverseLeadScenariosFor(['ゲンガー'],'ギルガルド');
               return {
                 total:all.length,valid:all.every(isReviewedAdverseLeadScenario),
+                unique:new Set(all.map(s=>[s.form,s.ownLead,s.ownAction,s.opponentMove].join('|'))).size,
                 hippo:hippo.map(s=>s.form+'|'+s.ownAction),
                 lucario:lucario.map(s=>s.ownAction),
                 dragonite:dragonite.map(s=>s.ownAction),
+                golisopod:golisopod.map(s=>s.outcome),
+                mimikyu:mimikyu.map(s=>s.ownAction),
+                aegislash:aegislash.map(s=>s.ownAction),
                 wrongMega:adverseLeadScenariosFor(['メガリザードンX'],'カバルドン').length,
                 baseOnly:adverseLeadScenariosFor(['ゲンガー'],'カバルドン').length,
                 tampered:isReviewedAdverseLeadScenario({...all[0],warning:'安全'}),
+                priorityTampered:isReviewedAdverseLeadScenario({...all[5],opponentMove:'ふいうち'}),
                 safeCount:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
             assert adverse == {
-                'total':5,'valid':True,
+                'total':14,'valid':True,'unique':14,
                 'hippo':['メガグソクムシャ|ステルスロック',
                          'メガリザードンY|じしん',
-                         'メガゲンガー|manual-switch'],
-                'lucario':['しんくうは'],'dragonite':['しんそく'],
-                'wrongMega':0,'baseOnly':1,'tampered':False,'safeCount':0
+                         'メガゲンガー|manual-switch',
+                         'メガグソクムシャ|じしん',
+                         'メガグソクムシャ|あくび',
+                         'メガグソクムシャ|なまける'],
+                'lucario':['しんくうは','manual-switch'],
+                'dragonite':['しんそく','manual-switch'],
+                'golisopod':['priority-tie-risk'],
+                'mimikyu':['かげうち'],'aegislash':['インファイト'],
+                'wrongMega':0,'baseOnly':1,
+                'tampered':False,'priorityTampered':False,'safeCount':0
             }, adverse
             for i,name in enumerate(['グソクムシャ','リザードン','ゲンガー',
                                      'アシレーヌ','カバルドン','ドドゲザン']):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
-            assert page.locator('#result .adverse-lead-case').count()==3
+            assert page.locator('#result .adverse-lead-case').count()==6
             assert '安全認定0件' in page.locator('#result .adverse-lead-cases').inner_text()
             assert 'メガグソクムシャ' in page.locator('#result .adverse-lead-cases').inner_text()
             assert page.locator('#result .hero').count()==0
             page.locator('#lead-inspector-select').select_option('メガルカリオZ')
-            assert page.locator('#result .adverse-lead-case').count()==1
+            assert page.locator('#result .adverse-lead-case').count()==3
             assert 'しんくうは' in page.locator('#result .adverse-lead-cases').inner_text()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             page.locator('#lead-inspector-select').select_option('メガカイリュー')
-            assert page.locator('#result .adverse-lead-case').count()==1
+            assert page.locator('#result .adverse-lead-case').count()==3
             assert 'しんそく' in page.locator('#result .adverse-lead-cases').inner_text()
+            page.locator('#lead-inspector-select').select_option('ミミッキュ')
+            assert page.locator('#result .adverse-lead-case').count()==1
+            assert 'かげうち' in page.locator('#result .adverse-lead-cases').inner_text()
+            page.locator('#lead-inspector-select').select_option('ギルガルド')
+            assert page.locator('#result .adverse-lead-case').count()==1
+            assert 'インファイト' in page.locator('#result .adverse-lead-cases').inner_text()
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             assert page.locator('#result .abstention-banner').count()==1
 
             # Unknown Pokémon must not crash the app or inject markup.
