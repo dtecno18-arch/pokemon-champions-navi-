@@ -649,7 +649,7 @@ def main():
                   moveCoverageReviewed:true,moves:['どくどく','じこさいせい'],
                   itemCoverageReviewed:true,items:['くろいヘドロ'],
                   priorityMoves:[]}],
-                answers:[{...cited,variant:'normal',pokemon:'カバルドン',
+                answers:[{...cited,variant:'normal',pokemon:'カバルドン',action:'じしん',
                   reason:'synthetic schema fixture, not a real matchup',reviewed:true}],
                 leadChecks:[{...cited,variant:'normal',lead:'カバルドン',
                   response:'stay',reason:'synthetic schema fixture',reviewed:true}]};
@@ -667,7 +667,7 @@ def main():
                   {...record.leadChecks[0]}]}),
                 shadowTagTrapped:check({...record,variants:[{
                   ...record.variants[0],ability:'かげふみ'}],
-                  answers:[{...record.answers[0],pokemon:'ミミッキュ'}],
+                  answers:[{...record.answers[0],pokemon:'ミミッキュ',action:'かげうち'}],
                   leadChecks:[{...record.leadChecks[0],response:'switch',switchTo:'ミミッキュ'}]}),
                 shadowTagGhostCanSwitch:hasVerifiedMatchupAnswer({...record,
                   variants:[{...record.variants[0],ability:'かげふみ'}],
@@ -683,7 +683,7 @@ def main():
                 // A trapped non-Ghost cannot switch TO a Ghost teammate.
                 shadowTagCannotEscapeToBasculegion:hasVerifiedMatchupAnswer({...record,
                   variants:[{...record.variants[0],ability:'かげふみ'}],
-                  answers:[{...record.answers[0],pokemon:'イダイトウ♂'}],
+                  answers:[{...record.answers[0],pokemon:'イダイトウ♂',action:'アクアジェット'}],
                   leadChecks:[{...record.leadChecks[0],response:'switch',
                     switchTo:'イダイトウ♂'}]},
                   'ドヒドイデ',['カバルドン','イダイトウ♂','ミミッキュ'],'カバルドン'),
@@ -709,8 +709,25 @@ def main():
                 unlistedPriority:check({...record,variants:[{
                   ...record.variants[0],priorityMoves:['しんそく']}]}),
                 badCitation:check({...record,answers:[{...record.answers[0],source:''}]}),
+                missingAnswerMove:check({...record,answers:[{...record.answers[0],action:undefined}]}),
+                unownedAnswerMove:check({...record,answers:[{...record.answers[0],action:'しんそく'}]}),
+                immuneGroundMove:hasVerifiedMatchupAnswer({...record,
+                  form:'メガリザードンY',variants:[{...record.variants[0],form:'メガリザードンY'}]},
+                  'メガリザードンY',team,'カバルドン'),
+                reflectedYawn:hasVerifiedMatchupAnswer({...record,
+                  form:'メガヤミラミ',variants:[{...record.variants[0],form:'メガヤミラミ',ability:'マジックミラー'}],
+                  answers:[{...record.answers[0],action:'あくび'}]},
+                  'メガヤミラミ',team,'カバルドン'),
+                distinctMegaZAbility:hasVerifiedMatchupAnswer({...record,
+                  form:'メガアブソルZ',variants:[{...record.variants[0],form:'メガアブソルZ',ability:'きれあじ'}],
+                  answers:[{...record.answers[0],action:'あくび'}]},
+                  'メガアブソルZ',team,'カバルドン'),
+                distinctNonImmuneMove:hasVerifiedMatchupAnswer({...record,
+                  form:'メガリザードンY',variants:[{...record.variants[0],form:'メガリザードンY'}],
+                  answers:[{...record.answers[0],action:'あくび'}]},
+                  'メガリザードンY',team,'カバルドン'),
                 unrelatedLeadAnswer:check({...record,answers:[{
-                  ...record.answers[0],pokemon:'ミミッキュ'}]}),
+                  ...record.answers[0],pokemon:'ミミッキュ',action:'かげうち'}]}),
                 missingVariantAnswer:check({...record,variants:[
                   ...record.variants,{...record.variants[0],id:'otherAbility'}]}),
                 missingLeadReason:check({...record,leadChecks:[{
@@ -735,6 +752,9 @@ def main():
                             'shadowTagCannotEscapeToBasculegion': False,
                             'selfSwitch': False, 'missingBranch': False,
                             'badSwitch': False, 'badCitation': False,
+                            'missingAnswerMove': False, 'unownedAnswerMove': False,
+                            'immuneGroundMove': False, 'reflectedYawn': False,
+                            'distinctMegaZAbility': True, 'distinctNonImmuneMove': True,
                             'missingSpeedReview': False, 'reversedSpeedRange': False,
                             'missingMoveReview': False, 'emptyMoves': False,
                             'missingItemReview': False, 'emptyItems': False,
@@ -766,7 +786,7 @@ def main():
                 return {...cited,form,reviewed:true,formReviewed:true,
                   branchScope:'all-known',variants,
                   answers:variants.map(v=>({...cited,variant:v.id,
-                    pokemon:lead,reason:'synthetic fixture',reviewed:true})),
+                    pokemon:lead,action:'あくび',reason:'synthetic fixture',reviewed:true})),
                   leadChecks:variants.map(v=>({...cited,variant:v.id,
                     lead,response:'stay',reason:'synthetic fixture',reviewed:true}))};
               };

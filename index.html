@@ -803,7 +803,8 @@ function isAuditedMatchupRecord(r){
      covered.size!==required.length ||
      !required.every(form=>covered.has(form)))return false;
   if(r.answers.some(a=>!a || a.reviewed!==true || typeof a.pokemon!=='string' ||
-     !a.pokemon || !roster.some(p=>p[0]===a.pokemon) ||
+     !a.pokemon || !roster.some(p=>p[0]===a.pokemon &&
+       p[2].split('／').includes(a.action)) ||
      !ids.includes(a.variant) || typeof a.reason!=='string' || !a.reason.trim() ||
      !hasEvidenceCitation(a)))return false;
   if(r.leadChecks.some(c=>!c || c.reviewed!==true || !ids.includes(c.variant) ||
@@ -830,7 +831,14 @@ function hasVerifiedMatchupAnswer(record,opponent,team,lead){
     // not free the trapped lead; a documented switch is not a safe answer.
     const trapped=v.ability==='かげふみ' && !ghostTypeRosterLeads.has(lead);
     const safeAnswers=record.answers.filter(a=>
-      a.variant===v.id && team.includes(a.pokemon)).map(a=>a.pokemon);
+      a.variant===v.id && team.includes(a.pokemon) &&
+      // An audited answer cannot reuse a move already proven ineffective
+      // against this exact form. Exceptions need separate reviewed evidence.
+      !verifiedUnsafeActionEvidence.some(e=>
+        isVerifiedUnsafeActionEvidence(e) && e.form===v.form &&
+        e.ownLead===a.pokemon && e.action===a.action &&
+        ['immune','reflected','blocked'].includes(e.outcome)))
+      .map(a=>a.pokemon);
     return safeAnswers.length>0 && record.leadChecks.some(c=>
       c.variant===v.id && c.lead===lead && c.response!=='unsafe' &&
       !(trapped && c.response==='switch') &&
