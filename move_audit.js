@@ -66,5 +66,24 @@ function buildMoveAudit(opponents,trio,lead){
   '<p class="muted move-audit-summary">⛔既知の条件付き危険 '+stats.danger+
   '／⚠️条件付き注意 '+stats.caution+'／未検証 '+stats.unknown+
   '。安全認定0件。特定分岐の警告を他形態に流用しません。通常交代不可は先発詳細欄で別表示。</p>'+
-  '<div id="move-audit-rows">'+renderMoveAuditRows(opponents,trio,lead)+'</div></details>';
+  '<div id="move-audit-rows"></div></details>';
 }
+
+function refreshMoveAudit(opponents,trio,lead){
+ const rows=document.querySelector('#move-audit-rows');
+ if(!rows)return;
+ const stats=moveAuditStats(opponents,trio);
+ const summary=document.querySelector('.move-audit-summary');
+ if(summary)summary.textContent='⛔既知の条件付き危険 '+stats.danger+
+  '／⚠️条件付き注意 '+stats.caution+'／未検証 '+stats.unknown+
+  '。安全認定0件。特定分岐の警告を他形態に流用しません。通常交代不可は先発詳細欄で別表示。';
+ // Avoid rendering 72 verbose cells on every input or catalog test.
+ rows.innerHTML=rows.closest('details')?.open?
+  renderMoveAuditRows(opponents,trio,lead):'';
+}
+document.addEventListener('toggle',event=>{
+ if(!event.target.matches?.('.move-audit-details') || !event.target.open)return;
+ const opponents=fields.map(f=>f.value.trim());
+ if(opponents.length===6 && opponents.every(Boolean))
+  refreshMoveAudit(opponents,inspectedTrio,inspectedLead);
+},true);
