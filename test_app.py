@@ -1808,6 +1808,9 @@ def main():
             assert sum(audit['stats'][key] for key in ('danger','caution','unknown'))==72
             move_audit=page.locator('#result .move-audit-details')
             assert move_audit.count()==1
+            assert move_audit.locator('.move-audit-cell').count()==0  # lazy mobile rendering
+            move_audit.locator('summary').first.click()
+            page.wait_for_function("document.querySelectorAll('#result .move-audit-cell').length===72")
             assert move_audit.locator('.move-audit-foe').count()==6
             assert move_audit.locator('.move-audit-cell').count()==72
             assert move_audit.locator('[data-audit-status="safe"]').count()==0
