@@ -1246,7 +1246,7 @@ def main():
               item:p.item,ability:p.ability,moves:p.moves,
               speed:[p.speedMin,p.speedMax],sample:p.sampleSpeed
             }))""")
-            assert len(sample_profiles)==19
+            assert len(sample_profiles)==22
             assert sample_profiles[0]['form']=='メガグソクムシャ'
             assert sample_profiles[0]['regulation']=='M-C'
             assert sample_profiles[0]['speed']==[54,101]
@@ -1271,21 +1271,21 @@ def main():
             for i,name in enumerate(profile_names):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==6
+            assert page.locator('#result .reviewed-opponent-profile').count()==9
             page.locator('#result .reviewed-opponent-profiles summary').click()
-            assert page.locator('#result .speed-comparison').count()==42
-            assert '出典付き主要型参考例 6件' in page.locator('#result .evidence-summary').inner_text()
+            assert page.locator('#result .speed-comparison').count()==60
+            assert '出典付き主要型参考例 9件' in page.locator('#result .evidence-summary').inner_text()
             assert 'M-A/M-B（過去の参考型）' in page.locator('#result .reviewed-opponent-profiles').inner_text()
             assert page.locator('#result .hero').count()==0
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             page.locator('#foe2').fill('メガリザードンX')
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==5
+            assert page.locator('#result .reviewed-opponent-profile').count()==7
             assert 'メガリザードンY' not in page.locator('#result .reviewed-opponent-profiles').inner_text()
             page.locator('#foe2').fill('メガリザードンY')
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==5
+            assert page.locator('#result .reviewed-opponent-profile').count()==7
             assert page.locator('#result .hero').count()==0
 
             unsafe_names=['メガゲンガー','ミミッキュ','サーフゴー',
@@ -1499,7 +1499,7 @@ def main():
             }""")
             assert bad_profile=={
                 'source':False,'date':False,'speed':False,'boost':False,
-                'move':False,'invalidBoost':None,'reviewedCount':19,
+                'move':False,'invalidBoost':None,'reviewedCount':22,
                 'verifiedSafe':0}, bad_profile
             for i,name in enumerate(['カメックス','セグレイブ','ゲッコウガ',
                                      'アシレーヌ','ガブリアス','ペリッパー']):
@@ -1682,7 +1682,7 @@ def main():
             page.locator('#analyze').click()
             assert page.locator('#result .hero').count()==0
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
-            assert page.locator('#result .reviewed-opponent-profile').count()==6
+            assert page.locator('#result .reviewed-opponent-profile').count()==7
             page.locator('#result .reviewed-opponent-profiles summary').click()
             assert 'M-B（過去の参考型）' in page.locator('#result .reviewed-opponent-profiles').inner_text()
             page.locator('#result .risk-matrix summary').click()
@@ -1987,7 +1987,7 @@ def main():
             assert set(rotom['forms'])=={'ヒートロトム','フロストロトム',
                                         'スピンロトム','カットロトム'}, rotom
             assert rotom['danger'] and rotom['unknown'] and rotom['safe']==0, rotom
-            assert rotom['profiles']==[True,True] and rotom['profileCount']==19, rotom
+            assert rotom['profiles']==[True,True] and rotom['profileCount']==22, rotom
             assert rotom['speed']==[106,106] and rotom['rank']==[26,218], rotom
             assert not any(rotom[k] for k in ('forgedForm','forgedSource','forgedAbility',
                 'forgedDate','forgedProfileSource','forgedItem','forgedMoves','forgedProfileDate')), rotom
@@ -2060,7 +2060,7 @@ def main():
             assert ['メガガルーラ',1] in normal_audit['ordinary'], normal_audit
             assert len(normal_audit['family'])==2 and all(b[1]==1 for b in normal_audit['family']), normal_audit
             assert normal_audit['hisui']=='danger' and normal_audit['unrelated']=='unknown', normal_audit
-            assert normal_audit['profile'] and normal_audit['profileCount']==19, normal_audit
+            assert normal_audit['profile'] and normal_audit['profileCount']==22, normal_audit
             assert normal_audit['speed']==[108,167] and normal_audit['rank']==75, normal_audit
             assert 'ふいうち+1' in normal_audit['priority'], normal_audit
             assert not any(normal_audit[k] for k in ('wrongSource','wrongForm','wrongMove','wrongDate',
@@ -2081,6 +2081,95 @@ def main():
             assert 'イッカネズミ(3びき)' in page.locator('#result .verified-unsafe-action').text_content()
             assert 'イッカネズミ(4ひき)' in page.locator('#result .verified-unsafe-action').text_content()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            # 2026-10-30: Three *pre-Mega* source-reviewed reference profiles.
+            # M-7 usage is species-wide, not proof of a particular pre-Mega set.
+            # Exact Mega selection must not silently include a different Mega.
+            premega=page.evaluate("""() => {
+              const names=['グソクムシャ','リザードン','ゲンガー'];
+              const profiles=names.map(n=>reviewedOpponentProfiles.find(p=>p.form===n));
+              const expected=[
+                {ability:'ききかいひ',speed:[54,101],sample:60,
+                 source:'https://gamewith.jp/pokemon-champions/575014',updated:'2026-10-29'},
+                {ability:'もうか／サンパワー（個体による）',speed:[108,167],sample:120,
+                 source:'https://gamewith.jp/pokemon-champions/555372',updated:'2026-10-28'},
+                {ability:'のろわれボディ',speed:[117,178],sample:130,
+                 source:'https://gamewith.jp/pokemon-champions/554988',updated:'2026-10-29'}
+              ];
+              return {
+                count:reviewedOpponentProfiles.filter(isReviewedOpponentProfile).length,
+                data:profiles.map((p,i)=>({
+                  valid:isReviewedOpponentProfile(p),
+                  ability:p.ability,speed:[p.speedMin,p.speedMax],
+                  sample:p.sampleSpeed,source:p.source,updated:p.updated,
+                  item:p.item,rank:p.usageRank,
+                  wrongAbility:isReviewedOpponentProfile({...p,ability:'かげふみ'}),
+                  wrongSpeed:isReviewedOpponentProfile({...p,speedMax:999}),
+                  wrongSource:isReviewedOpponentProfile({...p,source:'https://example.com'}),
+                  wrongMoves:isReviewedOpponentProfile({...p,moves:['未確認']})
+                })),
+                expected,
+                baseGengar:requiredMatchupForms('ゲンガー'),
+                megaGengar:requiredMatchupForms('メガゲンガー'),
+                baseCharizard:requiredMatchupForms('リザードン'),
+                megaY:requiredMatchupForms('メガリザードンY'),
+                safe:Object.keys(verifiedMatchupEvidence).length
+              };
+            }""")
+            assert premega['count']==22 and premega['safe']==0, premega
+            assert premega['baseGengar']==['ゲンガー','メガゲンガー'], premega
+            assert premega['megaGengar']==['メガゲンガー'], premega
+            assert set(premega['baseCharizard'])=={
+                'リザードン','メガリザードンX','メガリザードンY'}, premega
+            assert premega['megaY']==['メガリザードンY'], premega
+            for profile, expected in zip(premega['data'],premega['expected']):
+                for key in ('ability','speed','sample','source','updated'):
+                    assert profile[key]==expected[key], (profile,expected,key)
+                assert profile['valid'] and profile['rank'] in (5,6,23), profile
+                assert 'メガ前候補' in profile['item'], profile
+                assert not any(profile[key] for key in (
+                    'wrongAbility','wrongSpeed','wrongSource','wrongMoves')), profile
+            for i,name in enumerate(['グソクムシャ','リザードン','ゲンガー',
+                                     'カバルドン','ニンフィア','ドドゲザン']):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .hero').count()==0
+            assert page.locator('#result .abstention-banner').count()==1
+            assert page.locator('#result .premega-transition').count()==3
+            transitions=page.locator('#result .premega-transition-risks').inner_text()
+            for name in ('グソクムシャ','メガグソクムシャ','リザードン',
+                         'メガリザードンX','メガリザードンY',
+                         'ゲンガー','メガゲンガー','ききかいひ','かげふみ',
+                         'のろわれボディ','メガ前'):
+                assert name in transitions, name
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            page.locator('#foe1').fill('メガリザードンY')
+            page.locator('#analyze').click()
+            charizard=page.locator('#result .premega-transition[data-premega-base="リザードン"]').inner_text()
+            assert 'メガリザードンY' in charizard and 'メガリザードンX' not in charizard
+            assert page.locator('#result .hero').count()==0
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            # A warning for one Mega branch is not a verdict on its siblings.
+            # The 72-move audit must show unknown branches explicitly.
+            branch_audit=page.evaluate("""() => {
+              const a=auditMoveAgainstOpponent('カバルドン','じしん','リザードン');
+              const b=auditMoveAgainstOpponent('ミミッキュ','かげうち','ガルーラ');
+              const html=renderMoveAuditRows(
+                ['リザードン','ゲンガー','グソクムシャ',
+                 'カバルドン','ニンフィア','ドドゲザン'],
+                ['カバルドン','メガルカリオZ','メガカイリュー'],
+                'カバルドン');
+              return {
+                a:a.branchCounts,b:b.branchCounts,status:a.status,
+                partial:html.includes('未検証：メガリザードンX'),
+                source:html.includes('メガリザードンY'),
+                noSafety:Object.keys(verifiedMatchupEvidence).length===0
+              };
+            }""")
+            assert branch_audit=={
+                'a':{'danger':2,'caution':0,'unknown':1},
+                'b':{'danger':2,'caution':0,'unknown':0},
+                'status':'danger','partial':True,'source':True,'noSafety':True
+            }, branch_audit
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):

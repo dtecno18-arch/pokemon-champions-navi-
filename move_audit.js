@@ -10,9 +10,13 @@ function auditMoveAgainstOpponent(own,move,opponent){
    isReviewedConditionalLeadInteraction(e) && e.forms.includes(form) &&
    e.own===own && e.move===move)
  }));
- const status=branches.some(b=>b.vetoes.length)?'danger':
-  branches.some(b=>b.cautions.length)?'caution':'unknown';
- return {own,move,opponent,branches,status};
+ const branchCounts={
+  danger:branches.filter(b=>b.vetoes.length).length,
+  caution:branches.filter(b=>!b.vetoes.length && b.cautions.length).length,
+  unknown:branches.filter(b=>!b.vetoes.length && !b.cautions.length).length
+ };
+ const status=branchCounts.danger?'danger':branchCounts.caution?'caution':'unknown';
+ return {own,move,opponent,branches,branchCounts,status};
 }
 function moveAuditStats(opponents,trio){
  const audits=opponents.flatMap(opponent=>trio.flatMap(own=>{
@@ -42,11 +46,16 @@ function renderMoveAuditRows(opponents,trio,lead){
       '：'+esc(e.mechanic)+'</b><div>'+esc(e.condition)+
       '</div><div>'+esc(e.effect)+'</div><div class="muted">出典更新 '+
       esc(e.sourceUpdated)+' ／ <a href="'+esc(e.source)+
-      '" target="_blank" rel="noopener noreferrer">根拠</a></div></div>')
+      '" target="_blank" rel="noopener noreferrer">根拠</a></div></div>'),
+     ...(b.vetoes.length||b.cautions.length?[]:[
+      '<div class="muted move-audit-unknown-branch">未検証：'+esc(b.form)+
+      '（この形態の行動可否・先手・安全性は不明）</div>'])
     ]);
     return '<div class="line move-audit-cell" data-audit-status="'+audit.status+
      '"><b>'+esc(own)+(own===lead?'（先発候補）':'')+'｜'+esc(move)+
-     '</b><div>'+esc(status)+'</div>'+
+     '</b><div>'+esc(status)+'／'+esc('危険 '+audit.branchCounts.danger+
+     '・注意 '+audit.branchCounts.caution+'・未検証 '+audit.branchCounts.unknown+
+     ' 分岐')+'</div>'+
      (details.length?details.join(''):'<div class="muted">全分岐 '+esc(audit.branches.map(b=>b.form).join('・'))+
       ' に登録済みの個別行動根拠なし。安全・有効・先手・勝敗は不明。</div>')+
      '</div>';

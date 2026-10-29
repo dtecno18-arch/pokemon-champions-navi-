@@ -420,7 +420,34 @@ const reviewedOpponentProfiles=Object.freeze([
   priority:'ふいうち+1は相手が攻撃技を選んだ場合のみ成功。ねこだまし+3は候補で登場直後に限定。',
   caveat:'M-7の種族全体使用率75位（10/28集計）と採用技の参考値。メガ前はきもったま等、メガ後はおやこあい。4技同時採用・先発安全・ゴースト相手への通りは未検証。'})
 
-]);
+ ,Object.freeze({form:'グソクムシャ',title:'メガ前の特性・先制技・素早さ（種族全体の統計）',
+  regulation:'M-C（メガ前参考）',source:'https://gamewith.jp/pokemon-champions/575014',
+  updated:'2026-10-29',usageAsOf:'2026-10-28',usageRank:5,
+  item:'グソクムシャナイト（メガ前候補）',ability:'ききかいひ',
+  moves:['ふいうち','きゅうけつ','つるぎのまい','アイアンヘッド'],
+  alternateMoves:['であいがしら','アクアジェット','インファイト'],
+  speedMin:54,speedMax:101,sampleSpeed:60,
+  priority:'ふいうち+1／であいがしら+2（登場直後のみ）／アクアジェット+1は技候補。採用は未確定。',
+  caveat:'メガ前はむし・みず、特性ききかいひ。メガ後はむし・はがね、かたいツメ。順位・技率は両形態を含む種族全体であり、4技同時採用・メガ前の行動・持ち物は確定しない。'}),
+ Object.freeze({form:'リザードン',title:'メガX/Y前の特性・素早さ・主要技（種族全体の統計）',
+  regulation:'M-C（メガ前参考）',source:'https://gamewith.jp/pokemon-champions/555372',
+  updated:'2026-10-28',usageAsOf:'2026-10-28',usageRank:6,
+  item:'リザードナイトX/Y（メガ前候補）',ability:'もうか／サンパワー（個体による）',
+  moves:['ソーラービーム','りゅうのはどう','かえんほうしゃ','はねやすめ'],
+  alternateMoves:['フレアドライブ','ニトロチャージ','りゅうのまい'],
+  speedMin:108,speedMax:167,sampleSpeed:120,
+  priority:'掲載主要技に攻撃先制技なし。メガX/Yの特性とタイプは異なり、どちらに進化するか未確定。',
+  caveat:'メガ前はほのお・ひこう。メガXはほのお・ドラゴン／かたいツメ、メガYはほのお・ひこう／ひでり。種族全体の技率をメガ前個体の確定技とみなさない。'}),
+ Object.freeze({form:'ゲンガー',title:'メガ前の素早さ・のろわれボディ（種族全体の統計）',
+  regulation:'M-C（メガ前参考）',source:'https://gamewith.jp/pokemon-champions/554988',
+  updated:'2026-10-29',usageAsOf:'2026-10-28',usageRank:23,
+  item:'ゲンガナイト（メガ前候補）',ability:'のろわれボディ',
+  moves:['シャドーボール','ヘドロウェーブ','こごえるかぜ','みちづれ'],
+  alternateMoves:['まもる','ほろびのうた','わるだくみ'],
+  speedMin:117,speedMax:178,sampleSpeed:130,
+  priority:'メガ前はのろわれボディ、メガ後はかげふみ。通常交代不可をメガ前に誤適用しない。',
+  caveat:'メガ前はゴースト・どく／素早さ種族値110、メガ後は素早さ130。種族全体の技率・ゲンガナイト採用率は個別型の保証ではない。'})
+]); 
 // M-C Rotom reference sets are not matchup answers. Reject source/date,
 // item, ability, speed, or move substitutions before displaying as reviewed.
 const rotomProfileSpecs=Object.freeze({
@@ -450,8 +477,35 @@ function isReviewedMegaKangaskhanProfile(p){
   Array.isArray(p.moves) && p.moves.length===moves.length &&
   moves.every((move,i)=>p.moves[i]===move);
 }
+// Independently checked 2026-10-30: source-dated *pre-Mega* reference forms.
+// The M-7 usage sample combines Mega and non-Mega sets. These are not
+// observed pre-Mega movesets or safe matchup answers.
+const preMegaProfileSpecs=Object.freeze({
+ 'グソクムシャ':{source:'https://gamewith.jp/pokemon-champions/575014',
+  updated:'2026-10-29',usageAsOf:'2026-10-28',usageRank:5,
+  item:'グソクムシャナイト（メガ前候補）',ability:'ききかいひ',
+  speedMin:54,speedMax:101,sampleSpeed:60,
+  moves:['ふいうち','きゅうけつ','つるぎのまい','アイアンヘッド']},
+ 'リザードン':{source:'https://gamewith.jp/pokemon-champions/555372',
+  updated:'2026-10-28',usageAsOf:'2026-10-28',usageRank:6,
+  item:'リザードナイトX/Y（メガ前候補）',ability:'もうか／サンパワー（個体による）',
+  speedMin:108,speedMax:167,sampleSpeed:120,
+  moves:['ソーラービーム','りゅうのはどう','かえんほうしゃ','はねやすめ']},
+ 'ゲンガー':{source:'https://gamewith.jp/pokemon-champions/554988',
+  updated:'2026-10-29',usageAsOf:'2026-10-28',usageRank:23,
+  item:'ゲンガナイト（メガ前候補）',ability:'のろわれボディ',
+  speedMin:117,speedMax:178,sampleSpeed:130,
+  moves:['シャドーボール','ヘドロウェーブ','こごえるかぜ','みちづれ']}
+});
+function isReviewedPreMegaProfile(p){
+ const spec=preMegaProfileSpecs[p?.form];
+ return !spec || (p.regulation==='M-C（メガ前参考）' &&
+  Object.entries(spec).every(([key,value])=>Array.isArray(value)?
+   Array.isArray(p[key]) && p[key].length===value.length &&
+    value.every((move,i)=>p[key][i]===move):p[key]===value));
+}
 function isReviewedOpponentProfile(p){
- return !!(p && isReviewedRotomProfile(p) && isReviewedMegaKangaskhanProfile(p) && typeof p.form==='string' && p.form &&
+ return !!(p && isReviewedRotomProfile(p) && isReviewedMegaKangaskhanProfile(p) && isReviewedPreMegaProfile(p) && typeof p.form==='string' && p.form &&
   typeof p.regulation==='string' && /^M-[ABC]/.test(p.regulation) &&
   hasEvidenceCitation(p) && typeof p.item==='string' && p.item &&
   typeof p.ability==='string' && p.ability &&
@@ -487,6 +541,38 @@ function referenceSpeedComparison(ownSpeed,p){
  if(ownSpeed>max)return '掲載最速例より速い（差+'+(ownSpeed-max)+'）';
  if(ownSpeed<min)return '掲載最遅例より遅い（差'+(ownSpeed-min)+'）';
  return '掲載例の範囲内（型次第）';
+}
+// A preview of the normal species can turn into any listed Mega branch.
+// Show the pre-Mega speed/ability *alongside* Mega data, not only Mega stats.
+function buildPreMegaTransitionRisks(opponents){
+ const groups=[
+  {base:'グソクムシャ',mega:['メガグソクムシャ']},
+  {base:'リザードン',mega:['メガリザードンX','メガリザードンY']},
+  {base:'ゲンガー',mega:['メガゲンガー']}
+ ];
+ const visible=groups.filter(g=>opponents.some(n=>normalize(n)===g.base));
+ if(!visible.length)return '';
+ const entries=visible.map(g=>{
+  const inputs=opponents.filter(n=>normalize(n)===g.base);
+  const allowed=new Set(inputs.flatMap(requiredMatchupForms));
+  const before=reviewedOpponentProfiles.find(p=>p.form===g.base && isReviewedOpponentProfile(p));
+  const after=g.mega.filter(f=>allowed.has(f)).map(f=>
+   reviewedOpponentProfiles.find(p=>p.form===f && isReviewedOpponentProfile(p)));
+  const missing=!before || !after.length || after.some(p=>!p);
+  return '<div class="line premega-transition" data-premega-base="'+esc(g.base)+'"><b>'+esc(g.base)+
+   '｜メガ前後の条件差</b>'+
+   (before?'<div>メガ前：'+esc(before.ability)+'／Lv50掲載素早さ '+before.speedMin+'〜'+before.speedMax+
+     '／候補持ち物 '+esc(before.item)+'</div><div class="muted">出典更新 '+esc(before.updated)+
+     ' ／ <a href="'+esc(before.source)+'" target="_blank" rel="noopener noreferrer">メガ前の参考データ</a></div>':
+     '<div class="warn">メガ前の特性・素早さ未検証。</div>')+
+   after.filter(Boolean).map(p=>'<div>メガ後 '+esc(p.form)+'：'+esc(p.ability)+
+     '／Lv50掲載素早さ '+p.speedMin+'〜'+p.speedMax+
+     '／<a href="'+esc(p.source)+'" target="_blank" rel="noopener noreferrer">出典 '+esc(p.updated)+'</a></div>').join('')+
+   (missing?'<div class="warn">必要な分岐データが不足。安全性は不明。</div>':'')+
+   '<div class="muted">種族全体の採用技・参考速度は実際の型を確定しません。メガ前後の特性・タイプ・先制技・行動順を混同しないでください。先発・交代の安全性は未検証。</div></div>';
+ }).join('');
+ return '<section class="line premega-transition-risks"><details open><summary>⚠️ メガ前→後の特性・Lv50素早さ差（'+visible.length+'種／推奨なし）</summary>'+
+  entries+'</details></section>';
 }
 function buildReviewedOpponentProfiles(opponents){
  const profiles=reviewedOpponentProfilesFor(opponents);
@@ -1707,7 +1793,7 @@ function analyze(){
   const megaCaution=megaCandidates.length?'<div class="warn mega-uncertainty"><b>メガシンカの分岐に注意</b><div>'+esc(megaCandidates.join('・'))+' が候補に含まれます。実際のメガシンカ先は選出段階では確定できません。通常形態とメガ形態を両方警戒してください。</div></div>':'';
   $('#result').innerHTML=suggestionWarning+
    '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対策候補付きルール '+actionableCount+'/6匹／選出3匹の対応 '+selectedCoverage+'/6匹／検証済み対面 '+verifiedMatchupCount+'/6匹：選出3匹・先発は推奨しません</b><div>相手6匹のうち名前ベースの対策候補は'+actionableCount+'匹、暫定選出3匹が実際に対応できる候補は'+selectedCoverage+'匹です。選出3匹で対応できない相手が1匹でもいる場合、または相手6匹の中に個別対策未登録・候補未照合の入力・個別対面未検証のメガ形態・メガシンカ可能な通常形態・重大メガ分岐・サイコフィールド展開役が1匹でも含まれる場合は推奨を保留します。さらに相手6匹全員について、出典・更新日付きの個別対面と選出3匹の回答が検証済みでなければ推奨しません。名前ベースの対策候補が6/6匹でも安全とは判定しません。対戦画面でメガ候補・先制技も確認してください。</div></div>'+
-   confidenceBanner+disguiseWarning+criticalWarning+terrainWarning+megaFormWarning+megaBaseWarning+evidenceSummary+buildLeadInspector(vals)+buildReviewedOpponentProfiles(vals)+buildLeadRiskMatrix(vals)+unsafeActionWarning+conditionalActionWarning+sourcedWarning+extraThreatWarnings+pairRiskWarning+megaCaution+
+   confidenceBanner+disguiseWarning+criticalWarning+terrainWarning+megaFormWarning+megaBaseWarning+evidenceSummary+buildLeadInspector(vals)+buildPreMegaTransitionRisks(vals)+buildReviewedOpponentProfiles(vals)+buildLeadRiskMatrix(vals)+unsafeActionWarning+conditionalActionWarning+sourcedWarning+extraThreatWarnings+pairRiskWarning+megaCaution+
    (missingVerifiedMatchups.length?'<div class="warn matchup-unverified" role="alert"><b>⚠️ 個別対面の検証不足：'+verifiedMatchupCount+'/6匹</b><div>未検証：'+esc(missingVerifiedMatchups.join('・'))+'。名前ベースの対策候補・出典付き脅威情報は、選出3匹で勝てる根拠ではありません。</div></div>':'')+
    '<div class="line abstention-coverage"><b>選出3匹で対応できない相手</b>'+ (unansweredByTrio.length?unansweredByTrio.map(c=>'<div class="line"><b>'+esc(c.name)+'</b>：'+esc(c.answer)+'</div>').join(''):'<p class="muted">名前ベースの対応候補はありますが、型・技・メガ分岐等の検証が不足しています。</p>')+'</div>'+
    '<div class="line"><b>相手6匹（入力候補の根拠／個別対面未検証）</b>'+vals.map(n=>{const p=candidateProvenance(n);return '<div class="line candidate-provenance"><b>'+esc(n)+'</b><div class="muted">'+esc(p.label)+(p.source?' ／ <a href="'+esc(p.source)+'" target="_blank" rel="noopener noreferrer">出典</a>':'')+'</div></div>';}).join('')+'</div>';
@@ -1716,7 +1802,7 @@ function analyze(){
   return;
  }
  $('#result').classList.remove('hidden');
- $('#result').innerHTML=suggestionWarning+'<h2>② おすすめ選出</h2><div class="hero"><div class="tag">登録済みの戦術ルールに基づく推奨（暫定）</div><div class="pokemon">'+r.team.map(x=>'<span class="chip">'+esc(x)+'</span>').join('')+'</div><p><b>先発：'+esc(r.lead)+'</b></p><p>'+esc(r.reason)+'</p></div>'+confidenceBanner+disguiseWarning+evidenceSummary+buildReviewedOpponentProfiles(vals)+unsafeActionWarning+conditionalActionWarning+sourcedWarning+'<div class="line"><b>立ち回り</b><p>'+esc(r.plan)+'</p></div><div class="line"><b>注意点</b>'+r.cautions.map(x=>'<div class="warn">'+esc(x)+'</div>').join('')+'</div><div class="line"><b>相手6匹の脅威チェック</b>'+r.threats.map(t=>'<div class="line"><b>'+esc(t.name)+'</b><div>'+esc(t.why)+'</div><div class="tag">対策：'+esc(t.answer)+'</div></div>').join('')+'</div><div class="line"><b>3匹比較（20通り）</b><p class="muted">'+esc(r.comparisonSummary.mode)+'。既知の対策がある相手 '+r.comparisonSummary.total+'匹中、基本選出 '+r.comparisonSummary.baseline+'匹 → 推奨 '+r.comparisonSummary.chosen+'匹。個別データがない相手は比較に反映できません。</p></div><div class="line"><b>選出3匹の対応範囲（暫定）</b><p class="muted">既知の対策候補だけを照合。要確認は相性不利の断定ではありません。</p>'+r.coverage.map(c=>'<div class="line"><b>'+esc(c.name)+' ｜ '+esc(c.status)+'</b><div class="muted">'+esc(c.answer)+'</div></div>').join('')+'</div><div class="line"><b>初手の行動分岐</b>'+r.leadBranches.map(b=>'<div class="line"><b>'+esc(b.when)+'</b><div>'+esc(b.action)+'</div></div>').join('')+'</div><details><summary>別の選出を考える条件</summary><p>相手の初手に不利で、控えの後出しも難しい場合は、メガカイリューの対面性能、ギルガルドのタスキ＋先制技、イダイトウのスカーフを軸に組み直してください。相手の選出3匹は決め打ちしません。</p></details>';
+ $('#result').innerHTML=suggestionWarning+'<h2>② おすすめ選出</h2><div class="hero"><div class="tag">登録済みの戦術ルールに基づく推奨（暫定）</div><div class="pokemon">'+r.team.map(x=>'<span class="chip">'+esc(x)+'</span>').join('')+'</div><p><b>先発：'+esc(r.lead)+'</b></p><p>'+esc(r.reason)+'</p></div>'+confidenceBanner+disguiseWarning+evidenceSummary+buildPreMegaTransitionRisks(vals)+buildReviewedOpponentProfiles(vals)+unsafeActionWarning+conditionalActionWarning+sourcedWarning+'<div class="line"><b>立ち回り</b><p>'+esc(r.plan)+'</p></div><div class="line"><b>注意点</b>'+r.cautions.map(x=>'<div class="warn">'+esc(x)+'</div>').join('')+'</div><div class="line"><b>相手6匹の脅威チェック</b>'+r.threats.map(t=>'<div class="line"><b>'+esc(t.name)+'</b><div>'+esc(t.why)+'</div><div class="tag">対策：'+esc(t.answer)+'</div></div>').join('')+'</div><div class="line"><b>3匹比較（20通り）</b><p class="muted">'+esc(r.comparisonSummary.mode)+'。既知の対策がある相手 '+r.comparisonSummary.total+'匹中、基本選出 '+r.comparisonSummary.baseline+'匹 → 推奨 '+r.comparisonSummary.chosen+'匹。個別データがない相手は比較に反映できません。</p></div><div class="line"><b>選出3匹の対応範囲（暫定）</b><p class="muted">既知の対策候補だけを照合。要確認は相性不利の断定ではありません。</p>'+r.coverage.map(c=>'<div class="line"><b>'+esc(c.name)+' ｜ '+esc(c.status)+'</b><div class="muted">'+esc(c.answer)+'</div></div>').join('')+'</div><div class="line"><b>初手の行動分岐</b>'+r.leadBranches.map(b=>'<div class="line"><b>'+esc(b.when)+'</b><div>'+esc(b.action)+'</div></div>').join('')+'</div><details><summary>別の選出を考える条件</summary><p>相手の初手に不利で、控えの後出しも難しい場合は、メガカイリューの対面性能、ギルガルドのタスキ＋先制技、イダイトウのスカーフを軸に組み直してください。相手の選出3匹は決め打ちしません。</p></details>';
 
  // The original coverage model is sparse. Show the gaps rather than claiming exhaustive optimization.
  const detail=buildDecisionExplanation(vals,r);
