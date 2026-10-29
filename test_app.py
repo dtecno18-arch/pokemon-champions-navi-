@@ -1153,7 +1153,7 @@ def main():
                 verifiedSafeCount:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
-            assert unsafe_gate == {'count':63,'valid':True,'wrongSource':False,
+            assert unsafe_gate == {'count':82,'valid':True,'wrongSource':False,
                 'wrongAbility':False,'ghostLead':False,'wrongItem':False,
                 'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
 
@@ -1875,6 +1875,69 @@ def main():
             assert page.evaluate("sessionStorage.getItem(TRIO_INSPECTOR_KEY)") is None
             assert all(page.locator(f'#foe{i}').input_value()=='' for i in range(6))
             assert not errors, errors
+            # 2026-10-30: six further exact Ghost forms x three registered
+            # Normal/Fighting moves, plus the separate Normal-type immunity of
+            # Hisuian Zoroark to Aegislash's Ghost move. No positive matchup.
+            expanded=page.evaluate("""() => {
+              const records=verifiedUnsafeActionEvidence.filter(e=>
+                furtherGhostImmunityTargets.some(t=>t.form===e.form) &&
+                ghostImmuneRosterMoves.some(m=>m.action===e.action) &&
+                e.ability==='type-only');
+              const hisui=verifiedUnsafeActionEvidence.find(e=>
+                e.form==='ヒスイゾロアーク' && e.action==='ポルターガイスト');
+              const charizard=auditMoveAgainstOpponent('メガカイリュー','しんそく','シャンデラ');
+              return {
+                forms:furtherGhostImmunityTargets.length,
+                records:records.length,
+                total:verifiedUnsafeActionEvidence.length,
+                valid:records.every(isVerifiedUnsafeActionEvidence),
+                distinct:new Set(records.map(e=>e.form+'|'+e.ownLead+'|'+e.action)).size,
+                hasDates:records.every(e=>e.sourceUpdated && e.moveUpdated &&
+                  e.mechanicUpdated && e.updated),
+                wrongForm:isVerifiedUnsafeActionEvidence({...records[0],form:'ゾロアーク'}),
+                wrongSource:isVerifiedUnsafeActionEvidence({...records[0],source:'https://example.com'}),
+                wrongMove:isVerifiedUnsafeActionEvidence({...records[0],action:'じしん'}),
+                hisuiValid:isVerifiedUnsafeActionEvidence(hisui),
+                hisuiWrongForm:isVerifiedUnsafeActionEvidence({...hisui,form:'ゾロアーク'}),
+                hisuiWrongMove:isVerifiedUnsafeActionEvidence({...hisui,action:'かげうち'}),
+                hisuiWrongDate:isVerifiedUnsafeActionEvidence({...hisui,sourceUpdated:'2026-10-28'}),
+                hisuiGhost:auditMoveAgainstOpponent('ギルガルド','ポルターガイスト','ヒスイゾロアーク').status,
+                ordinaryGhost:auditMoveAgainstOpponent('ギルガルド','ポルターガイスト','ゾロアーク').status,
+                megaBranch:charizard.branches.map(b=>[b.form,b.vetoes.length]),
+                noSafe:Object.keys(verifiedMatchupEvidence).length===0,
+                disguise:reviewedDisguiseThreats.map(isReviewedDisguiseThreat),
+                wrongDisguise:isReviewedDisguiseThreat({...reviewedDisguiseThreats[0],ability:'ふゆう'})
+              };
+            }""")
+            assert expanded['forms']==6 and expanded['records']==18, expanded
+            assert expanded['total']==82 and expanded['distinct']==18, expanded
+            assert expanded['valid'] and expanded['hasDates'] and expanded['hisuiValid'], expanded
+            assert not any(expanded[k] for k in ('wrongForm','wrongSource','wrongMove',
+                'hisuiWrongForm','hisuiWrongMove','hisuiWrongDate','wrongDisguise')), expanded
+            assert expanded['hisuiGhost']=='danger' and expanded['ordinaryGhost']=='unknown', expanded
+            assert ['シャンデラ',1] in expanded['megaBranch'], expanded
+            assert ['メガシャンデラ',1] in expanded['megaBranch'], expanded
+            assert expanded['noSafe'] and expanded['disguise']==[True,True], expanded
+            # Disguised leads are a separate visible warning, never a safe
+            # classification; the ordinary and Hisuian forms remain distinct.
+            for i, name in enumerate(['ゾロアーク','ヒスイゾロアーク','シャンデラ',
+                                      'カバルドン','ニンフィア','ドドゲザン']):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .disguise-uncertainty').count()==1
+            warning=page.locator('#result .disguise-uncertainty').inner_text()
+            assert 'ゾロアーク' in warning and 'ヒスイゾロアーク' in warning
+            assert 'イリュージョン' in warning and '見た目' in warning
+            assert page.locator('#result .hero').count()==0
+            assert page.locator('#result .abstention-banner').count()==1
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            # A normal Zoroark preview cannot inherit the Normal/Ghost veto.
+            page.locator('#foe1').fill('メガリザードンY')
+            page.locator('#analyze').click()
+            assert page.locator('#result .disguise-uncertainty').count()==1
+            assert 'ヒスイゾロアーク' not in page.locator('#result .disguise-uncertainty').inner_text()
+            assert page.locator('#result .hero').count()==0
+            page.locator('#clear').click()
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):
