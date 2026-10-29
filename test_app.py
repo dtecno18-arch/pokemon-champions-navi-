@@ -1814,6 +1814,7 @@ def main():
                 exactYawn:status('あくび','サーフゴー').branches.every(b=>b.form==='サーフゴー'),
                 wrongAbility:isVerifiedUnsafeActionEvidence({...yawn,ability:'ふうせん'}),
                 wrongMove:isVerifiedUnsafeActionEvidence({...quake,action:'あくび'}),
+                wrongItem:isVerifiedUnsafeActionEvidence({...quake,opponentItem:'たべのこし'}),
                 wrongSource:isVerifiedUnsafeActionEvidence({...quake,source:'https://example.org'}),
                 wrongDate:isVerifiedUnsafeActionEvidence({...yawn,sourceUpdated:'2026-10-28'}),
                 hasConditions:cases.every(e=>e.when.includes('場合') || e.when.includes('のみ')),
@@ -1827,7 +1828,7 @@ def main():
             assert gold['count']==2 and gold['allReviewed'], gold
             assert gold['yawn']=='danger' and gold['quake']=='danger', gold
             assert gold['rocks']=='unknown' and gold['exactYawn'], gold
-            assert not any(gold[k] for k in ('wrongAbility','wrongMove','wrongSource','wrongDate')), gold
+            assert not any(gold[k] for k in ('wrongAbility','wrongMove','wrongItem','wrongSource','wrongDate')), gold
             assert gold['hasConditions'] and gold['profiles']==[True,True], gold
             assert gold['profileSpeeds']==[149,67], gold
             assert gold['goldItem']=='こだわりスカーフ' and gold['hippoItem']=='たべのこし', gold
