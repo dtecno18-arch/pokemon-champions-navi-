@@ -464,6 +464,21 @@ function hasVerifiedMatchupAnswer(record,opponent,team,lead){
         c.switchTo!==lead && team.includes(c.switchTo) && safeAnswers.includes(c.switchTo)));
   });
 }
+// All uncertainty groups must use the SAME reviewed, lead-specific evidence gate.
+// Previously Mega, critical-threat and terrain warnings vetoed recommendations
+// unconditionally, even after exhaustive form/variant/lead evidence was supplied.
+// This helper is deliberately injectable only for synthetic regression fixtures;
+// production uses the empty or reviewed evidence registry above.
+function unverifiedMatchupBranches(opponents,team,lead,evidence=verifiedMatchupEvidence){
+ const missing=opponents.filter(n=>
+  !hasVerifiedMatchupAnswer(evidence[formKey(n)],n,team,lead));
+ return {
+  missing,
+  megaForms:missing.filter(isMegaForm),
+  megaBases:missing.filter(n=>!isMegaForm(n) &&
+    requiredMatchupForms(n).some(isMegaForm))
+ };
+}
 // Keep opponent inputs on reload; clear explicitly with the reset button.
 const INPUT_KEY='champions-navi-opponents-v1';
 try{const saved=JSON.parse(sessionStorage.getItem(INPUT_KEY)||'[]');if(Array.isArray(saved))fields.forEach((f,i)=>{if(typeof saved[i]==='string')f.value=saved[i]});}catch(e){}
@@ -773,27 +788,23 @@ function analyze(){
  const unansweredByTrio=r.coverage.filter(c=>c.status!=='候補あり');
  const sourcedCount=vals.filter(n=>Object.prototype.hasOwnProperty.call(sourcedThreatIntel,formKey(n))).length;
  const pairRisks=reviewedPairRisksFor(vals);
- const missingVerifiedMatchups=vals.filter(n=>{
-  const record=verifiedMatchupEvidence[formKey(n)];
-  return !hasVerifiedMatchupAnswer(record,n,r.team,r.lead);
- });
+ const unverified=unverifiedMatchupBranches(vals,r.team,r.lead);
+ const missingVerifiedMatchups=unverified.missing;
  const verifiedMatchupCount=6-missingVerifiedMatchups.length;
  const notInSuggestions=vals.filter(n=>!supportedNames.has(formKey(n)));
- // A displayed Mega form is not a verified matchup. Even the existing
- // Mega Salamence name-only rule cannot establish a safe lead or trio.
- const unverifiedMegaForms=vals.filter(isMegaForm);
- // A normal-form entry may Mega evolve. No base/Mega branch has verified
- // matchups, so a six-name heuristic cannot establish a safe lead.
- const unverifiedMegaBases=vals.filter(n=>!isMegaForm(n) && requiredMatchupForms(n).some(isMegaForm));
+ // Only complete, source-reviewed evidence for the selected trio AND lead
+ // clears a Mega warning. Name-only rules never clear it.
+ const unverifiedMegaForms=unverified.megaForms;
+ const unverifiedMegaBases=unverified.megaBases;
  // M-C high-tier Megas without a validated matchup answer are not safe to
  // infer from a small number of unrelated name-only coverage rules.
  // Normal Charizard / Gengar / Golisopod also require a Mega branch.
  const criticalUnverified=new Set(['リザードン','メガリザードンY','ゲンガー','メガゲンガー','グソクムシャ','メガグソクムシャ']);
- const criticalUnknown=vals.filter(n=>criticalUnverified.has(formKey(n)));
+ const criticalUnknown=missingVerifiedMatchups.filter(n=>criticalUnverified.has(formKey(n)));
  // Indeedee's Psychic Surge can invalidate priority-based cleanup. There is
  // no validated form-specific answer for either sex, even if 5 other names
  // have provisional answers. Abstain instead of treating the field as safe.
- const terrainUnknown=vals.filter(n=>normalize(n)==='イエッサン');
+ const terrainUnknown=missingVerifiedMatchups.filter(n=>normalize(n)==='イエッサン');
  const terrainWarning=terrainUnknown.length?
   '<div class="warn terrain-uncertainty" role="alert"><b>⚠️ サイコフィールド対策未検証：'+esc(terrainUnknown.join('・'))+'</b><div>サイコメイカーによるサイコフィールド下では、接地した相手への先制技が無効です。ミミッキュ・ギルガルドのかげうちやメガカイリューのしんそく等を勝ち筋として保証できません。相手の性別・特性・フィールド状態と通常技の通りを確認してください。</div><div class="muted">出典：<a href="https://gamewith.jp/pokemon-champions/575639" target="_blank" rel="noopener noreferrer">GameWith イエッサン♂育成論（2026-10-28確認）</a>。♀を含む個別対面は未検証。</div></div>':'';
  const criticalWarning=criticalUnknown.length?
