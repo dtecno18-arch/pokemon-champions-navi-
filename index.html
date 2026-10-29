@@ -1174,7 +1174,7 @@ function buildLeadRiskMatrix(opponents){
     boostedSpeedRange(p) && ownLv50Speed[own[0]]<=boostedSpeedRange(p)[1]);
    const status=vetoes.length?'⛔ 特定行動の危険 '+vetoes.length+'件':
      (interactions.length||pairs.length||boosted.length||speedRisks.length?'⚠️ 条件付き注意 '+(interactions.length+pairs.length+boosted.length+speedRisks.length)+'件':'未検証（安全性不明）');
-   const reasons=vetoes.map(e=>e.form+'：'+(e.outcome==='blocked'?'通常交代不可':e.action+'無効')+
+   const reasons=vetoes.map(e=>e.form+'：'+(e.outcome==='blocked'?'通常交代不可':e.outcome==='reflected'?e.action+'反射':e.action+'無効')+
       '（条件付き）').concat(interactions.map(e=>e.form+'：'+e.move+'／'+e.mechanic),
       pairs.map(e=>e.form+'：型・素早さ・先制技に注意'),
     boosted.map(p=>p.form+'：'+p.boostedSpeedMove+'成功後の素早さ'+boostedSpeedRange(p).join('〜')+'（採用・成功未確認）'),
@@ -1241,7 +1241,7 @@ function renderLeadInspectorRows(opponents,ownLead){
   return '<details class="lead-inspector-foe"'+(riskCount?' open':'')+'><summary>相手'+(i+1)+' '+esc(row.name)+'｜'+esc(summary)+'</summary>'+
    row.branches.map(b=>{
     const notes=b.unsafe.map(e=>
-      '<div class="warn lead-inspector-veto"><b>⛔ '+esc(e.action==='manual-switch'?'通常交代':e.action)+'：'+esc(e.outcome==='blocked'?'交代不可':'無効')+'</b>'+
+      '<div class="warn lead-inspector-veto"><b>⛔ '+esc(e.action==='manual-switch'?'通常交代':e.action)+'：'+esc(e.outcome==='blocked'?'交代不可':e.outcome==='reflected'?'反射':'無効')+'</b>'+
       '<div>'+esc(e.reason)+'</div><div class="muted">適用条件：'+esc(e.when)+'</div>'+
       '<div class="muted">出典更新 '+esc(e.updated)+'：<a href="'+esc(e.source)+'" target="_blank" rel="noopener noreferrer">根拠</a></div></div>');
     notes.push(...b.interactions.map(e=>
@@ -1273,7 +1273,7 @@ function renderTrioRiskRows(opponents,trio){
    '<div class="muted">確認分岐：'+esc(requiredMatchupForms(name).join('・'))+'</div>'+
    '<div class="trio-inspector-cells">'+all.map(({own,branches})=>{
     const vetoes=branches.flatMap(b=>b.unsafe.map(e=>b.form+'：'+
-      (e.outcome==='blocked'?'通常交代不可':e.action+'無効')+'（条件付き）'));
+      (e.outcome==='blocked'?'通常交代不可':e.outcome==='reflected'?e.action+'反射':e.action+'無効')+'（条件付き）'));
     const cautions=branches.flatMap(b=>[
       ...b.interactions.map(e=>b.form+'：'+e.move+'／'+e.mechanic),
       ...b.pairRisks.map(e=>b.form+'：型・先制技'),
