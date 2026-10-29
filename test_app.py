@@ -1081,6 +1081,46 @@ def main():
             assert unsafe_gate == {'count':4,'valid':True,'wrongSource':False,
                 'wrongAbility':False,'ghostLead':False,'wrongItem':False,
                 'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
+            # Reviewed interaction facts: 5 terrain-vs-priority moves and 4
+            # Mega Golisopod First Impression (+2) vs roster priority (+1).
+            # They must NEVER count as safe matchup answers.
+            conditional_gate=page.evaluate("""() => {
+              const e=reviewedConditionalLeadInteractions;
+              return {
+                total:e.length,
+                valid:e.every(isReviewedConditionalLeadInteraction),
+                terrain:e.filter(x=>x.mechanic==='psychic-terrain').length,
+                priority:e.filter(x=>x.mechanic==='priority-order').length,
+                wrongSource:isReviewedConditionalLeadInteraction({...e[0],source:''}),
+                wrongMove:isReviewedConditionalLeadInteraction({...e[0],move:'じしん'}),
+                wrongPriority:isReviewedConditionalLeadInteraction({...e[5],opponentPriority:1}),
+                promoted:isReviewedConditionalLeadInteraction({...e[0],scope:'safe-lead'}),
+                safe:Object.keys(verifiedMatchupEvidence).length
+              };
+            }""")
+            assert conditional_gate == {'total':9,'valid':True,'terrain':5,
+                'priority':4,'wrongSource':False,'wrongMove':False,
+                'wrongPriority':False,'promoted':False,'safe':0}, conditional_gate
+            conditional_names=['イエッサン','グソクムシャ','ミミッキュ',
+                               'サーフゴー','アシレーヌ','ガブリアス']
+            for i, name in enumerate(conditional_names):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert '条件付き技相互作用 9件' in page.locator('#result .conditional-interactions').inner_text()
+            assert page.locator('#result .conditional-interactions .line').count() == 9
+            assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert page.locator('#result .hero').count() == 0
+            page.locator('#foe0').fill('イエッサン(メス)')
+            page.locator('#foe1').fill('メガリザードンY')
+            page.locator('#analyze').click()
+            assert page.locator('#result .conditional-interactions .line').count() == 5
+            page.locator('#foe0').fill('メガグソクムシャ')
+            page.locator('#analyze').click()
+            assert page.locator('#result .conditional-interactions .line').count() == 4
+            page.locator('#foe0').fill('メガリザードンY')
+            page.locator('#analyze').click()
+            assert page.locator('#result .conditional-interactions').count() == 0
+
             unsafe_names=['メガゲンガー','ミミッキュ','サーフゴー',
                           'アシレーヌ','ガブリアス','カバルドン']
             for i, name in enumerate(unsafe_names):
