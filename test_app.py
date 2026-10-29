@@ -1991,6 +1991,10 @@ def main():
             assert rotom['speed']==[106,106] and rotom['rank']==[26,218], rotom
             assert not any(rotom[k] for k in ('forgedForm','forgedSource','forgedAbility',
                 'forgedDate','forgedProfileSource','forgedItem','forgedMoves','forgedProfileDate')), rotom
+            # Refill all six after the preceding Zoroark test cleared the UI.
+            for i,name in enumerate(['ヒートロトム','メガリザードンY','シャンデラ',
+                                     'カバルドン','ニンフィア','ドドゲザン']):
+                page.locator(f'#foe{i}').fill(name)
             for form in ['ヒートロトム','フロストロトム','スピンロトム','カットロトム']:
                 page.locator('#foe0').fill(form)
                 page.locator('#analyze').click()
