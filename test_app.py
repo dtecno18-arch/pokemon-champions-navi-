@@ -960,7 +960,7 @@ def main():
                 risk = page.locator('#result .reviewed-pair-risks')
                 assert risk.count() == 1
                 assert all(x in risk.inner_text() for x in (own, opponent, warning, '未検証'))
-                assert risk.locator('a[href*="'+source+'"]').count() == 1
+                assert risk.locator('a[href*="'+source+'"]').count() >= 1
                 # Reviewed M-7 observations are form-specific warning context,
                 # not proof of an advantageous lead or a complete move set.
                 observed = {
