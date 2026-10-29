@@ -359,14 +359,33 @@ const verifiedUnsafeActionEvidence=Object.freeze([
   when:'相手メガゲンガーがメガシンカ済みで「かげふみ」が有効、カバルドンが場にいる場合。交代技・特殊な例外は対象外。',
   reason:'ゴーストタイプではないカバルドンは、かげふみが有効な間は通常交代できません。',
   source:'https://gamewith.jp/pokemon-champions/555161',
-  updated:'2026-10-27',scope:'verified-unsafe-action',reviewed:true}
+  updated:'2026-10-27',scope:'verified-unsafe-action',reviewed:true},
+ // Ground-type Earthquake cannot hit a Flying-type Mega Charizard Y under
+ // ordinary type rules. NOT a safe lead, not a prediction of its moves.
+ // GameWith Charizard Y 2026-10-28; Earthquake 2026-10-20; type chart 2026-10-28.
+ {form:'メガリザードンY',ownLead:'カバルドン',heldItem:'たべのこし',
+  ability:'ひでり',action:'じしん',outcome:'immune',
+  when:'相手がメガリザードンY（ほのお・ひこう）にメガシンカ済みで、通常のタイプ相性が適用される場合。じゅうりょく・はねやすめ等でひこうの地面無効が失われる状況は除外。',
+  reason:'カバルドンのじしん（じめん技）は、ひこうタイプのメガリザードンYに通常は無効。じしんを安易に選ばないでください。',
+  source:'https://gamewith.jp/pokemon-champions/554808',
+  moveSource:'https://gamewith.jp/pokemon-champions/554282',
+  mechanicSource:'https://gamewith.jp/pokemon-champions/546446',
+  updated:'2026-10-28',scope:'verified-unsafe-action',reviewed:true}
 ]);
 function isVerifiedUnsafeActionEvidence(e){
  const own=e&&roster.find(p=>p[0]===e.ownLead);
  return !!(e && e.reviewed===true && e.scope==='verified-unsafe-action' &&
-  e.form==='メガゲンガー' && e.ability==='かげふみ' &&
-  e.action==='manual-switch' && e.outcome==='blocked' &&
-  own && own[1]===e.heldItem && !ghostTypeRosterLeads.has(e.ownLead) &&
+  own && e.ownLead==='カバルドン' && own[1]===e.heldItem &&
+  ((e.form==='メガゲンガー' && e.ability==='かげふみ' &&
+    e.action==='manual-switch' && e.outcome==='blocked' &&
+    e.source==='https://gamewith.jp/pokemon-champions/555161' &&
+    !ghostTypeRosterLeads.has(e.ownLead)) ||
+   (e.form==='メガリザードンY' && e.ability==='ひでり' &&
+    e.action==='じしん' && e.outcome==='immune' &&
+    own[2].split('／').includes(e.action) &&
+    e.source==='https://gamewith.jp/pokemon-champions/554808' &&
+    e.moveSource==='https://gamewith.jp/pokemon-champions/554282' &&
+    e.mechanicSource==='https://gamewith.jp/pokemon-champions/546446')) &&
   typeof e.when==='string' && e.when.length>10 &&
   typeof e.reason==='string' && e.reason.length>10 &&
   hasEvidenceCitation(e));
@@ -862,7 +881,7 @@ function analyze(){
   pairRisks.map(p=>'<div class="line"><b>'+esc(p.own)+' 対 '+esc(p.form)+'</b><div>'+esc(p.risk)+'</div><div class="muted">メガ後特性 '+esc(p.ability)+'／素早さ種族値 '+p.speedBase+'／Lv50参考実数値 '+p.speedExampleMin+'〜'+p.speedExampleMax+'（GameWith掲載例・31IV前提。全型の上下限ではありません）</div><div class="muted">M-7シングル '+esc(p.usageAsOf)+' 集計：通常種を含む採用順位 '+p.usageRank+'位。技 '+p.observedMoves.map(m=>esc(m.move)+' '+m.percent+'%').join('、')+'（種族全体の採用率。メガ型への採用を断定しません）</div><div class="muted">確認した先制技候補：'+(p.priorityMoves.length?p.priorityMoves.map(m=>esc(m.move)+'（優先度+'+m.priority+'・'+esc(m.condition)+'）').join('、'):'個別採用率・全候補は未確認')+'</div><div class="muted">対面注意の出典更新 '+esc(p.updated)+' ／ <a href="'+esc(p.source)+'" target="_blank" rel="noopener noreferrer">根拠</a>。型・統計の出典更新 '+esc(p.statsUpdated)+' ／ <a href="'+esc(p.statsSource)+'" target="_blank" rel="noopener noreferrer">GameWithデータ</a>。全技・持ち物・先発安全性は未検証。選出推奨は保留。</div></div>').join('')+'</div>':'';
  const unsafeActionWarning=verifiedUnsafeActions.length?
   '<div class="warn verified-unsafe-action" role="alert"><b>⛔ 出典・条件確認済みの危険行動 '+verifiedUnsafeActions.length+'件（安全な選出を保証しません）</b>'+
-  verifiedUnsafeActions.map(e=>'<div class="line"><b>'+esc(e.ownLead)+' 対 '+esc(e.form)+'：通常交代不可</b><div>'+esc(e.when)+'</div><div>'+esc(e.reason)+'</div><div class="muted">検証：'+esc(e.updated)+' ／ <a href="'+esc(e.source)+'" target="_blank" rel="noopener noreferrer">特性の出典（GameWith）</a>。全型の対面勝敗・先発安全性は未検証。</div></div>').join('')+'</div>':'';
+  verifiedUnsafeActions.map(e=>'<div class="line"><b>'+esc(e.ownLead)+' 対 '+esc(e.form)+'：'+esc(e.outcome==='blocked'?'通常交代不可':'じしん無効（条件付き）')+'</b><div>'+esc(e.when)+'</div><div>'+esc(e.reason)+'</div><div class="muted">検証：'+esc(e.updated)+' ／ <a href="'+esc(e.source)+'" target="_blank" rel="noopener noreferrer">出典（GameWith）</a>'+(e.moveSource?' ／ <a href="'+esc(e.moveSource)+'" target="_blank" rel="noopener noreferrer">じしんの効果</a>':'')+(e.mechanicSource?' ／ <a href="'+esc(e.mechanicSource)+'" target="_blank" rel="noopener noreferrer">タイプ相性表</a>':'')+'。全型の対面勝敗・先発安全性は未検証。</div></div>').join('')+'</div>':'';
  const confidenceBanner=uncovered.length
   ?'<div class="warn risk-banner" role="status"><b>⚠️ 対策データ不足：'+knownCount+'/6匹のみ登録</b><div>未登録：'+esc(uncovered.join('・'))+'</div><div>未登録の相手への有利不利は評価できません。選出判断を保留し、先発・交代先を安全とは判定しません。</div></div>'
   :'<div class="warn risk-banner" role="status"><b>注意：対策ルール登録6/6匹</b><div>名前ベースの登録件数であり、型・技・持ち物・特性・素早さ・メガ候補の対策精度は未検証です。安全性を保証しません。</div></div>';
