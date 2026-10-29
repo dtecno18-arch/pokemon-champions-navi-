@@ -1153,7 +1153,7 @@ def main():
                 verifiedSafeCount:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
-            assert unsafe_gate == {'count':61,'valid':True,'wrongSource':False,
+            assert unsafe_gate == {'count':63,'valid':True,'wrongSource':False,
                 'wrongAbility':False,'ghostLead':False,'wrongItem':False,
                 'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
 
