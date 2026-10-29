@@ -360,6 +360,20 @@ const verifiedUnsafeActionEvidence=Object.freeze([
   reason:'ゴーストタイプではないカバルドンは、かげふみが有効な間は通常交代できません。',
   source:'https://gamewith.jp/pokemon-champions/555161',
   updated:'2026-10-27',scope:'verified-unsafe-action',reviewed:true},
+ // Shadow Tag traps any non-Ghost active lead, not only Hippowdon. These
+ // are independent exact-roster lead/action facts, NOT safe matchup answers.
+ {form:'メガゲンガー',ownLead:'メガルカリオZ',heldItem:'ルカリオナイトZ',
+  ability:'かげふみ',action:'manual-switch',outcome:'blocked',
+  when:'相手メガゲンガーのかげふみが有効で、非ゴーストのメガルカリオZが場にいる場合。交代技・特別な例外は対象外。',
+  reason:'メガルカリオZはゴーストタイプではないため、かげふみが有効な間は通常交代できません。',
+  source:'https://gamewith.jp/pokemon-champions/555161',
+  updated:'2026-10-29',scope:'verified-unsafe-action',reviewed:true},
+ {form:'メガゲンガー',ownLead:'メガカイリュー',heldItem:'カイリュナイト',
+  ability:'かげふみ',action:'manual-switch',outcome:'blocked',
+  when:'相手メガゲンガーのかげふみが有効で、非ゴーストのメガカイリューが場にいる場合。交代技・特別な例外は対象外。',
+  reason:'メガカイリューはゴーストタイプではないため、かげふみが有効な間は通常交代できません。',
+  source:'https://gamewith.jp/pokemon-champions/555161',
+  updated:'2026-10-29',scope:'verified-unsafe-action',reviewed:true},
  // Ground-type Earthquake cannot hit a Flying-type Mega Charizard Y under
  // ordinary type rules. NOT a safe lead, not a prediction of its moves.
  // GameWith Charizard Y 2026-10-28; Earthquake 2026-10-20; type chart 2026-10-28.
@@ -375,7 +389,7 @@ const verifiedUnsafeActionEvidence=Object.freeze([
 function isVerifiedUnsafeActionEvidence(e){
  const own=e&&roster.find(p=>p[0]===e.ownLead);
  return !!(e && e.reviewed===true && e.scope==='verified-unsafe-action' &&
-  own && e.ownLead==='カバルドン' && own[1]===e.heldItem &&
+  own && own[1]===e.heldItem &&
   ((e.form==='メガゲンガー' && e.ability==='かげふみ' &&
     e.action==='manual-switch' && e.outcome==='blocked' &&
     e.source==='https://gamewith.jp/pokemon-champions/555161' &&
