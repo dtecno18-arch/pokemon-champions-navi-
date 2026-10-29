@@ -2003,7 +2003,7 @@ def main():
                 assert form in page.locator('#result .verified-unsafe-action').inner_text()
                 assert 'じしん無効（条件付き）' in page.locator('#result .verified-unsafe-action').inner_text()
                 if form in ('ヒートロトム','フロストロトム'):
-                    assert form in page.locator('#result .reviewed-opponent-profiles').inner_text()
+                    assert form in page.locator('#result .reviewed-opponent-profiles').text_content()
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             page.locator('#foe1').fill('フロストロトム')
             page.locator('#foe0').fill('ヒートロトム')
