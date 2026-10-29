@@ -1563,8 +1563,46 @@ def main():
             page.locator('#analyze').click()
             assert page.locator('#lead-inspector-select').input_value()=='メガカイリュー'
             assert page.locator('#result .hero').count()==0
+            # Manual trio inspection: 3 distinct chosen members x all 6 foes,
+            # with every Mega/sex branch, no implicit safe or winning outcome.
+            trio=page.locator('#result .trio-inspector-details')
+            assert trio.count()==1
+            assert trio.locator('.trio-inspector-foe').count()==6
+            assert trio.locator('.trio-inspector-cell').count()==18
+            assert 'メガゲンガー：通常交代不可' in trio.inner_text()
+            assert page.locator('#result .hero').count()==0
+            assert [page.locator(f'#trio-inspector-{i}').input_value()
+                    for i in range(3)]==[
+                        'カバルドン','メガルカリオZ','メガカイリュー']
+            page.locator('#trio-inspector-1').select_option('ギルガルド')
+            assert trio.locator('.trio-inspector-cell').count()==18
+            assert page.locator('#trio-inspector-1').input_value()=='ギルガルド'
+            # Duplicate attempt is rejected without losing a previous choice.
+            page.locator('#trio-inspector-2').select_option('ギルガルド')
+            assert page.locator('#trio-inspector-2').input_value()=='メガカイリュー'
+            assert '同じポケモンを2匹選択できません' in page.locator(
+                '#trio-inspector-status').inner_text()
+            page.locator('#lead-inspector-select').select_option('ギルガルド')
+            page.locator('#trio-inspector-1').select_option('ミミッキュ')
+            assert page.locator('#lead-inspector-select').input_value()=='カバルドン'
+            # Choosing a lead outside the trio replaces slot 3, not a fourth member.
+            page.locator('#lead-inspector-select').select_option('ギルガルド')
+            assert [page.locator(f'#trio-inspector-{i}').input_value()
+                    for i in range(3)]==[
+                        'カバルドン','ミミッキュ','ギルガルド']
+            assert trio.locator('.trio-inspector-cell').count()==18
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            page.reload(wait_until='domcontentloaded')
+            page.locator('#analyze').click()
+            assert [page.locator(f'#trio-inspector-{i}').input_value()
+                    for i in range(3)]==[
+                        'カバルドン','ミミッキュ','ギルガルド']
+            assert page.locator('#lead-inspector-select').input_value()=='ギルガルド'
+            assert page.locator('#result .trio-inspector-cell').count()==18
+            assert page.locator('#result .hero').count()==0
             page.locator('#clear').click()
             assert page.evaluate("sessionStorage.getItem(LEAD_INSPECTOR_KEY)") is None
+            assert page.evaluate("sessionStorage.getItem(TRIO_INSPECTOR_KEY)") is None
             assert all(page.locator(f'#foe{i}').input_value()=='' for i in range(6))
             assert not errors, errors
             # Unknown Pokémon must not crash the app or inject markup.
