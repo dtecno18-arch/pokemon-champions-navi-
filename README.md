@@ -54,6 +54,11 @@ Pokémon Champions シングル（3対3）の選出支援アプリ。**開発途
 - 出典：GameWith [ギルガルド（2026-10-29）](https://gamewith.jp/pokemon-champions/554959)、[シャンデラ（10-28）](https://gamewith.jp/pokemon-champions/556413)、[メガシャンデラ（10-28）](https://gamewith.jp/pokemon-champions/554674)、[ソウブレイズ（10-27）](https://gamewith.jp/pokemon-champions/553166)、[ヒスイバクフーン（10-27）](https://gamewith.jp/pokemon-champions/554150)、[ヒスイゾロアーク（10-27）](https://gamewith.jp/pokemon-champions/553385)、[イリュージョン（10-27）](https://gamewith.jp/pokemon-champions/555166)、[ポルターガイスト（10-27）](https://gamewith.jp/pokemon-champions/554474)、[タイプ相性（10-28）](https://gamewith.jp/pokemon-champions/546446)。
 - 既存63件から**条件付き危険行動82件**へ。新19件は「特定技が無効」の確認であり、**安全な個別対面は0件、選出推奨は保留**。追加テストは全件出典・日付・技・形態分岐・偽装警告・スマホ390px/PC1280px・安全推奨保留を検査します。
 
+### 2026-10-30：ロトム4形態の危険行動とM-C参考型2件
+- ヒート・フロスト・スピン・カットロトムの「ふゆう」有効時のカバルドン「じしん」無効を、形態別に4件追加。例外（かたやぶり・じゅうりょく・特性変更）は未検証。出典：GameWith [ヒート（10/27）](https://gamewith.jp/pokemon-champions/553368)、[フロスト（10/27）](https://gamewith.jp/pokemon-champions/554389)、[スピン（10/27）](https://gamewith.jp/pokemon-champions/554388)、[カット（10/27）](https://gamewith.jp/pokemon-champions/553370)。
+- ヒートロトム（M-7 10/28集計・使用率26位）とフロストロトム（10/26集計・218位）の参考技・持ち物・Lv50掲載素早さ95〜151（無振り106）を追加。技4つの同時採用・持ち物・先発安全は未確定。出典：[ヒート育成論（10/29更新）](https://gamewith.jp/pokemon-champions/554982)、[フロスト育成論（10/26更新）](https://gamewith.jp/pokemon-champions/556483)。
+- 出典・更新日・形態・特性・技・持ち物改ざん拒否、ロトム形態間の重複拒否、390px/1280px・安全推奨保留の回帰テストを追加。**安全な個別対面は0件**。
+
 ## テスト
 ```bash
 python -m pip install -r requirements-dev.txt

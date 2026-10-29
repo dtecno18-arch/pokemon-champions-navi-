@@ -1153,7 +1153,7 @@ def main():
                 verifiedSafeCount:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
-            assert unsafe_gate == {'count':82,'valid':True,'wrongSource':False,
+            assert unsafe_gate == {'count':86,'valid':True,'wrongSource':False,
                 'wrongAbility':False,'ghostLead':False,'wrongItem':False,
                 'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
 
@@ -1246,7 +1246,7 @@ def main():
               item:p.item,ability:p.ability,moves:p.moves,
               speed:[p.speedMin,p.speedMax],sample:p.sampleSpeed
             }))""")
-            assert len(sample_profiles)==16
+            assert len(sample_profiles)==18
             assert sample_profiles[0]['form']=='メガグソクムシャ'
             assert sample_profiles[0]['regulation']=='M-C'
             assert sample_profiles[0]['speed']==[54,101]
@@ -1499,7 +1499,7 @@ def main():
             }""")
             assert bad_profile=={
                 'source':False,'date':False,'speed':False,'boost':False,
-                'move':False,'invalidBoost':None,'reviewedCount':16,
+                'move':False,'invalidBoost':None,'reviewedCount':18,
                 'verifiedSafe':0}, bad_profile
             for i,name in enumerate(['カメックス','セグレイブ','ゲッコウガ',
                                      'アシレーヌ','ガブリアス','ペリッパー']):
@@ -1910,7 +1910,7 @@ def main():
               };
             }""")
             assert expanded['forms']==6 and expanded['records']==18, expanded
-            assert expanded['total']==82 and expanded['distinct']==18, expanded
+            assert expanded['total']==86 and expanded['distinct']==18, expanded
             assert expanded['valid'] and expanded['hasDates'] and expanded['hisuiValid'], expanded
             assert not any(expanded[k] for k in ('wrongForm','wrongSource','wrongMove',
                 'hisuiWrongForm','hisuiWrongMove','hisuiWrongDate','wrongDisguise')), expanded
@@ -1956,6 +1956,60 @@ def main():
             assert 'ヒスイゾロアーク' not in page.locator('#result .disguise-uncertainty b').first.inner_text()
             assert page.locator('#result .hero').count()==0
             page.locator('#clear').click()
+            # Four source-dated Levitate vetoes, two M-C reference profiles.
+            # Exact form, source, item and move audits cannot certify safety.
+            rotom=page.evaluate("""() => {
+              const forms=['ヒートロトム','フロストロトム','スピンロトム','カットロトム'];
+              const records=verifiedUnsafeActionEvidence.filter(e=>
+                forms.includes(e.form) && e.action==='じしん' && e.ownLead==='カバルドン');
+              const heat=reviewedOpponentProfiles.find(p=>p.form===forms[0]);
+              const frost=reviewedOpponentProfiles.find(p=>p.form===forms[1]);
+              return {count:records.length,forms:records.map(e=>e.form),
+                valid:records.every(isVerifiedUnsafeActionEvidence),
+                dated:records.every(e=>e.sourceUpdated==='2026-10-27' &&
+                  e.mechanicUpdated==='2026-10-28'),
+                danger:forms.every(f=>auditMoveAgainstOpponent('カバルドン','じしん',f).status==='danger'),
+                unknown:forms.every(f=>auditMoveAgainstOpponent('カバルドン','あくび',f).status==='unknown'),
+                forgedForm:isVerifiedUnsafeActionEvidence({...records[0],form:'ウォッシュロトム'}),
+                forgedSource:isVerifiedUnsafeActionEvidence({...records[0],source:records[1].source}),
+                forgedAbility:isVerifiedUnsafeActionEvidence({...records[0],ability:'type-only'}),
+                forgedDate:isVerifiedUnsafeActionEvidence({...records[0],sourceUpdated:'2026-10-28'}),
+                profiles:[isReviewedOpponentProfile(heat),isReviewedOpponentProfile(frost)],
+                profileCount:reviewedOpponentProfiles.filter(isReviewedOpponentProfile).length,
+                speed:[heat.sampleSpeed,frost.sampleSpeed],rank:[heat.usageRank,frost.usageRank],
+                forgedProfileSource:isReviewedOpponentProfile({...heat,source:frost.source}),
+                forgedItem:isReviewedOpponentProfile({...heat,item:'こだわりスカーフ'}),
+                forgedMoves:isReviewedOpponentProfile({...frost,moves:['ふぶき']}),
+                forgedProfileDate:isReviewedOpponentProfile({...frost,updated:'2026-10-29'}),
+                safe:Object.keys(verifiedMatchupEvidence).length};
+            }""")
+            assert rotom['count']==4 and rotom['valid'] and rotom['dated'], rotom
+            assert set(rotom['forms'])=={'ヒートロトム','フロストロトム',
+                                        'スピンロトム','カットロトム'}, rotom
+            assert rotom['danger'] and rotom['unknown'] and rotom['safe']==0, rotom
+            assert rotom['profiles']==[True,True] and rotom['profileCount']==18, rotom
+            assert rotom['speed']==[106,106] and rotom['rank']==[26,218], rotom
+            assert not any(rotom[k] for k in ('forgedForm','forgedSource','forgedAbility',
+                'forgedDate','forgedProfileSource','forgedItem','forgedMoves','forgedProfileDate')), rotom
+            # Refill all six after the preceding Zoroark test cleared the UI.
+            for i,name in enumerate(['ヒートロトム','メガリザードンY','シャンデラ',
+                                     'カバルドン','ニンフィア','ドドゲザン']):
+                page.locator(f'#foe{i}').fill(name)
+            for form in ['ヒートロトム','フロストロトム','スピンロトム','カットロトム']:
+                page.locator('#foe0').fill(form)
+                page.locator('#analyze').click()
+                assert page.locator('#result .hero').count()==0
+                assert page.locator('#result .abstention-banner').count()==1
+                assert form in page.locator('#result .verified-unsafe-action').inner_text()
+                assert 'じしん無効（条件付き）' in page.locator('#result .verified-unsafe-action').inner_text()
+                if form in ('ヒートロトム','フロストロトム'):
+                    assert form in page.locator('#result .reviewed-opponent-profiles').text_content()
+                assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            page.locator('#foe1').fill('フロストロトム')
+            page.locator('#foe0').fill('ヒートロトム')
+            page.locator('#analyze').click()
+            assert '同じポケモンが重複' in page.locator('#status').inner_text()
+            page.locator('#foe1').fill('メガリザードンY')
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):
