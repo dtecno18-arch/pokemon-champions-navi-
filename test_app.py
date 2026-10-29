@@ -1078,7 +1078,7 @@ def main():
                 verifiedSafeCount:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
-            assert unsafe_gate == {'count':4,'valid':True,'wrongSource':False,
+            assert unsafe_gate == {'count':7,'valid':True,'wrongSource':False,
                 'wrongAbility':False,'ghostLead':False,'wrongItem':False,
                 'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
             # Reviewed interaction facts: 5 terrain-vs-priority moves and 4
@@ -1091,6 +1091,7 @@ def main():
                 valid:e.every(isReviewedConditionalLeadInteraction),
                 terrain:e.filter(x=>x.mechanic==='psychic-terrain').length,
                 priority:e.filter(x=>x.mechanic==='priority-order').length,
+                ties:e.filter(x=>x.mechanic==='priority-tie').length,
                 wrongSource:isReviewedConditionalLeadInteraction({...e[0],source:''}),
                 wrongFemaleSource:isReviewedConditionalLeadInteraction({...e[0],femaleSource:''}),
                 wrongUpdate:isReviewedConditionalLeadInteraction({...e[0],sourceUpdated:'未確認'}),
@@ -1100,7 +1101,7 @@ def main():
                 safe:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
-            assert conditional_gate == {'total':9,'valid':True,'terrain':5,
+            assert conditional_gate == {'total':14,'valid':True,'terrain':5,'ties':5,
                 'priority':4,'wrongSource':False,'wrongFemaleSource':False,'wrongUpdate':False,'wrongMove':False,
                 'wrongPriority':False,'promoted':False,'safe':0}, conditional_gate
             conditional_names=['イエッサン','グソクムシャ','ミミッキュ',
@@ -1110,8 +1111,8 @@ def main():
             page.locator('#analyze').click()
             assert '公式M-C入力網羅率 100%' in page.locator('#result .evidence-summary').inner_text()
             assert '検証済み対面率 0%' in page.locator('#result .evidence-summary').inner_text()
-            assert '条件付き技相互作用 9件' in page.locator('#result .conditional-interactions').inner_text()
-            assert page.locator('#result .conditional-interactions .line').count() == 9
+            assert '条件付き技相互作用 14件' in page.locator('#result .conditional-interactions').inner_text()
+            assert page.locator('#result .conditional-interactions .line').count() == 14
             assert page.locator('#result .conditional-interactions details').get_attribute('open') is None
             page.locator('#result .conditional-interactions summary').click()
             assert page.locator('#result .conditional-interactions details').get_attribute('open') is not None
@@ -1123,7 +1124,7 @@ def main():
             assert page.locator('#result .conditional-interactions .line').count() == 5
             page.locator('#foe0').fill('メガグソクムシャ')
             page.locator('#analyze').click()
-            assert page.locator('#result .conditional-interactions .line').count() == 4
+            assert page.locator('#result .conditional-interactions .line').count() == 9
             page.locator('#foe0').fill('メガゲンガー')
             page.locator('#analyze').click()
             assert page.locator('#result .conditional-interactions').count() == 0
@@ -1144,6 +1145,49 @@ def main():
             page.locator('#foe0').fill('メガグソクムシャ')
             page.locator('#analyze').click()
             assert page.locator('#result .verified-unsafe-action').count() == 0
+            assert page.locator('#result .hero').count() == 0
+
+            # Ghost immunities: exact moves, items and sources, never a safe lead.
+            immune_gate=page.evaluate("""() => {
+              return verifiedUnsafeActionEvidence.slice(4).map(e=>({
+                lead:e.ownLead,move:e.action,valid:isVerifiedUnsafeActionEvidence(e),
+                wrongMove:isVerifiedUnsafeActionEvidence({...e,action:'じしん'}),
+                wrongChart:isVerifiedUnsafeActionEvidence({...e,mechanicSource:''}),
+                wrongSource:isVerifiedUnsafeActionEvidence({...e,source:''}),
+                wrongItem:isVerifiedUnsafeActionEvidence({...e,heldItem:'オボンのみ'})
+              }));
+            }""")
+            assert [(x['lead'],x['move']) for x in immune_gate] == [
+              ('メガカイリュー','しんそく'),
+              ('メガルカリオZ','しんくうは'),
+              ('ギルガルド','インファイト')], immune_gate
+            assert all(x['valid'] and not x['wrongMove'] and not x['wrongChart']
+                       and not x['wrongSource'] and not x['wrongItem'] for x in immune_gate)
+            page.locator('#foe0').fill('メガゲンガー')
+            page.locator('#analyze').click()
+            ghost_warning=page.locator('#result .verified-unsafe-action')
+            assert ghost_warning.locator('.line').count() == 6
+            for move in ('しんそく','しんくうは','インファイト'):
+                assert move+'無効（条件付き）' in ghost_warning.inner_text()
+            assert page.locator('#result .hero').count() == 0
+
+            tie_gate=page.evaluate("""() => {
+              return reviewedConditionalLeadInteractions.slice(9).map(e=>({
+                own:e.own,move:e.move,opponent:e.opponentMove,
+                valid:isReviewedConditionalLeadInteraction(e),
+                wrongOpponent:isReviewedConditionalLeadInteraction({...e,opponentMove:'アクアジェット'}),
+                wrongPriority:isReviewedConditionalLeadInteraction({...e,opponentPriority:0}),
+                wrongSource:isReviewedConditionalLeadInteraction({...e,source:''})
+              }));
+            }""")
+            assert len(tie_gate)==5 and all(x['valid'] and not x['wrongOpponent']
+                and not x['wrongPriority'] and not x['wrongSource'] for x in tie_gate)
+            assert tie_gate[-1]['move']=='しんそく' and tie_gate[-1]['opponent']=='であいがしら'
+            page.locator('#foe0').fill('メガグソクムシャ')
+            page.locator('#analyze').click()
+            assert page.locator('#result .conditional-interactions .line').count() == 9
+            page.locator('#result .conditional-interactions summary').click()
+            assert '素早さ等によって行動順が変わる' in page.locator('#result .conditional-interactions').inner_text()
             assert page.locator('#result .hero').count() == 0
 
             # Both additional non-Ghost leads must have exact, cited vetoes.
@@ -1200,8 +1244,8 @@ def main():
             page.locator('#foe0').fill('メガリザードンY')
             page.locator('#foe1').fill('メガゲンガー')
             page.locator('#analyze').click()
-            assert '検証済み危険行動 4件' in page.locator('#result .evidence-summary').inner_text()
-            assert page.locator('#result .verified-unsafe-action .line').count() == 4
+            assert '検証済み危険行動 7件' in page.locator('#result .evidence-summary').inner_text()
+            assert page.locator('#result .verified-unsafe-action .line').count() == 7
             assert page.locator('#result .hero').count() == 0
 
             # Unknown Pokémon must not crash the app or inject markup.
