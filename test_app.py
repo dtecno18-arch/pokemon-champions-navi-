@@ -1471,7 +1471,7 @@ def main():
             # Neither batch counts as a safe matchup or unlocks recommendations.
             extra_negative=page.evaluate("""() => {
               const ghost=verifiedUnsafeActionEvidence.filter(e=>
-                additionalGhostImmunityTargets.some(t=>t.form===e.form));
+                additionalGhostImmunityTargets.some(t=>t.form===e.form) && e.ability==='type-only');
               const bounce=verifiedUnsafeActionEvidence.filter(e=>
                 e.ability==='マジックミラー');
               return {
