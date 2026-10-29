@@ -219,7 +219,11 @@ def audit():
                 megaInputForms: megaInputForms.map(formKey),
                 // Independent prefix check catches unknown Mega entries even if
                 // isMegaForm() fails to recognize them.
-                actualMegaCandidates: options.filter(n => n.startsWith('メガ')).map(formKey)
+                // メガニウム and メガヤンマ are ordinary species whose
+                // Japanese names begin with メガ. Keep unknown Mega names
+                // detectable without misclassifying these non-Mega species.
+                actualMegaCandidates: options.filter(n =>
+                    n.startsWith('メガ') && !['メガニウム', 'メガヤンマ'].includes(n)).map(formKey)
             };
         }""", expanded)
         browser.close()
