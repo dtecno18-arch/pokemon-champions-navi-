@@ -1107,6 +1107,8 @@ def main():
             for i, name in enumerate(conditional_names):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
+            assert '公式M-C入力網羅率 100%' in page.locator('#result .evidence-summary').inner_text()
+            assert '検証済み対面率 0%' in page.locator('#result .evidence-summary').inner_text()
             assert '条件付き技相互作用 9件' in page.locator('#result .conditional-interactions').inner_text()
             assert page.locator('#result .conditional-interactions .line').count() == 9
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
