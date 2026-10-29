@@ -829,7 +829,12 @@ function hasVerifiedMatchupAnswer(record,opponent,team,lead){
   return record.variants.every(v=>{
     // Shadow Tag traps non-Ghost leads. Switching to a Ghost teammate does
     // not free the trapped lead; a documented switch is not a safe answer.
-    const trapped=v.ability==='かげふみ' && !ghostTypeRosterLeads.has(lead);
+    // Trapping cannot be waived by a synthetic or incorrectly labelled
+    // ability branch. Exact source-reviewed manual-switch vetoes are decisive.
+    const trapped=(v.ability==='かげふみ' && !ghostTypeRosterLeads.has(lead)) ||
+      verifiedUnsafeActionEvidence.some(e=>
+        isVerifiedUnsafeActionEvidence(e) && e.form===v.form &&
+        e.ownLead===lead && e.action==='manual-switch' && e.outcome==='blocked');
     const safeAnswers=record.answers.filter(a=>
       a.variant===v.id && team.includes(a.pokemon) &&
       // An audited answer cannot reuse a move already proven ineffective
@@ -837,8 +842,19 @@ function hasVerifiedMatchupAnswer(record,opponent,team,lead){
       !verifiedUnsafeActionEvidence.some(e=>
         isVerifiedUnsafeActionEvidence(e) && e.form===v.form &&
         e.ownLead===a.pokemon && e.action===a.action &&
-        ['immune','reflected','blocked'].includes(e.outcome)))
-      .map(a=>a.pokemon);
+        ['immune','reflected','blocked'].includes(e.outcome)) &&
+      // Source-reviewed conditional hazards are NOT proofs of safety.
+      // Psychic Terrain may block priority into a grounded target; a
+      // priority tie or faster priority move may reverse action order.
+      // Until a record explicitly audits the field/turn-order branches,
+      // never certify that action as a safe lead or switch-in answer.
+      !reviewedConditionalLeadInteractions.some(e=>
+        isReviewedConditionalLeadInteraction(e) &&
+        e.forms.includes(v.form) && e.own===a.pokemon && e.move===a.action &&
+        (e.mechanic==='psychic-terrain' ||
+         (['priority-order','priority-tie'].includes(e.mechanic) &&
+          v.moves.includes(e.opponentMove))))
+      ).map(a=>a.pokemon);
     return safeAnswers.length>0 && record.leadChecks.some(c=>
       c.variant===v.id && c.lead===lead && c.response!=='unsafe' &&
       !(trapped && c.response==='switch') &&
