@@ -1271,21 +1271,21 @@ def main():
             for i,name in enumerate(profile_names):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==6
+            assert page.locator('#result .reviewed-opponent-profile').count()==9
             page.locator('#result .reviewed-opponent-profiles summary').click()
-            assert page.locator('#result .speed-comparison').count()==42
-            assert '出典付き主要型参考例 6件' in page.locator('#result .evidence-summary').inner_text()
+            assert page.locator('#result .speed-comparison').count()==60
+            assert '出典付き主要型参考例 9件' in page.locator('#result .evidence-summary').inner_text()
             assert 'M-A/M-B（過去の参考型）' in page.locator('#result .reviewed-opponent-profiles').inner_text()
             assert page.locator('#result .hero').count()==0
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             page.locator('#foe2').fill('メガリザードンX')
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==5
+            assert page.locator('#result .reviewed-opponent-profile').count()==7
             assert 'メガリザードンY' not in page.locator('#result .reviewed-opponent-profiles').inner_text()
             page.locator('#foe2').fill('メガリザードンY')
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==5
+            assert page.locator('#result .reviewed-opponent-profile').count()==7
             assert page.locator('#result .hero').count()==0
 
             unsafe_names=['メガゲンガー','ミミッキュ','サーフゴー',
@@ -1682,7 +1682,7 @@ def main():
             page.locator('#analyze').click()
             assert page.locator('#result .hero').count()==0
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
-            assert page.locator('#result .reviewed-opponent-profile').count()==6
+            assert page.locator('#result .reviewed-opponent-profile').count()==7
             page.locator('#result .reviewed-opponent-profiles summary').click()
             assert 'M-B（過去の参考型）' in page.locator('#result .reviewed-opponent-profiles').inner_text()
             page.locator('#result .risk-matrix summary').click()
