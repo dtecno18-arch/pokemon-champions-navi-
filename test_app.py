@@ -1153,7 +1153,7 @@ def main():
                 verifiedSafeCount:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
-            assert unsafe_gate == {'count':61,'valid':True,'wrongSource':False,
+            assert unsafe_gate == {'count':63,'valid':True,'wrongSource':False,
                 'wrongAbility':False,'ghostLead':False,'wrongItem':False,
                 'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
 
@@ -1246,7 +1246,7 @@ def main():
               item:p.item,ability:p.ability,moves:p.moves,
               speed:[p.speedMin,p.speedMax],sample:p.sampleSpeed
             }))""")
-            assert len(sample_profiles)==14
+            assert len(sample_profiles)==16
             assert sample_profiles[0]['form']=='メガグソクムシャ'
             assert sample_profiles[0]['regulation']=='M-C'
             assert sample_profiles[0]['speed']==[54,101]
@@ -1271,21 +1271,21 @@ def main():
             for i,name in enumerate(profile_names):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==5
+            assert page.locator('#result .reviewed-opponent-profile').count()==6
             page.locator('#result .reviewed-opponent-profiles summary').click()
-            assert page.locator('#result .speed-comparison').count()==36
-            assert '出典付き主要型参考例 5件' in page.locator('#result .evidence-summary').inner_text()
+            assert page.locator('#result .speed-comparison').count()==42
+            assert '出典付き主要型参考例 6件' in page.locator('#result .evidence-summary').inner_text()
             assert 'M-A/M-B（過去の参考型）' in page.locator('#result .reviewed-opponent-profiles').inner_text()
             assert page.locator('#result .hero').count()==0
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             page.locator('#foe2').fill('メガリザードンX')
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==4
+            assert page.locator('#result .reviewed-opponent-profile').count()==5
             assert 'メガリザードンY' not in page.locator('#result .reviewed-opponent-profiles').inner_text()
             page.locator('#foe2').fill('メガリザードンY')
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==4
+            assert page.locator('#result .reviewed-opponent-profile').count()==5
             assert page.locator('#result .hero').count()==0
 
             unsafe_names=['メガゲンガー','ミミッキュ','サーフゴー',
@@ -1304,7 +1304,7 @@ def main():
             page.locator('#foe0').fill('メガグソクムシャ')
             page.locator('#analyze').click()
             # Other slots still contain Mimikyu and Gholdengo, both Ghost.
-            assert page.locator('#result .verified-unsafe-action .line').count() == 6
+            assert page.locator('#result .verified-unsafe-action .line').count() == 8
             assert page.locator('#result .hero').count() == 0
 
             # Ghost immunities: exact moves, items and sources, never a safe lead.
@@ -1326,7 +1326,7 @@ def main():
             page.locator('#foe0').fill('メガゲンガー')
             page.locator('#analyze').click()
             ghost_warning=page.locator('#result .verified-unsafe-action')
-            assert ghost_warning.locator('.line').count() == 12
+            assert ghost_warning.locator('.line').count() == 14
             for move in ('しんそく','しんくうは','インファイト'):
                 assert move+'無効（条件付き）' in ghost_warning.inner_text()
             assert page.locator('#result .hero').count() == 0
@@ -1349,7 +1349,7 @@ def main():
             # Remove the other Ghost opponents so each case has an exact count.
             page.locator('#foe1').fill('ドドゲザン')
             page.locator('#foe2').fill('エースバーン')
-            for opponent, expected in [('ミミッキュ',3),('サーフゴー',3),
+            for opponent, expected in [('ミミッキュ',3),('サーフゴー',5),
                                        ('ドラパルト',3),('ゲンガー',9)]:
                 page.locator('#foe0').fill(opponent)
                 page.locator('#analyze').click()
@@ -1499,7 +1499,7 @@ def main():
             }""")
             assert bad_profile=={
                 'source':False,'date':False,'speed':False,'boost':False,
-                'move':False,'invalidBoost':None,'reviewedCount':14,
+                'move':False,'invalidBoost':None,'reviewedCount':16,
                 'verifiedSafe':0}, bad_profile
             for i,name in enumerate(['カメックス','セグレイブ','ゲッコウガ',
                                      'アシレーヌ','ガブリアス','ペリッパー']):
@@ -1645,7 +1645,7 @@ def main():
 
             # Four historical M-B Mega examples: never promote to current
             # M-C reviewed matchups. X/Y must stay distinct.
-            extra=page.evaluate("""() => reviewedOpponentProfiles.slice(10).map(p=>({
+            extra=page.evaluate("""() => reviewedOpponentProfiles.slice(10,14).map(p=>({
               form:p.form,regulation:p.regulation,source:p.source,
               updated:p.updated,item:p.item,ability:p.ability,
               speed:[p.speedMin,p.speedMax],boost:boostedSpeedRange(p),
@@ -1794,6 +1794,58 @@ def main():
                 switchExcluded:ghost.branches.every(b=>b.vetoes.every(e=>e.action==='しんそく')),
                 stats:moveAuditStats(['カバルドン','アシレーヌ','サーフゴー','ガブリアス','メガボーマンダ','ミミッキュ'],['カバルドン','メガルカリオZ','メガカイリュー'])};
             }""")
+            # 2026-10-30: two source-reviewed, CONDITIONAL negative lead
+            # interactions. Good as Gold and Air Balloon are distinct mechanics.
+            # The latter is a held-item branch, never a universal Ground immunity.
+            gold=page.evaluate("""() => {
+              const cases=verifiedUnsafeActionEvidence.filter(e=>
+                e.form==='サーフゴー' && e.ownLead==='カバルドン' &&
+                ['あくび','じしん'].includes(e.action) && e.updated==='2026-10-30');
+              const yawn=cases.find(e=>e.action==='あくび');
+              const quake=cases.find(e=>e.action==='じしん');
+              const status=(move,foe)=>auditMoveAgainstOpponent('カバルドン',move,foe);
+              const gholdengo=reviewedOpponentProfiles.find(p=>p.form==='サーフゴー');
+              const hippo=reviewedOpponentProfiles.find(p=>p.form==='カバルドン');
+              return {
+                count:cases.length,allReviewed:cases.every(isVerifiedUnsafeActionEvidence),
+                yawn:status('あくび','サーフゴー').status,
+                quake:status('じしん','サーフゴー').status,
+                rocks:status('ステルスロック','サーフゴー').status,
+                exactYawn:status('あくび','サーフゴー').branches.every(b=>b.form==='サーフゴー'),
+                wrongAbility:isVerifiedUnsafeActionEvidence({...yawn,ability:'ふうせん'}),
+                wrongMove:isVerifiedUnsafeActionEvidence({...quake,action:'あくび'}),
+                wrongItem:isVerifiedUnsafeActionEvidence({...quake,opponentItem:'たべのこし'}),
+                wrongSource:isVerifiedUnsafeActionEvidence({...quake,source:'https://example.org'}),
+                wrongDate:isVerifiedUnsafeActionEvidence({...yawn,sourceUpdated:'2026-10-28'}),
+                hasConditions:cases.every(e=>e.when.includes('場合') || e.when.includes('のみ')),
+                profiles:[gholdengo && isReviewedOpponentProfile(gholdengo),
+                          hippo && isReviewedOpponentProfile(hippo)],
+                profileSpeeds:[gholdengo?.sampleSpeed,hippo?.sampleSpeed],
+                goldItem:gholdengo?.item,hippoItem:hippo?.item,
+                scarfEffective:gholdengo?.effectiveSpeedMin,
+                scarfReference:referenceSpeedComparison(201,gholdengo),
+                scarfRisk:reviewedSpeedReferencesFor('メガルカリオZ',['サーフゴー']).some(r=>r.speedMax===223 && r.fasterPossible),
+                forgedScarf:isReviewedOpponentProfile({...gholdengo,effectiveSpeedMax:149}),
+                noSafeMatchups:Object.keys(verifiedMatchupEvidence).length===0
+              };
+            }""")
+            assert gold['count']==2 and gold['allReviewed'], gold
+            assert gold['yawn']=='danger' and gold['quake']=='danger', gold
+            assert gold['rocks']=='unknown' and gold['exactYawn'], gold
+            assert not any(gold[k] for k in ('wrongAbility','wrongMove','wrongItem','wrongSource','wrongDate')), gold
+            assert gold['hasConditions'] and gold['profiles']==[True,True], gold
+            assert gold['profileSpeeds']==[149,67], gold
+            assert gold['goldItem']=='こだわりスカーフ' and gold['hippoItem']=='たべのこし', gold
+            assert gold['scarfEffective']==223 and gold['scarfRisk'], gold
+            assert '遅い（差-22）' in gold['scarfReference'], gold
+            assert gold['forgedScarf'] is False, gold
+            assert gold['noSafeMatchups'], gold
+            for i, name in enumerate(['サーフゴー','カバルドン','アシレーヌ','メガボーマンダ','ミミッキュ','ドドゲザン']):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .verified-unsafe-action').count()==1
+            assert 'ふうせん' in page.locator('#result .verified-unsafe-action').inner_text()
+            assert page.locator('#result .hero').count()==0
             assert audit['normalStatus']=='danger'
             assert ['リザードン',1] in audit['normal']
             assert ['メガリザードンY',1] in audit['normal']
