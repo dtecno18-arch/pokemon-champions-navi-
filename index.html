@@ -1516,7 +1516,7 @@ function analyze(){
  $('#result').classList.add('hidden');
  const vals=fields.map(f=>f.value.trim());
  if(vals.some(v=>!v)){ $('#status').textContent='相手6匹をすべて入力してください。';$('#status').className='error';return;}
- if(new Set(vals.map(normalize)).size!==6){$('#status').textContent='同じポケモンが重複しています。';$('#status').className='error';return;}
+ if(new Set(vals.map(normalize)).size!==6){$('#status').textContent='同じポケモンが重複しています（通常・リージョン・メガなどの形態違いも同じ種族として数えます）。';$('#status').className='error';return;}
  $('#status').textContent='';$('#status').className='muted';
  const r=recommend(vals);
  const uncovered=vals.filter(n=>!knownCoverage.has(formKey(n)));
