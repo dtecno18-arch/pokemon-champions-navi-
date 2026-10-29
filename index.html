@@ -323,6 +323,42 @@ const reviewedOpponentProfiles=Object.freeze([
   speedMin:108,speedMax:167,sampleSpeed:120,
   priority:'先制技の採用は未検証。ひでりで晴れ5ターン（上書き等は別）。',
   caveat:'掲載型はM-A/M-B用。通常リザードンからのメガX/Y分岐は未確定で、M-Cで同型採用の保証はありません。'})
+ ,Object.freeze({form:'メガボーマンダ',title:'M-C物理積みエースの主要技候補',
+  regulation:'M-C',source:'https://gamewith.jp/pokemon-champions/575012',
+  updated:'2026-10-28',usageAsOf:'2026-10-28',usageRank:15,
+  item:'ボーマンダナイト',ability:'スカイスキン',
+  moves:['りゅうのまい','すてみタックル','じしん','はねやすめ'],
+  alternateMoves:['のしかかり','やけっぱち'],speedMin:126,speedMax:189,sampleSpeed:null,
+  priority:'先制技はこの掲載例で確認できず。りゅうのまい後の素早さ上昇は比較値に未反映。',
+  caveat:'M-C掲載の主要技・入替候補を区別した参考情報。4技の採用と素早さ配分は未確定。すてみタックルはスカイスキンでひこう技に変化。'}),
+ Object.freeze({form:'メガガブリアスZ',title:'M-C高速特殊アタッカーの主要技候補',
+  regulation:'M-C',source:'https://gamewith.jp/pokemon-champions/574491',
+  updated:'2026-10-28',usageAsOf:'未確認',usageRank:null,
+  item:'ガブリアスナイトZ',ability:'ふゆう',
+  moves:['りゅうせいぐん','かえんほうしゃ','ステルスロック','だいちのちから'],
+  alternateMoves:['りゅうのはどう','パワージェム','なみのり'],
+  speedMin:153,speedMax:223,sampleSpeed:null,
+  priority:'先制技の採用は未確認。ふゆう有効時は地面技が無効。',
+  caveat:'M-C掲載の主要技と入替候補の参考。メガ前はじめん・ドラゴン、メガ後はドラゴン単タイプ＋ふゆう。実際の4技とメガ選択は未確定。'}),
+ Object.freeze({form:'メガルカリオZ',title:'M-C高速特殊アタッカーの主要技候補',
+  regulation:'M-C',source:'https://gamewith.jp/pokemon-champions/574490',
+  updated:'2026-10-27',usageAsOf:'未確認',usageRank:null,
+  item:'ルカリオナイトZ',ability:'はどうのぼうご',
+  moves:['ラスターカノン','わるだくみ','しんくうは'],
+  alternateMoves:['てっていこうせん','サイコキネシス','あくのはどう'],
+  speedMin:153,speedMax:223,sampleSpeed:null,
+  priority:'しんくうは+1はダブル掲載型で確認。シングル型の採用は未確認。',
+  caveat:'M-C掲載の技候補であり、掲載4技を断定しない。はどうのぼうごは接触技のみ軽減、じしん等の非接触技は軽減しない。'}),
+ Object.freeze({form:'メガアブソルZ',title:'M-C高速物理アタッカーの主要技候補',
+  regulation:'M-C',source:'https://gamewith.jp/pokemon-champions/574492',
+  updated:'2026-10-27',usageAsOf:'未確認',usageRank:null,
+  item:'アブソルナイトZ',ability:'きれあじ',
+  moves:['つじぎり','シャドークロー','インファイト'],
+  alternateMoves:['サイコカッター','ふいうち（ダブル掲載型）','かげうち（入替候補）'],
+  speedMin:153,speedMax:223,sampleSpeed:null,
+  priority:'ふいうち+1・かげうち+1は掲載候補。実際の採用は未確定。',
+  caveat:'M-C掲載の技候補。あく・ゴースト複合なのでノーマル・かくとう技は通常無効。4技と先制技採用は未確定。'})
+
 ]);
 function reviewedOpponentProfilesFor(opponents){
  return reviewedOpponentProfiles.filter(p=>opponents.some(n=>requiredMatchupForms(n).includes(p.form)));
@@ -336,10 +372,10 @@ function buildReviewedOpponentProfiles(opponents){
  const profiles=reviewedOpponentProfilesFor(opponents);
  if(!profiles.length)return '';
  return '<section class="line reviewed-opponent-profiles"><details><summary>出典付き主要型・Lv50素早さ比較 '+profiles.length+'件（参考情報・安全な選出は未検証）</summary>'+
- '<p class="muted">素早さ比較はGameWith掲載のLv50・31IV基準値と登録構築の実数値を比較したものです。相手の実際の配分、能力変化、麻痺、追い風、トリックルーム、先制技、特性・持ち物による行動順は保証しません。過去レギュの型は現行M-C採用確認ではありません。</p>'+
+ '<p class="muted">素早さ比較はGameWith掲載のLv50・31IV基準値と登録構築の実数値を比較したものです。相手の実際の配分、能力変化、麻痺、追い風、トリックルーム、先制技、特性・持ち物による行動順は保証しません。過去レギュの型は現行M-C採用確認ではありません。メガ前後の素早さは別で、ここではメガ後の基準のみ表示します。</p>'+
  profiles.map(p=>'<div class="line reviewed-opponent-profile"><b>'+esc(p.form)+'｜'+esc(p.title)+'</b>'+
  '<div class="tag">掲載レギュ '+esc(p.regulation)+'／持ち物 '+esc(p.item)+'／特性 '+esc(p.ability)+'</div>'+
- '<div>掲載4技：'+p.moves.map(esc).join('／')+'</div>'+
+ '<div>掲載主要技（4技確定ではありません）：'+p.moves.map(esc).join('／')+'</div>'+
  '<div class="muted">入替候補：'+p.alternateMoves.map(esc).join('／')+'</div>'+
  '<div class="muted">Lv50素早さ掲載基準 '+p.speedMin+'〜'+p.speedMax+
  (p.sampleSpeed===null?'':'／掲載型の実数値 '+p.sampleSpeed)+'</div>'+
@@ -349,7 +385,7 @@ function buildReviewedOpponentProfiles(opponents){
  '：'+esc(referenceSpeedComparison(ownLv50Speed[own[0]],p))+'</div>').join('')+'</div>'+
  '<div class="muted">'+esc(p.caveat)+'</div>'+
  '<div class="muted">出典更新 '+esc(p.updated)+'／種族単位の使用率集計 '+esc(p.usageAsOf)+
- '（'+p.usageRank+'位。メガ形態固有の順位ではありません）／<a href="'+esc(p.source)+
+ '（'+(p.usageRank===null?'順位未確認':p.usageRank+'位。メガ形態固有の順位ではありません')+'）／<a href="'+esc(p.source)+
  '" target="_blank" rel="noopener noreferrer">GameWith掲載型・素早さ・採用情報</a>。個別対面・先発安全性は未検証。</div></div>').join('')+
  '</details></section>';
 }
@@ -428,7 +464,14 @@ const ghostImmunityTargets=Object.freeze([
  {form:'ゲンガー',source:'https://gamewith.jp/pokemon-champions/554988',sourceUpdated:'2026-10-28'},
  {form:'ミミッキュ',source:'https://gamewith.jp/pokemon-champions/554964',sourceUpdated:'2026-10-28'},
  {form:'サーフゴー',source:'https://gamewith.jp/pokemon-champions/564100',sourceUpdated:'2026-10-28'},
- {form:'ドラパルト',source:'https://gamewith.jp/pokemon-champions/554984',sourceUpdated:'2026-10-27'}
+ {form:'ドラパルト',source:'https://gamewith.jp/pokemon-champions/554984',sourceUpdated:'2026-10-27'},
+ {form:'メガアブソルZ',source:'https://gamewith.jp/pokemon-champions/574492',sourceUpdated:'2026-10-27'}
+]);
+const groundImmuneTargets=Object.freeze([
+ {form:'メガボーマンダ',ability:'スカイスキン',source:'https://gamewith.jp/pokemon-champions/575012',sourceUpdated:'2026-10-28',
+  condition:'相手がメガボーマンダにメガシンカ済みで、ひこうタイプによる地面無効が維持される場合。じゅうりょく・はねやすめ等の例外は対象外。'},
+ {form:'メガガブリアスZ',ability:'ふゆう',source:'https://gamewith.jp/pokemon-champions/574491',sourceUpdated:'2026-10-28',
+  condition:'相手がメガガブリアスZにメガシンカ済みで、ふゆうが有効な場合。かたやぶり・じゅうりょく等で無効が失われる状況は対象外。'}
 ]);
 const ghostImmuneRosterMoves=Object.freeze([
  {ownLead:'メガカイリュー',heldItem:'カイリュナイト',action:'しんそく',moveType:'ノーマル',moveSource:'https://gamewith.jp/pokemon-champions/554544',moveUpdated:'2026-10-27'},
@@ -481,7 +524,16 @@ const verifiedUnsafeActionEvidence=Object.freeze([
   mechanicSource:'https://gamewith.jp/pokemon-champions/546446',
   mechanicUpdated:'2026-10-28',updated:'2026-10-29',
   scope:'verified-unsafe-action',reviewed:true
- })))
+ }))),
+ ...groundImmuneTargets.map(t=>({
+  form:t.form,ownLead:'カバルドン',heldItem:'たべのこし',
+  ability:t.ability,action:'じしん',outcome:'immune',when:t.condition,
+  reason:'カバルドンのじしんは、'+t.form+'に対して'+(t.ability==='ふゆう'?'ふゆうが有効な間':'ひこうタイプの地面無効が維持される間')+'無効。通常形態・別メガ形態にはこの判定を引き継がない。',
+  source:t.source,sourceUpdated:t.sourceUpdated,
+  moveSource:'https://gamewith.jp/pokemon-champions/554282',moveUpdated:'2026-10-20',
+  mechanicSource:'https://gamewith.jp/pokemon-champions/546446',mechanicUpdated:'2026-10-28',
+  updated:'2026-10-29',scope:'verified-unsafe-action',reviewed:true
+ }))
 ]);
 function isVerifiedUnsafeActionEvidence(e){
  const own=e&&roster.find(p=>p[0]===e.ownLead);
@@ -512,6 +564,16 @@ function isVerifiedUnsafeActionEvidence(e){
        m.moveSource===e.moveSource && m.moveUpdated===e.moveUpdated) &&
      e.ability==='type-only' && e.outcome==='immune' &&
      own[2].split('／').includes(e.action) &&
+     e.mechanicSource==='https://gamewith.jp/pokemon-champions/546446' &&
+     e.mechanicUpdated==='2026-10-28') ||
+    (groundImmuneTargets.some(t=>t.form===e.form && t.ability===e.ability &&
+       t.source===e.source && t.sourceUpdated===e.sourceUpdated &&
+       t.condition===e.when) &&
+     e.ownLead==='カバルドン' && e.heldItem==='たべのこし' &&
+     e.action==='じしん' && e.outcome==='immune' &&
+     own[2].split('／').includes(e.action) &&
+     e.moveSource==='https://gamewith.jp/pokemon-champions/554282' &&
+     e.moveUpdated==='2026-10-20' &&
      e.mechanicSource==='https://gamewith.jp/pokemon-champions/546446' &&
      e.mechanicUpdated==='2026-10-28')) &&
   typeof e.when==='string' && e.when.length>10 &&
