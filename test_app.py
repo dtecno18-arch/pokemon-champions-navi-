@@ -1093,6 +1093,7 @@ def main():
                 priority:e.filter(x=>x.mechanic==='priority-order').length,
                 wrongSource:isReviewedConditionalLeadInteraction({...e[0],source:''}),
                 wrongFemaleSource:isReviewedConditionalLeadInteraction({...e[0],femaleSource:''}),
+                wrongUpdate:isReviewedConditionalLeadInteraction({...e[0],sourceUpdated:'未確認'}),
                 wrongMove:isReviewedConditionalLeadInteraction({...e[0],move:'じしん'}),
                 wrongPriority:isReviewedConditionalLeadInteraction({...e[5],opponentPriority:1}),
                 promoted:isReviewedConditionalLeadInteraction({...e[0],scope:'safe-lead'}),
@@ -1100,7 +1101,7 @@ def main():
               };
             }""")
             assert conditional_gate == {'total':9,'valid':True,'terrain':5,
-                'priority':4,'wrongSource':False,'wrongFemaleSource':False,'wrongMove':False,
+                'priority':4,'wrongSource':False,'wrongFemaleSource':False,'wrongUpdate':False,'wrongMove':False,
                 'wrongPriority':False,'promoted':False,'safe':0}, conditional_gate
             conditional_names=['イエッサン','グソクムシャ','ミミッキュ',
                                'サーフゴー','アシレーヌ','ガブリアス']
