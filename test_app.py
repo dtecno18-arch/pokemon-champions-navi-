@@ -2170,8 +2170,8 @@ def main():
                 'b':{'danger':2,'caution':0,'unknown':0},
                 'status':'danger','partial':True,'source':True,'noSafety':True
             }, branch_audit
-            # Five source-reviewed exact-form adverse lead/action scenarios.
-            # These are CONDITIONAL hazards, not five safe matchup answers.
+            # Twenty source-reviewed exact-form adverse lead/action scenarios (14 previous + 6).
+            # These are CONDITIONAL hazards, never safe matchup answers.
             adverse = page.evaluate("""() => {
               const all=adverseLeadScenarios;
               const hippo=adverseLeadScenariosFor(
@@ -2198,7 +2198,7 @@ def main():
               };
             }""")
             assert adverse == {
-                'total':14,'valid':True,'unique':14,
+                'total':20,'valid':True,'unique':20,
                 'hippo':['メガグソクムシャ|ステルスロック',
                          'メガリザードンY|じしん',
                          'メガゲンガー|manual-switch',
@@ -2208,7 +2208,7 @@ def main():
                 'lucario':['しんくうは','manual-switch'],
                 'dragonite':['しんそく','manual-switch'],
                 'golisopod':['priority-tie-risk'],
-                'mimikyu':['かげうち'],'aegislash':['インファイト'],
+                'mimikyu':['かげうち','かげうち'],'aegislash':['インファイト'],
                 'wrongMega':0,'baseOnly':1,
                 'tampered':False,'priorityTampered':False,'safeCount':0
             }, adverse
@@ -2221,20 +2221,52 @@ def main():
             assert 'メガグソクムシャ' in page.locator('#result .adverse-lead-cases').inner_text()
             assert page.locator('#result .hero').count()==0
             page.locator('#lead-inspector-select').select_option('メガルカリオZ')
-            assert page.locator('#result .adverse-lead-case').count()==3
+            assert page.locator('#result .adverse-lead-case').count()==4
             assert 'しんくうは' in page.locator('#result .adverse-lead-cases').inner_text()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             page.locator('#lead-inspector-select').select_option('メガカイリュー')
             assert page.locator('#result .adverse-lead-case').count()==3
             assert 'しんそく' in page.locator('#result .adverse-lead-cases').inner_text()
             page.locator('#lead-inspector-select').select_option('ミミッキュ')
-            assert page.locator('#result .adverse-lead-case').count()==1
+            assert page.locator('#result .adverse-lead-case').count()==2
             assert 'かげうち' in page.locator('#result .adverse-lead-cases').inner_text()
             page.locator('#lead-inspector-select').select_option('ギルガルド')
-            assert page.locator('#result .adverse-lead-case').count()==1
+            assert page.locator('#result .adverse-lead-case').count()==3
             assert 'インファイト' in page.locator('#result .adverse-lead-cases').inner_text()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             assert page.locator('#result .abstention-banner').count()==1
+            # First Impression (+2) and Sucker Punch (+1) are different
+            # scenarios. Equal-priority Sucker Punch is NOT a guaranteed hit.
+            # The manual trio's 18-pair matrix must show the concrete move
+            # names and must not promote either case to a safe answer.
+            priority_matrix=page.evaluate("""() => {
+              const cases=adverseLeadScenariosFor(['グソクムシャ'],'メガルカリオZ');
+              const branch=leadRiskRows(['グソクムシャ'],'メガルカリオZ')[0]
+                .branches.find(b=>b.form==='メガグソクムシャ');
+              const html=renderTrioRiskRows(
+                ['グソクムシャ','ゲンガー','リザードン',
+                 'アシレーヌ','カバルドン','ドドゲザン'],
+                ['カバルドン','メガルカリオZ','メガカイリュー']);
+              const tie=cases.find(s=>s.opponentMove==='ふいうち');
+              return {
+                cases:cases.length,
+                branchCases:branch.adverse.length,
+                hasFirst:html.includes('しんくうは 対 であいがしら'),
+                hasSucker:html.includes('しんくうは 対 ふいうち'),
+                tie:tie.outcome,
+                noSafety:!html.includes('安全な対面を認定'),
+                wrongMove:isReviewedAdverseLeadScenario({...tie,opponentMove:'であいがしら'}),
+                wrongForm:isReviewedAdverseLeadScenario({...tie,form:'グソクムシャ'}),
+                wrongSource:isReviewedAdverseLeadScenario({...tie,source:'https://example.com'}),
+                exactBase:adverseLeadScenariosFor(['メガリザードンX'],'メガルカリオZ').length
+              };
+            }""")
+            assert priority_matrix=={
+                'cases':2,'branchCases':2,'hasFirst':True,'hasSucker':True,
+                'tie':'priority-tie-risk','noSafety':True,
+                'wrongMove':False,'wrongForm':False,'wrongSource':False,
+                'exactBase':0
+            }, priority_matrix
 
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
