@@ -3,6 +3,7 @@
 :root{font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;color:#192b42;background:#f3f6fb}*{box-sizing:border-box}body{margin:0}main{max-width:760px;margin:auto;padding:16px 14px 55px}h1{font-size:1.4rem;margin:8px 0}h2{font-size:1.08rem;margin:0 0 12px}p{line-height:1.65}.sub{color:#53657b;font-size:.88rem}.panel{background:white;border:1px solid #dbe3ef;border-radius:16px;padding:18px;margin:14px 0;box-shadow:0 2px 9px #2137550a}.inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.slot label{display:block;font-size:.77rem;font-weight:700;margin-bottom:4px;color:#465a75}input{width:100%;font:inherit;padding:11px;border:1px solid #bdcbdb;border-radius:10px;min-width:0}input:focus{outline:2px solid #3774d5}button{border:0;border-radius:11px;padding:13px 18px;font:inherit;font-weight:750;cursor:pointer;min-height:45px}button.primary{background:#215db7;color:white;flex:1}button.secondary{background:#e9eff7;color:#23436b}.actions{display:flex;gap:9px;margin-top:16px}.hero{background:#eaf3ff;border:1px solid #a8c9f7;border-radius:14px;padding:15px}.pokemon{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.chip{background:#fff;border:1px solid #bad0ed;border-radius:30px;padding:7px 10px;font-weight:750;font-size:.9rem}.line{padding:10px 0;border-bottom:1px solid #e7edf5;line-height:1.6}.line:last-child{border:0}.warn{background:#fff6e9;border-left:4px solid #d78a2a;padding:10px 12px;margin-top:12px;border-radius:6px}.muted{color:#63748a;font-size:.82rem}.hidden{display:none}details{margin-top:12px}summary{cursor:pointer;font-weight:700}.tag{font-size:.76rem;font-weight:800;color:#205da9}.ready{font-size:.8rem;color:#19694b;font-weight:700}.error{color:#b43632}.moves{font-size:.84rem;color:#405b76;line-height:1.65}.slot-source{display:block;font-size:.7rem;line-height:1.4;margin-top:5px;overflow-wrap:anywhere}.slot-source.source-uncertain{color:#925c14}.roster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.roster div{border:1px solid #e1e9f4;border-radius:10px;padding:10px}.roster b{display:block}@media(max-width:420px){.panel{padding:14px}.roster{grid-template-columns:1fr}h1{font-size:1.25rem}}
 .risk-matrix h3{font-size:.92rem;margin:14px 0 4px}.matrix-foe{border-top:1px solid #dce5f0;padding:8px 0}.matrix-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.matrix-cell{min-width:0;overflow-wrap:anywhere;border:1px solid #dce5f0;border-radius:9px;padding:8px;background:#f8fafc;font-size:.81rem}.matrix-cell b{display:block}.matrix-status{font-weight:700;margin:3px 0}.risk-matrix details{max-width:100%}@media(max-width:560px){.matrix-grid{grid-template-columns:1fr}}
 @media(max-width:560px){.lead-inspector select{width:100%;min-height:44px;margin:8px 0}.lead-inspector-foe summary{padding:10px 0;cursor:pointer}.lead-inspector-branch{overflow-wrap:anywhere}}.lead-inspector-foe{border-top:1px solid #64748b44;padding:8px 0}.lead-inspector-branch{margin:8px 0}.lead-inspector select{max-width:100%;padding:8px;border-radius:8px}
+.trio-inspector-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}.trio-inspector-grid label{font-size:.78rem;font-weight:700}.trio-inspector-grid select{width:100%;min-width:0;min-height:44px}.trio-inspector-foe{border-top:1px solid #dce5f0;padding:9px 0}.trio-inspector-cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.trio-inspector-cell{border:1px solid #dce5f0;background:#f8fafc;border-radius:9px;padding:9px;min-width:0;overflow-wrap:anywhere;font-size:.82rem}.trio-inspector-cell b{display:block}.trio-inspector-cell .muted{margin-top:5px}@media(max-width:560px){.trio-inspector-grid,.trio-inspector-cells{grid-template-columns:1fr}}
 </style></head><body><main>
 <h1>⚔️ Champions 選出ナビ <span class="tag">v7.2 選出精度・警戒強化版</span></h1>
 <p class="sub">S6最終2位構築記事を参考にした試作版。公式M-C一覧262フォームIDと出典付き形態差を照合し、入力候補348形態は2026-10-29の監査で差分0です。ただし個別対面は未検証です。選出3匹・先発の推奨は保留し、相手6匹の未検証リスクを確認できます。</p>
@@ -1137,11 +1138,22 @@ function buildLeadRiskMatrix(opponents){
 // Tactical inspection is deliberately NOT a lead recommendation. All six
 // opponent inputs and their possible Mega/form branches remain visible.
 const LEAD_INSPECTOR_KEY='champions-navi-inspected-lead-v1';
+const TRIO_INSPECTOR_KEY='champions-navi-manual-trio-v1';
+const defaultTrio=roster.slice(0,3).map(p=>p[0]);
+let inspectedTrio=[...defaultTrio];
+function validInspectedTrio(trio){return Array.isArray(trio) && trio.length===3 &&
+ new Set(trio).size===3 && trio.every(n=>roster.some(p=>p[0]===n));}
 let inspectedLead=roster[0][0];
 try {
  const saved=sessionStorage.getItem(LEAD_INSPECTOR_KEY);
  if(roster.some(p=>p[0]===saved))inspectedLead=saved;
 } catch(e) {}
+try{
+ const saved=JSON.parse(sessionStorage.getItem(TRIO_INSPECTOR_KEY)||'null');
+ if(validInspectedTrio(saved))inspectedTrio=saved;
+ else if(!inspectedTrio.includes(inspectedLead))inspectedTrio[2]=inspectedLead;
+ if(!inspectedTrio.includes(inspectedLead))inspectedLead=inspectedTrio[0];
+}catch(e){if(!inspectedTrio.includes(inspectedLead))inspectedTrio[2]=inspectedLead;}
 function leadRiskRows(opponents,ownLead){
  if(!roster.some(p=>p[0]===ownLead))return [];
  return opponents.map(name=>({
@@ -1194,22 +1206,95 @@ function renderLeadInspectorRows(opponents,ownLead){
    }).join('')+'</details>';
  }).join('');
 }
+
+function renderTrioRiskRows(opponents,trio){
+ if(!validInspectedTrio(trio))return '';
+ return opponents.map((name,i)=>{
+  const all=trio.map(own=>({own,branches:leadRiskRows([name],own)[0].branches}));
+  return '<section class="trio-inspector-foe"><b>相手'+(i+1)+' '+esc(name)+'</b>'+
+   '<div class="muted">確認分岐：'+esc(requiredMatchupForms(name).join('・'))+'</div>'+
+   '<div class="trio-inspector-cells">'+all.map(({own,branches})=>{
+    const vetoes=branches.flatMap(b=>b.unsafe.map(e=>b.form+'：'+
+      (e.outcome==='blocked'?'通常交代不可':e.action+'無効')+'（条件付き）'));
+    const cautions=branches.flatMap(b=>[
+      ...b.interactions.map(e=>b.form+'：'+e.move+'／'+e.mechanic),
+      ...b.pairRisks.map(e=>b.form+'：型・先制技'),
+      ...b.speed.filter(p=>p.fasterPossible).map(p=>b.form+'：同優先度の素早さ注意'),
+      ...b.boosted.map(p=>b.form+'：'+p.boostedSpeedMove+'成功時の素早さ注意')
+    ]);
+    const status=vetoes.length?'⛔ 特定行動の危険 '+vetoes.length+'件':
+      cautions.length?'⚠️ 条件付き注意 '+cautions.length+'件':'未検証（安全性不明）';
+    return '<div class="trio-inspector-cell"><b>'+esc(own)+'</b><div>'+esc(status)+'</div>'+
+     (vetoes.length?'<div class="muted">'+vetoes.map(esc).join('／')+'</div>':'')+
+     (cautions.length?'<div class="muted">'+cautions.map(esc).join('／')+'</div>':'')+
+     '<div class="muted">安全な先発・交代・勝敗は未検証。条件と出典は先発候補の詳細で確認。</div></div>';
+   }).join('')+'</div></section>';
+ }).join('');
+}
+function renderTrioSelects(){
+ return inspectedTrio.map((selected,i)=>
+  '<label for="trio-inspector-'+i+'">手動選択 '+(i+1)+
+  '<select id="trio-inspector-'+i+'" data-trio-index="'+i+'">'+roster.map(p=>
+   '<option value="'+esc(p[0])+'"'+(p[0]===selected?' selected':'')+'>'+esc(p[0])+'</option>').join('')+
+  '</select></label>').join('');
+}
+
 function buildLeadInspector(opponents){
  return '<section class="line lead-inspector"><h3>初手候補の危険行動を確認（推奨ではありません）</h3>'+
   '<p class="muted">自分の登録6匹から1匹を選び、相手6匹の通常・メガ・性差分岐を個別に点検できます。⛔は条件付きの行動禁止、⚠️は注意、記載なしは安全を意味しません。相手の実際の先発・技・持ち物は不明です。</p>'+
-  '<label for="lead-inspector-select">確認する自分の先発候補</label> '+
+  '<p class="muted">自分の3匹を手動で選ぶと、相手6匹×選択3匹の18組を全形態分岐込みで確認できます。これは選出の提案・採点ではありません。</p>'+ 
+  '<div class="trio-inspector-grid" id="trio-inspector-selects">'+renderTrioSelects()+'</div>'+
+  '<p id="trio-inspector-status" class="muted" role="status">手動選択3匹・重複なし。先発候補はこの3匹に限定します。</p>'+
+  '<details class="trio-inspector-details" open><summary>手動選択3匹 × 相手6匹｜18組の危険点検（安全判定なし）</summary>'+
+  '<div id="trio-inspector-rows">'+renderTrioRiskRows(opponents,inspectedTrio)+'</div></details>'+
+  '<label for="lead-inspector-select">確認する自分の先発候補（選択3匹内）</label> '+
   '<select id="lead-inspector-select">'+roster.map(p=>
    '<option value="'+esc(p[0])+'"'+(p[0]===inspectedLead?' selected':'')+'>'+esc(p[0])+'</option>').join('')+'</select>'+
   '<div id="lead-inspector-rows">'+renderLeadInspectorRows(opponents,inspectedLead)+'</div></section>';
 }
 $('#result').addEventListener('change',event=>{
+ const trioIndex=event.target.dataset.trioIndex;
+ if(trioIndex!==undefined){
+  const index=Number(trioIndex),value=event.target.value;
+  if(!Number.isInteger(index)||index<0||index>2)return;
+  if(inspectedTrio.some((name,i)=>i!==index && name===value)){
+   event.target.value=inspectedTrio[index];
+   $('#trio-inspector-status').textContent='同じポケモンを2匹選択できません。元の選択を保持しました。';
+   return;
+  }
+  inspectedTrio[index]=value;
+  if(!inspectedTrio.includes(inspectedLead))inspectedLead=inspectedTrio[0];
+  try{
+   sessionStorage.setItem(TRIO_INSPECTOR_KEY,JSON.stringify(inspectedTrio));
+   sessionStorage.setItem(LEAD_INSPECTOR_KEY,inspectedLead);
+  }catch(e){}
+  const opponents=fields.map(f=>f.value.trim());
+  $('#trio-inspector-status').textContent='3匹を手動選択しました。安全な選出を意味しません。';
+  $('#lead-inspector-select').value=inspectedLead;
+  if(opponents.every(Boolean)){
+   $('#trio-inspector-rows').innerHTML=renderTrioRiskRows(opponents,inspectedTrio);
+   $('#lead-inspector-rows').innerHTML=renderLeadInspectorRows(opponents,inspectedLead);
+  }
+  return;
+ }
  if(event.target.id!=='lead-inspector-select')return;
  const lead=event.target.value;
  if(!roster.some(p=>p[0]===lead))return;
  inspectedLead=lead;
- try{sessionStorage.setItem(LEAD_INSPECTOR_KEY,lead)}catch(e){}
+ if(!inspectedTrio.includes(lead)){
+  inspectedTrio[2]=lead;
+  $('#trio-inspector-selects').innerHTML=renderTrioSelects();
+  $('#trio-inspector-status').textContent='先発候補を手動選択3匹へ追加しました（3枠目と入替）。';
+ }
+ try{
+  sessionStorage.setItem(LEAD_INSPECTOR_KEY,lead);
+  sessionStorage.setItem(TRIO_INSPECTOR_KEY,JSON.stringify(inspectedTrio));
+ }catch(e){}
  const opponents=fields.map(f=>f.value.trim());
- if(opponents.every(Boolean))$('#lead-inspector-rows').innerHTML=renderLeadInspectorRows(opponents,lead);
+ if(opponents.every(Boolean)){
+  $('#lead-inspector-rows').innerHTML=renderLeadInspectorRows(opponents,lead);
+  $('#trio-inspector-rows').innerHTML=renderTrioRiskRows(opponents,inspectedTrio);
+ }
 });
 
 function analyze(){
@@ -1315,6 +1400,6 @@ function analyze(){
  $('#result').focus({preventScroll:true});
 }
 $('#analyze').addEventListener('click',analyze);
-$('#clear').addEventListener('click',()=>{try{sessionStorage.removeItem(INPUT_KEY);sessionStorage.removeItem(LEAD_INSPECTOR_KEY)}catch(e){}inspectedLead=roster[0][0];fields.forEach(f=>f.value='');$('#result').classList.add('hidden');update();fields[0].focus();});
+$('#clear').addEventListener('click',()=>{try{sessionStorage.removeItem(INPUT_KEY);sessionStorage.removeItem(LEAD_INSPECTOR_KEY);sessionStorage.removeItem(TRIO_INSPECTOR_KEY)}catch(e){}inspectedLead=roster[0][0];inspectedTrio=[...defaultTrio];fields.forEach(f=>f.value='');$('#result').classList.add('hidden');update();fields[0].focus();});
 update();
 </script></body></html>
