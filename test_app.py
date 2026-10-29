@@ -667,7 +667,7 @@ def main():
                   {...record.leadChecks[0]}]}),
                 shadowTagTrapped:check({...record,variants:[{
                   ...record.variants[0],ability:'かげふみ'}],
-                  answers:[{...record.answers[0],pokemon:'ミミッキュ'}],
+                  answers:[{...record.answers[0],pokemon:'ミミッキュ',action:'かげうち'}],
                   leadChecks:[{...record.leadChecks[0],response:'switch',switchTo:'ミミッキュ'}]}),
                 shadowTagGhostCanSwitch:hasVerifiedMatchupAnswer({...record,
                   variants:[{...record.variants[0],ability:'かげふみ'}],
@@ -683,7 +683,7 @@ def main():
                 // A trapped non-Ghost cannot switch TO a Ghost teammate.
                 shadowTagCannotEscapeToBasculegion:hasVerifiedMatchupAnswer({...record,
                   variants:[{...record.variants[0],ability:'かげふみ'}],
-                  answers:[{...record.answers[0],pokemon:'イダイトウ♂'}],
+                  answers:[{...record.answers[0],pokemon:'イダイトウ♂',action:'アクアジェット'}],
                   leadChecks:[{...record.leadChecks[0],response:'switch',
                     switchTo:'イダイトウ♂'}]},
                   'ドヒドイデ',['カバルドン','イダイトウ♂','ミミッキュ'],'カバルドン'),
@@ -719,7 +719,7 @@ def main():
                   answers:[{...record.answers[0],action:'あくび'}]},
                   'メガリザードンY',team,'カバルドン'),
                 unrelatedLeadAnswer:check({...record,answers:[{
-                  ...record.answers[0],pokemon:'ミミッキュ'}]}),
+                  ...record.answers[0],pokemon:'ミミッキュ',action:'かげうち'}]}),
                 missingVariantAnswer:check({...record,variants:[
                   ...record.variants,{...record.variants[0],id:'otherAbility'}]}),
                 missingLeadReason:check({...record,leadChecks:[{
