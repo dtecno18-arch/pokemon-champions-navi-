@@ -1417,7 +1417,9 @@ def main():
             # Exact Mega and pre-Mega branches both show a conditional boost.
             page.locator('#foe0').fill('メガカメックス')
             page.locator('#analyze').click()
-            assert page.locator('#result .boosted-speed-risk').count()==1
+            # The independent Mega Baxcalibur branch remains present.
+            assert page.locator('#result .boosted-speed-risk').count()==2
+            assert page.locator('#result .reviewed-opponent-profile').count()==4
             assert page.locator('#result .hero').count()==0
 
             # Five exact negative move interactions; normal forms remain
