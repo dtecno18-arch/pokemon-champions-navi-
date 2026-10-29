@@ -1246,7 +1246,7 @@ def main():
               item:p.item,ability:p.ability,moves:p.moves,
               speed:[p.speedMin,p.speedMax],sample:p.sampleSpeed
             }))""")
-            assert len(sample_profiles)==14
+            assert len(sample_profiles)==16
             assert sample_profiles[0]['form']=='メガグソクムシャ'
             assert sample_profiles[0]['regulation']=='M-C'
             assert sample_profiles[0]['speed']==[54,101]
@@ -1499,7 +1499,7 @@ def main():
             }""")
             assert bad_profile=={
                 'source':False,'date':False,'speed':False,'boost':False,
-                'move':False,'invalidBoost':None,'reviewedCount':14,
+                'move':False,'invalidBoost':None,'reviewedCount':16,
                 'verifiedSafe':0}, bad_profile
             for i,name in enumerate(['カメックス','セグレイブ','ゲッコウガ',
                                      'アシレーヌ','ガブリアス','ペリッパー']):
