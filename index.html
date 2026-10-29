@@ -288,19 +288,62 @@ const sourcedThreatIntel=Object.freeze({
 // Source-reviewed *conditional pair risks* are NOT validated win/loss or safe-lead answers.
 // These warnings can apply to a possible Mega branch of a normal-form input.
 // Keep them separate from verifiedMatchupEvidence; they never unlock selection.
+// M-7 single-battle snapshot (2026-10-28) and source-reviewed *negative*
+// matchup cautions. Speed examples are GameWith's Lv50 31-IV reference
+// values (negative-nature uninvested to fastest), NOT exhaustive speed ranges.
+// Usage rank and move frequency refer to the base species; they do not prove
+// that the opponent selected Mega evolution or any particular four moves.
+// Never pass these records into verifiedMatchupEvidence or unlock a lead.
 const reviewedPairRisks=Object.freeze([
  {form:'メガグソクムシャ',own:'カバルドン',
-  risk:'物理受け候補として挙がりますが、つるぎのまいによる攻撃上昇には注意。受け出し・初手居座りの安全は保証できません。',
-  source:'https://gamewith.jp/pokemon-champions/575652',updated:'2026-10-27',reviewed:true},
+  risk:'物理受け候補ですが、つるぎのまいによる攻撃上昇と先制技に注意。受け出し・初手居座りの安全は保証できません。',
+  source:'https://gamewith.jp/pokemon-champions/575652',updated:'2026-10-27',
+  statsSource:'https://gamewith.jp/pokemon-champions/575652',statsUpdated:'2026-10-27',
+  usageAsOf:'2026-10-28',usageRank:5,ability:'かたいツメ',
+  speedBase:40,speedExampleMin:54,speedExampleMax:101,
+  observedMoves:[{move:'ふいうち',percent:80.2},{move:'つるぎのまい',percent:64.2}],
+  priorityMoves:[{move:'ふいうち',priority:1,condition:'相手が攻撃を選択した場合のみ'},{move:'であいがしら',priority:2,condition:'場に出て最初の行動のみ'}],
+  scope:'conditional-risk-only',reviewed:true},
  {form:'メガリザードンY',own:'カバルドン',
   risk:'ステルスロックは相手の4倍弱点ですが、ひでり下のソーラービームも警戒。初手に安全にステルスロックを撒けるとは限りません。',
-  source:'https://gamewith.jp/pokemon-champions/554808',updated:'2026-10-28',reviewed:true},
+  source:'https://gamewith.jp/pokemon-champions/554808',updated:'2026-10-28',
+  statsSource:'https://gamewith.jp/pokemon-champions/554808',statsUpdated:'2026-10-28',
+  usageAsOf:'2026-10-28',usageRank:6,ability:'ひでり',
+  speedBase:100,speedExampleMin:108,speedExampleMax:167,
+  observedMoves:[{move:'ソーラービーム',percent:65.2}],
+  priorityMoves:[],scope:'conditional-risk-only',reviewed:true},
  {form:'メガゲンガー',own:'カバルドン',
   risk:'メガ後のかげふみで、ゴーストタイプではないカバルドンは通常交代できません。初手対面での交代前提のプランは危険です。',
-  source:'https://gamewith.jp/pokemon-champions/555161',updated:'2026-10-27',reviewed:true}
+  source:'https://gamewith.jp/pokemon-champions/555161',updated:'2026-10-27',
+  statsSource:'https://gamewith.jp/pokemon-champions/554816',statsUpdated:'2026-10-28',
+  usageAsOf:'2026-10-28',usageRank:23,ability:'かげふみ',
+  speedBase:130,speedExampleMin:135,speedExampleMax:200,
+  observedMoves:[{move:'シャドーボール',percent:81.4},{move:'こごえるかぜ',percent:56.3}],
+  priorityMoves:[],scope:'conditional-risk-only',reviewed:true}
 ]);
+function isReviewedPairRisk(p){
+ return p && p.reviewed===true && p.scope==='conditional-risk-only' &&
+  typeof p.form==='string' && typeof p.own==='string' &&
+  typeof p.risk==='string' && p.risk.trim() &&
+  hasEvidenceCitation(p) &&
+  typeof p.statsSource==='string' && p.statsSource.startsWith('https://') &&
+  /^\\d{4}-\\d{2}-\\d{2}$/.test(p.statsUpdated) &&
+  /^\\d{4}-\\d{2}-\\d{2}$/.test(p.usageAsOf) &&
+  Number.isInteger(p.usageRank) && p.usageRank>0 &&
+  typeof p.ability==='string' && p.ability.length>0 &&
+  Number.isInteger(p.speedBase) && p.speedBase>0 &&
+  Number.isInteger(p.speedExampleMin) && p.speedExampleMin>0 &&
+  Number.isInteger(p.speedExampleMax) && p.speedExampleMax>=p.speedExampleMin &&
+  Array.isArray(p.observedMoves) && p.observedMoves.length>0 &&
+  p.observedMoves.every(m=>m && typeof m.move==='string' && m.move &&
+    Number.isFinite(m.percent) && m.percent>=0 && m.percent<=100) &&
+  Array.isArray(p.priorityMoves) && p.priorityMoves.every(m=>m &&
+    typeof m.move==='string' && m.move &&
+    Number.isInteger(m.priority) && m.priority>0 &&
+    typeof m.condition==='string' && m.condition.trim());
+}
 function reviewedPairRisksFor(opponents){
- return reviewedPairRisks.filter(r=>r.reviewed===true &&
+ return reviewedPairRisks.filter(r=>isReviewedPairRisk(r) &&
    roster.some(p=>p[0]===r.own) &&
    hasEvidenceCitation(r) &&
    opponents.some(n=>requiredMatchupForms(n).includes(r.form)));
@@ -777,7 +820,7 @@ function analyze(){
     data.sourceUpdated+'／<a href="'+data.source+'" target="_blank" rel="noopener noreferrer">GameWith出典</a>。個別対面・初手安全性は未検証。</div></div>';}).join('');
  const pairRiskWarning=pairRisks.length?
   '<div class="warn reviewed-pair-risks" role="status"><b>出典付き・条件付き対面注意 '+pairRisks.length+'件（安全な選出の根拠ではありません）</b>'+
-  pairRisks.map(p=>'<div class="line"><b>'+esc(p.own)+' 対 '+esc(p.form)+'</b><div>'+esc(p.risk)+'</div><div class="muted">出典更新 '+esc(p.updated)+' ／ <a href="'+esc(p.source)+'" target="_blank" rel="noopener noreferrer">GameWith等の根拠</a>。全技・持ち物・素早さ・先発安全性は未検証。</div></div>').join('')+'</div>':'';
+  pairRisks.map(p=>'<div class="line"><b>'+esc(p.own)+' 対 '+esc(p.form)+'</b><div>'+esc(p.risk)+'</div><div class="muted">メガ後特性 '+esc(p.ability)+'／素早さ種族値 '+p.speedBase+'／Lv50参考実数値 '+p.speedExampleMin+'〜'+p.speedExampleMax+'（GameWith掲載例・31IV前提。全型の上下限ではありません）</div><div class="muted">M-7シングル '+esc(p.usageAsOf)+' 集計：通常種を含む採用順位 '+p.usageRank+'位。技 '+p.observedMoves.map(m=>esc(m.move)+' '+m.percent+'%').join('、')+'（種族全体の採用率。メガ型への採用を断定しません）</div><div class="muted">確認した先制技候補：'+(p.priorityMoves.length?p.priorityMoves.map(m=>esc(m.move)+'（優先度+'+m.priority+'・'+esc(m.condition)+'）').join('、'):'個別採用率・全候補は未確認')+'</div><div class="muted">対面注意の出典更新 '+esc(p.updated)+' ／ <a href="'+esc(p.source)+'" target="_blank" rel="noopener noreferrer">根拠</a>。型・統計の出典更新 '+esc(p.statsUpdated)+' ／ <a href="'+esc(p.statsSource)+'" target="_blank" rel="noopener noreferrer">GameWithデータ</a>。全技・持ち物・先発安全性は未検証。選出推奨は保留。</div></div>').join('')+'</div>':'';
  const confidenceBanner=uncovered.length
   ?'<div class="warn risk-banner" role="status"><b>⚠️ 対策データ不足：'+knownCount+'/6匹のみ登録</b><div>未登録：'+esc(uncovered.join('・'))+'</div><div>未登録の相手への有利不利は評価できません。選出判断を保留し、先発・交代先を安全とは判定しません。</div></div>'
   :'<div class="warn risk-banner" role="status"><b>注意：対策ルール登録6/6匹</b><div>名前ベースの登録件数であり、型・技・持ち物・特性・素早さ・メガ候補の対策精度は未検証です。安全性を保証しません。</div></div>';
