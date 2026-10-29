@@ -21,7 +21,7 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Unit-test official roster extraction
         run: python -m unittest discover -s tests -p test_official_roster_parser.py
-      - name: Reconcile complete official M-C non-Mega roster
+      - name: Reconcile official M-C roster and all M-A/B/C Mega forms
         run: python tools/audit_official_mc.py
       - name: Preserve full diff even if audit fails
         if: always()
