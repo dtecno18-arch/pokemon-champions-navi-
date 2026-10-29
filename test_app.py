@@ -1326,7 +1326,7 @@ def main():
             page.locator('#foe0').fill('メガゲンガー')
             page.locator('#analyze').click()
             ghost_warning=page.locator('#result .verified-unsafe-action')
-            assert ghost_warning.locator('.line').count() == 12
+            assert ghost_warning.locator('.line').count() == 14
             for move in ('しんそく','しんくうは','インファイト'):
                 assert move+'無効（条件付き）' in ghost_warning.inner_text()
             assert page.locator('#result .hero').count() == 0
