@@ -410,7 +410,16 @@ const reviewedOpponentProfiles=Object.freeze([
   alternateMoves:['ふきとばし','まもる'],
   speedMin:67,speedMax:67,sampleSpeed:67,
   priority:'掲載型に先制技なし。あくびは相手の特性・みがわり・持ち物で無効になる場合あり。',
-  caveat:'M-A/M-B掲載のLv50実数値67のみ。オボンのみ型は別の持ち物・技候補です。M-Cでの採用・先発安全性は未検証。'})
+  caveat:'M-A/M-B掲載のLv50実数値67のみ。オボンのみ型は別の持ち物・技候補です。M-Cでの採用・先発安全性は未検証。'}) ,Object.freeze({form:'メガガルーラ',title:'M-C物理技・先制技候補（同時採用未確認）',
+  regulation:'M-C',source:'https://gamewith.jp/pokemon-champions/554826',
+  updated:'2026-10-30',usageAsOf:'2026-10-28',usageRank:75,
+  item:'ガルーラナイト',ability:'おやこあい',
+  moves:['れいとうパンチ','じしん','のしかかり','ふいうち'],
+  alternateMoves:['ねこだまし','すてみタックル','ともえなげ'],
+  speedMin:108,speedMax:167,sampleSpeed:null,
+  priority:'ふいうち+1は相手が攻撃技を選んだ場合のみ成功。ねこだまし+3は候補で登場直後に限定。',
+  caveat:'M-7の種族全体使用率75位（10/28集計）と採用技の参考値。メガ前はきもったま等、メガ後はおやこあい。4技同時採用・先発安全・ゴースト相手への通りは未検証。'})
+
 ]);
 // M-C Rotom reference sets are not matchup answers. Reject source/date,
 // item, ability, speed, or move substitutions before displaying as reviewed.
@@ -429,8 +438,20 @@ function isReviewedRotomProfile(p){
   Array.isArray(p.moves) && p.moves.length===spec.moves.length &&
   spec.moves.every((move,i)=>p.moves[i]===move));
 }
+// Fail closed on forged Mega Kangaskhan reference profiles.
+function isReviewedMegaKangaskhanProfile(p){
+ if(p?.form!=='メガガルーラ')return true;
+ const moves=['れいとうパンチ','じしん','のしかかり','ふいうち'];
+ return p.source==='https://gamewith.jp/pokemon-champions/554826' &&
+  p.updated==='2026-10-30' && p.usageAsOf==='2026-10-28' &&
+  p.usageRank===75 && p.regulation==='M-C' &&
+  p.item==='ガルーラナイト' && p.ability==='おやこあい' &&
+  p.speedMin===108 && p.speedMax===167 && p.sampleSpeed===null &&
+  Array.isArray(p.moves) && p.moves.length===moves.length &&
+  moves.every((move,i)=>p.moves[i]===move);
+}
 function isReviewedOpponentProfile(p){
- return !!(p && isReviewedRotomProfile(p) && typeof p.form==='string' && p.form &&
+ return !!(p && isReviewedRotomProfile(p) && isReviewedMegaKangaskhanProfile(p) && typeof p.form==='string' && p.form &&
   typeof p.regulation==='string' && /^M-[ABC]/.test(p.regulation) &&
   hasEvidenceCitation(p) && typeof p.item==='string' && p.item &&
   typeof p.ability==='string' && p.ability &&
@@ -591,6 +612,15 @@ const furtherGhostImmunityTargets=Object.freeze([
  {form:'ヒスイバクフーン',source:'https://gamewith.jp/pokemon-champions/554150',sourceUpdated:'2026-10-27'},
  {form:'ヒスイゾロアーク',source:'https://gamewith.jp/pokemon-champions/553385',sourceUpdated:'2026-10-27'}
 ]);
+// 2026-10-30: exact Normal-type forms. This is negative move evidence,
+// not proof of a safe matchup. Never inherit from one Mega/form to another.
+const normalGhostImmunityTargets=Object.freeze([
+ {form:'カビゴン',source:'https://gamewith.jp/pokemon-champions/554963',sourceUpdated:'2026-10-29'},
+ {form:'ガルーラ',source:'https://gamewith.jp/pokemon-champions/553207',sourceUpdated:'2026-10-27'},
+ {form:'メガガルーラ',source:'https://gamewith.jp/pokemon-champions/554826',sourceUpdated:'2026-10-30'},
+ {form:'イッカネズミ(3びき)',source:'https://gamewith.jp/pokemon-champions/553170',sourceUpdated:'2026-10-27'},
+ {form:'イッカネズミ(4ひき)',source:'https://gamewith.jp/pokemon-champions/553170',sourceUpdated:'2026-10-27'}
+]);
 // Magic Bounce only after Mega evolution; ordinary forms and Mega Absol Z differ.
 const magicBounceTargets=Object.freeze([
  {form:'メガヤミラミ',source:'https://gamewith.jp/pokemon-champions/553316',sourceUpdated:'2026-10-27'},
@@ -633,6 +663,14 @@ const ghostImmuneRosterMoves=Object.freeze([
  {ownLead:'メガカイリュー',heldItem:'カイリュナイト',action:'しんそく',moveType:'ノーマル',moveSource:'https://gamewith.jp/pokemon-champions/554544',moveUpdated:'2026-10-27'},
  {ownLead:'メガルカリオZ',heldItem:'ルカリオナイトZ',action:'しんくうは',moveType:'かくとう',moveSource:'https://gamewith.jp/pokemon-champions/554194',moveUpdated:'2026-10-20'},
  {ownLead:'ギルガルド',heldItem:'きあいのタスキ',action:'インファイト',moveType:'かくとう',moveSource:'https://gamewith.jp/pokemon-champions/554264',moveUpdated:'2026-10-20'}
+]);
+// All four Ghost attacks are already registered on the fixed six.
+// Normal targets resist none of these: ordinary Ghost damage is ineffective.
+const ghostDamageRosterMoves=Object.freeze([
+ {ownLead:'ミミッキュ',heldItem:'いのちのたま',action:'かげうち',moveSource:'https://gamewith.jp/pokemon-champions/554265',moveUpdated:'2026-10-27'},
+ {ownLead:'ギルガルド',heldItem:'きあいのタスキ',action:'かげうち',moveSource:'https://gamewith.jp/pokemon-champions/554265',moveUpdated:'2026-10-27'},
+ {ownLead:'ギルガルド',heldItem:'きあいのタスキ',action:'ポルターガイスト',moveSource:'https://gamewith.jp/pokemon-champions/554474',moveUpdated:'2026-10-27'},
+ {ownLead:'イダイトウ♂',heldItem:'こだわりスカーフ',action:'おはかまいり',moveSource:'https://gamewith.jp/pokemon-champions/554903',moveUpdated:'2026-10-27'}
 ]);
 const verifiedUnsafeActionEvidence=Object.freeze([
  {form:'メガゲンガー',ownLead:'カバルドン',heldItem:'たべのこし',
@@ -729,6 +767,18 @@ const verifiedUnsafeActionEvidence=Object.freeze([
   moveSource:'https://gamewith.jp/pokemon-champions/554474',moveUpdated:'2026-10-27',
   mechanicSource:'https://gamewith.jp/pokemon-champions/546446',mechanicUpdated:'2026-10-28',
   updated:'2026-10-30',scope:'verified-unsafe-action',reviewed:true},
+ // 2026-10-30: 5 Normal exact forms x 4 registered Ghost attacks.
+ // Conditional on ordinary type rules; does not certify safe leads.
+ ...normalGhostImmunityTargets.flatMap(t=>ghostDamageRosterMoves.map(m=>({
+  form:t.form,ownLead:m.ownLead,heldItem:m.heldItem,ability:'type-only',
+  action:m.action,outcome:'immune',
+  when:'相手が'+t.form+'（ノーマルタイプ）で通常のタイプ相性が適用される場合。タイプ無効を変更する特殊な例外は未検証。別のメガ・形態に継承しない。',
+  reason:m.ownLead+'の'+m.action+'（ゴースト技）は'+t.form+'に通常無効。先制技や終盤のおはかまいりを勝ち筋と決め打ちしない。',
+  source:t.source,sourceUpdated:t.sourceUpdated,
+  moveSource:m.moveSource,moveUpdated:m.moveUpdated,
+  mechanicSource:'https://gamewith.jp/pokemon-champions/546446',mechanicUpdated:'2026-10-28',
+  updated:'2026-10-30',scope:'verified-unsafe-action',reviewed:true
+ }))),
  ...magicBounceTargets.flatMap(t=>magicBounceRosterMoves.map(m=>({
   form:t.form,ownLead:'カバルドン',heldItem:'たべのこし',
   ability:'マジックミラー',action:m.action,outcome:'reflected',
@@ -779,6 +829,15 @@ function isVerifiedUnsafeActionEvidence(e){
      own[2].split('／').includes(e.action) &&
      e.mechanicSource==='https://gamewith.jp/pokemon-champions/546446' &&
      e.mechanicUpdated==='2026-10-28') ||
+    (normalGhostImmunityTargets.some(t=>t.form===e.form &&
+       t.source===e.source && t.sourceUpdated===e.sourceUpdated) &&
+     ghostDamageRosterMoves.some(m=>m.ownLead===e.ownLead &&
+       m.heldItem===e.heldItem && m.action===e.action &&
+       m.moveSource===e.moveSource && m.moveUpdated===e.moveUpdated) &&
+     e.ability==='type-only' && e.outcome==='immune' &&
+     own[2].split('／').includes(e.action) &&
+     e.mechanicSource==='https://gamewith.jp/pokemon-champions/546446' &&
+     e.mechanicUpdated==='2026-10-28' && e.updated==='2026-10-30') ||
     (e.form==='ヒスイゾロアーク' && e.ownLead==='ギルガルド' &&
       e.heldItem==='きあいのタスキ' && e.ability==='type-only' &&
       e.action==='ポルターガイスト' && e.outcome==='immune' &&
