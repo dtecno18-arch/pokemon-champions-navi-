@@ -526,6 +526,20 @@ const magicBounceRosterMoves=Object.freeze([
  {action:'あくび',moveSource:'https://gamewith.jp/pokemon-champions/554330',moveUpdated:'2026-10-22'}
 ]);
 const groundImmuneTargets=Object.freeze([
+ // 2026-10-29: six source-checked exact-form Earthquake immunities.
+ // Flying type and Levitate are distinct mechanics; Mega X/Gyarados do NOT inherit.
+ {form:'ボーマンダ',ability:'type-only',source:'https://gamewith.jp/pokemon-champions/575013',sourceUpdated:'2026-10-28',
+  condition:'相手がボーマンダで、ひこうタイプによるじめん技無効が維持される場合のみ。じゅうりょく・はねやすめ等の例外は対象外。メガシンカ後の別タイプ・別特性には継承しない。'},
+ {form:'リザードン',ability:'type-only',source:'https://gamewith.jp/pokemon-champions/555372',sourceUpdated:'2026-10-28',
+  condition:'相手がリザードンで、ひこうタイプによるじめん技無効が維持される場合のみ。じゅうりょく・はねやすめ等の例外は対象外。メガシンカ後の別タイプ・別特性には継承しない。'},
+ {form:'ギャラドス',ability:'type-only',source:'https://gamewith.jp/pokemon-champions/555183',sourceUpdated:'2026-10-27',
+  condition:'相手がギャラドスで、ひこうタイプによるじめん技無効が維持される場合のみ。じゅうりょく・はねやすめ等の例外は対象外。メガシンカ後の別タイプ・別特性には継承しない。'},
+ {form:'アーマーガア',ability:'type-only',source:'https://gamewith.jp/pokemon-champions/555191',sourceUpdated:'2026-10-29',
+  condition:'相手がアーマーガアで、ひこうタイプによるじめん技無効が維持される場合のみ。じゅうりょく・はねやすめ等の例外は対象外。メガシンカ後の別タイプ・別特性には継承しない。'},
+ {form:'ウォッシュロトム',ability:'ふゆう',source:'https://gamewith.jp/pokemon-champions/554966',sourceUpdated:'2026-10-29',
+  condition:'相手がウォッシュロトムで、特性ふゆうが有効な場合のみ。かたやぶり・じゅうりょく・特性変更等の例外は対象外。メガシンカ後の別タイプ・別特性には継承しない。'},
+ {form:'ロトム',ability:'ふゆう',source:'https://gamewith.jp/pokemon-champions/558657',sourceUpdated:'2026-10-28',
+  condition:'相手がロトムで、特性ふゆうが有効な場合のみ。かたやぶり・じゅうりょく・特性変更等の例外は対象外。メガシンカ後の別タイプ・別特性には継承しない。'},
  {form:'メガボーマンダ',ability:'スカイスキン',source:'https://gamewith.jp/pokemon-champions/575012',sourceUpdated:'2026-10-28',
   condition:'相手がメガボーマンダにメガシンカ済みで、ひこうタイプによる地面無効が維持される場合。じゅうりょく・はねやすめ等の例外は対象外。'},
  {form:'メガガブリアスZ',ability:'ふゆう',source:'https://gamewith.jp/pokemon-champions/574491',sourceUpdated:'2026-10-28',
