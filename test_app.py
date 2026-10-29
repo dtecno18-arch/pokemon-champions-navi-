@@ -1081,7 +1081,7 @@ def main():
                 verifiedSafeCount:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
-            assert unsafe_gate == {'count':19,'valid':True,'wrongSource':False,
+            assert unsafe_gate == {'count':24,'valid':True,'wrongSource':False,
                 'wrongAbility':False,'ghostLead':False,'wrongItem':False,
                 'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
             # Reviewed interaction facts: 5 terrain-vs-priority moves and 4
@@ -1139,7 +1139,7 @@ def main():
               item:p.item,ability:p.ability,moves:p.moves,
               speed:[p.speedMin,p.speedMax],sample:p.sampleSpeed
             }))""")
-            assert len(sample_profiles)==3
+            assert len(sample_profiles)==7
             assert sample_profiles[0]['form']=='メガグソクムシャ'
             assert sample_profiles[0]['regulation']=='M-C'
             assert sample_profiles[0]['speed']==[54,101]
@@ -1164,25 +1164,25 @@ def main():
             for i,name in enumerate(profile_names):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==3
+            assert page.locator('#result .reviewed-opponent-profile').count()==4
             page.locator('#result .reviewed-opponent-profiles summary').click()
-            assert page.locator('#result .speed-comparison').count()==18
-            assert '出典付き主要型参考例 3件' in page.locator('#result .evidence-summary').inner_text()
+            assert page.locator('#result .speed-comparison').count()==24
+            assert '出典付き主要型参考例 4件' in page.locator('#result .evidence-summary').inner_text()
             assert 'M-A/M-B（過去の参考型）' in page.locator('#result .reviewed-opponent-profiles').inner_text()
             assert page.locator('#result .hero').count()==0
             assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             page.locator('#foe2').fill('メガリザードンX')
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==2
+            assert page.locator('#result .reviewed-opponent-profile').count()==3
             assert 'メガリザードンY' not in page.locator('#result .reviewed-opponent-profiles').inner_text()
             page.locator('#foe2').fill('メガリザードンY')
             page.locator('#analyze').click()
-            assert page.locator('#result .reviewed-opponent-profile').count()==3
+            assert page.locator('#result .reviewed-opponent-profile').count()==4
             assert page.locator('#result .hero').count()==0
 
             unsafe_names=['メガゲンガー','ミミッキュ','サーフゴー',
-                          'アシレーヌ','ガブリアス','カバルドン']
+                          'アシレーヌ','ニンフィア','カバルドン']
             for i, name in enumerate(unsafe_names):
                 page.locator(f'#foe{i}').fill(name)
             page.locator('#analyze').click()
@@ -1226,7 +1226,7 @@ def main():
 
             # Twelve new source-reviewed Ghost immunities (4 species x 3
             # roster moves), all strictly conditional and NEVER safe answers.
-            ghost_batch=page.evaluate("""() => verifiedUnsafeActionEvidence.slice(7).map(e=>({
+            ghost_batch=page.evaluate("""() => verifiedUnsafeActionEvidence.slice(7,22).map(e=>({
               form:e.form,move:e.action,valid:isVerifiedUnsafeActionEvidence(e),
               wrongType:isVerifiedUnsafeActionEvidence({...e,ability:'かげふみ'}),
               wrongMoveSource:isVerifiedUnsafeActionEvidence({...e,moveSource:''}),
@@ -1234,8 +1234,8 @@ def main():
               wrongForm:isVerifiedUnsafeActionEvidence({...e,form:'メガグソクムシャ'}),
               wrongScope:isVerifiedUnsafeActionEvidence({...e,scope:'safe-lead'})
             }))""")
-            assert len(ghost_batch)==12, ghost_batch
-            assert set(x['form'] for x in ghost_batch)=={'ゲンガー','ミミッキュ','サーフゴー','ドラパルト'}
+            assert len(ghost_batch)==15, ghost_batch
+            assert set(x['form'] for x in ghost_batch)=={'ゲンガー','ミミッキュ','サーフゴー','ドラパルト','メガアブソルZ'}
             assert all(x['valid'] and not x['wrongType'] and not x['wrongMoveSource']
                 and not x['wrongDate'] and not x['wrongForm'] and not x['wrongScope']
                 for x in ghost_batch)
@@ -1334,6 +1334,67 @@ def main():
             assert '検証済み危険行動 7件' in page.locator('#result .evidence-summary').inner_text()
             assert page.locator('#result .verified-unsafe-action .line').count() == 7
             assert page.locator('#result .hero').count() == 0
+
+            # Four new current M-C profiles (separate from verified safe matchups).
+            current_mc=page.evaluate("""() => reviewedOpponentProfiles.slice(3).map(p=>({
+              form:p.form,regulation:p.regulation,source:p.source,updated:p.updated,
+              item:p.item,ability:p.ability,speed:[p.speedMin,p.speedMax],
+              moves:p.moves,priority:p.priority
+            }))""")
+            assert [p['form'] for p in current_mc]==[
+                'メガボーマンダ','メガガブリアスZ','メガルカリオZ','メガアブソルZ']
+            assert [p['speed'] for p in current_mc]==[
+                [126,189],[153,223],[153,223],[153,223]]
+            assert all(p['regulation']=='M-C' and p['source'].startswith(
+                'https://gamewith.jp/pokemon-champions/') and
+                p['updated'].startswith('2026-10-') for p in current_mc)
+            assert current_mc[1]['ability']=='ふゆう'
+            assert current_mc[2]['ability']=='はどうのぼうご'
+            assert current_mc[3]['ability']=='きれあじ'
+            assert page.evaluate("() => Object.keys(verifiedMatchupEvidence).length")==0
+            # Five exact negative move interactions; normal forms remain
+            # uncertain until Mega evolution, and sibling Mega forms are distinct.
+            new_unsafe=page.evaluate("""() => verifiedUnsafeActionEvidence.slice(19).map(e=>({
+              form:e.form,lead:e.ownLead,move:e.action,
+              valid:isVerifiedUnsafeActionEvidence(e),
+              wrongSource:isVerifiedUnsafeActionEvidence({...e,source:''}),
+              wrongItem:isVerifiedUnsafeActionEvidence({...e,heldItem:'オボンのみ'}),
+              wrongAbility:isVerifiedUnsafeActionEvidence({...e,ability:'かげふみ'}),
+              wrongMove:isVerifiedUnsafeActionEvidence({...e,action:'ステルスロック'}),
+              wrongScope:isVerifiedUnsafeActionEvidence({...e,scope:'safe-lead'})
+            }))""")
+            assert len(new_unsafe)==5, new_unsafe
+            assert set(x['form'] for x in new_unsafe)=={
+                'メガアブソルZ','メガボーマンダ','メガガブリアスZ'}
+            assert all(x['valid'] and not x['wrongSource'] and
+                not x['wrongItem'] and not x['wrongAbility'] and
+                not x['wrongMove'] and not x['wrongScope'] for x in new_unsafe)
+            for target,expected in [
+                ('メガボーマンダ',1),('メガガブリアスZ',1),
+                ('メガアブソルZ',3)]:
+                for i,name in enumerate([target,'アシレーヌ','ドドゲザン',
+                                           'ニンフィア','カバルドン','ペリッパー']):
+                    page.locator(f'#foe{i}').fill(name)
+                page.locator('#analyze').click()
+                assert page.locator('#result .verified-unsafe-action .line').count()==expected
+                assert page.locator('#result .hero').count()==0
+                assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
+            for base,mega,expected in [
+                ('ボーマンダ','メガボーマンダ','じしん'),
+                ('ガブリアス','メガガブリアスZ','じしん'),
+                ('アブソル','メガアブソルZ','しんそく')]:
+                page.locator('#foe0').fill(base)
+                page.locator('#analyze').click()
+                assert expected+'無効（条件付き）' in page.locator('#result .verified-unsafe-action').inner_text()
+                assert mega in page.locator('#result .verified-unsafe-action').inner_text()
+            # A different Mega branch must not inherit the Ground immunity.
+            page.locator('#foe0').fill('メガガブリアス')
+            page.locator('#analyze').click()
+            assert page.locator('#result .verified-unsafe-action').count()==0
+            page.locator('#foe0').fill('メガリザードンX')
+            page.locator('#analyze').click()
+            assert page.locator('#result .verified-unsafe-action').count()==0
+            assert page.evaluate('() => document.documentElement.scrollWidth <= innerWidth + 2')
 
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
