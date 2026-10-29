@@ -2148,6 +2148,28 @@ def main():
             assert 'メガリザードンY' in charizard and 'メガリザードンX' not in charizard
             assert page.locator('#result .hero').count()==0
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            # A warning for one Mega branch is not a verdict on its siblings.
+            # The 72-move audit must show unknown branches explicitly.
+            branch_audit=page.evaluate("""() => {
+              const a=auditMoveAgainstOpponent('カバルドン','じしん','リザードン');
+              const b=auditMoveAgainstOpponent('ミミッキュ','かげうち','ガルーラ');
+              const html=renderMoveAuditRows(
+                ['リザードン','ゲンガー','グソクムシャ',
+                 'カバルドン','ニンフィア','ドドゲザン'],
+                ['カバルドン','メガルカリオZ','メガカイリュー'],
+                'カバルドン');
+              return {
+                a:a.branchCounts,b:b.branchCounts,status:a.status,
+                partial:html.includes('未検証：メガリザードンX'),
+                source:html.includes('メガリザードンY'),
+                noSafety:Object.keys(verifiedMatchupEvidence).length===0
+              };
+            }""")
+            assert branch_audit=={
+                'a':{'danger':2,'caution':0,'unknown':1},
+                'b':{'danger':2,'caution':0,'unknown':0},
+                'status':'danger','partial':True,'source':True,'noSafety':True
+            }, branch_audit
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):
