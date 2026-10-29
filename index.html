@@ -547,6 +547,15 @@ const additionalGhostImmunityTargets=Object.freeze([
  {form:'イダイトウ(メス)',source:'https://gamewith.jp/pokemon-champions/555272',sourceUpdated:'2026-10-28'},
  {form:'ミカルゲ',source:'https://gamewith.jp/pokemon-champions/555894',sourceUpdated:'2026-10-28'}
 ]);
+// 2026-10-30: six exact Ghost forms audited against three Normal/Fighting attacks.
+const furtherGhostImmunityTargets=Object.freeze([
+ {form:'ギルガルド',source:'https://gamewith.jp/pokemon-champions/554959',sourceUpdated:'2026-10-29'},
+ {form:'シャンデラ',source:'https://gamewith.jp/pokemon-champions/556413',sourceUpdated:'2026-10-28'},
+ {form:'メガシャンデラ',source:'https://gamewith.jp/pokemon-champions/554674',sourceUpdated:'2026-10-28'},
+ {form:'ソウブレイズ',source:'https://gamewith.jp/pokemon-champions/553166',sourceUpdated:'2026-10-27'},
+ {form:'ヒスイバクフーン',source:'https://gamewith.jp/pokemon-champions/554150',sourceUpdated:'2026-10-27'},
+ {form:'ヒスイゾロアーク',source:'https://gamewith.jp/pokemon-champions/553385',sourceUpdated:'2026-10-27'}
+]);
 // Magic Bounce only after Mega evolution; ordinary forms and Mega Absol Z differ.
 const magicBounceTargets=Object.freeze([
  {form:'メガヤミラミ',source:'https://gamewith.jp/pokemon-champions/553316',sourceUpdated:'2026-10-27'},
@@ -637,7 +646,7 @@ const verifiedUnsafeActionEvidence=Object.freeze([
   mechanicSource:'https://gamewith.jp/pokemon-champions/546446',mechanicUpdated:'2026-10-28',
   updated:'2026-10-29',scope:'verified-unsafe-action',reviewed:true
  })),
- ...additionalGhostImmunityTargets.flatMap(t=>ghostImmuneRosterMoves.map(m=>({
+ ...[...additionalGhostImmunityTargets,...furtherGhostImmunityTargets].flatMap(t=>ghostImmuneRosterMoves.map(m=>({
   form:t.form,ownLead:m.ownLead,heldItem:m.heldItem,ability:'type-only',
   action:m.action,outcome:'immune',
   when:'相手が'+t.form+'（ゴーストタイプ）で通常のタイプ相性が適用される場合。みやぶる・きもったま等、タイプ無効を変更する例外は対象外。',
@@ -665,6 +674,16 @@ const verifiedUnsafeActionEvidence=Object.freeze([
   source:'https://gamewith.jp/pokemon-champions/564100',sourceUpdated:'2026-10-29',
   mechanicSource:'https://gamewith.jp/pokemon-champions/564100',mechanicUpdated:'2026-10-29',
   moveSource:'https://gamewith.jp/pokemon-champions/554282',moveUpdated:'2026-10-20',
+  updated:'2026-10-30',scope:'verified-unsafe-action',reviewed:true},
+ // Hisuian Zoroark is Normal/Ghost: Normal typing blocks Ghost moves.
+ // Ordinary Dark-type Zoroark must NOT inherit this immunity.
+ {form:'ヒスイゾロアーク',ownLead:'ギルガルド',heldItem:'きあいのタスキ',
+  ability:'type-only',action:'ポルターガイスト',outcome:'immune',
+  when:'実際の相手がノーマル・ゴーストのヒスイゾロアークで、通常のタイプ相性が適用される場合のみ。イリュージョン中の見た目や通常ゾロアークには適用しない。タイプ無効を変更する例外は未検証。',
+  reason:'ギルガルドのポルターガイスト（ゴースト技）は、ノーマルタイプのヒスイゾロアークには無効。姿だけで真のタイプを判断しない。',
+  source:'https://gamewith.jp/pokemon-champions/553385',sourceUpdated:'2026-10-27',
+  moveSource:'https://gamewith.jp/pokemon-champions/554474',moveUpdated:'2026-10-27',
+  mechanicSource:'https://gamewith.jp/pokemon-champions/546446',mechanicUpdated:'2026-10-28',
   updated:'2026-10-30',scope:'verified-unsafe-action',reviewed:true},
  ...magicBounceTargets.flatMap(t=>magicBounceRosterMoves.map(m=>({
   form:t.form,ownLead:'カバルドン',heldItem:'たべのこし',
@@ -707,7 +726,7 @@ function isVerifiedUnsafeActionEvidence(e){
      own[2].split('／').includes(e.action) &&
      e.mechanicSource==='https://gamewith.jp/pokemon-champions/546446' &&
      e.mechanicUpdated==='2026-10-28') ||
-    (additionalGhostImmunityTargets.some(t=>t.form===e.form &&
+    ([...additionalGhostImmunityTargets,...furtherGhostImmunityTargets].some(t=>t.form===e.form &&
        t.source===e.source && t.sourceUpdated===e.sourceUpdated) &&
      ghostImmuneRosterMoves.some(m=>m.ownLead===e.ownLead &&
        m.heldItem===e.heldItem && m.action===e.action &&
@@ -716,6 +735,16 @@ function isVerifiedUnsafeActionEvidence(e){
      own[2].split('／').includes(e.action) &&
      e.mechanicSource==='https://gamewith.jp/pokemon-champions/546446' &&
      e.mechanicUpdated==='2026-10-28') ||
+    (e.form==='ヒスイゾロアーク' && e.ownLead==='ギルガルド' &&
+      e.heldItem==='きあいのタスキ' && e.ability==='type-only' &&
+      e.action==='ポルターガイスト' && e.outcome==='immune' &&
+      own[2].split('／').includes(e.action) &&
+      e.source==='https://gamewith.jp/pokemon-champions/553385' &&
+      e.sourceUpdated==='2026-10-27' &&
+      e.moveSource==='https://gamewith.jp/pokemon-champions/554474' &&
+      e.moveUpdated==='2026-10-27' &&
+      e.mechanicSource==='https://gamewith.jp/pokemon-champions/546446' &&
+      e.mechanicUpdated==='2026-10-28' && e.updated==='2026-10-30') ||
     (magicBounceTargets.some(t=>t.form===e.form &&
        t.source===e.source && t.sourceUpdated===e.sourceUpdated) &&
      magicBounceRosterMoves.some(m=>m.action===e.action &&
@@ -818,6 +847,25 @@ const verifiedMatchupEvidence=Object.freeze({});
 const ghostTypeRosterLeads=new Set(['ミミッキュ','ギルガルド','イダイトウ♂']);
 const hasEvidenceCitation=r=>r && typeof r.source==='string' &&
  r.source.startsWith('https://') && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(r.updated);
+// Illusion is a preview risk, not proof of the visible active Pokemon's identity.
+const reviewedDisguiseThreats=Object.freeze([
+ {form:'ゾロアーク',ability:'イリュージョン',
+  source:'https://gamewith.jp/pokemon-champions/556053',updated:'2026-10-27',
+  mechanicSource:'https://gamewith.jp/pokemon-champions/555166',mechanicUpdated:'2026-10-27'},
+ {form:'ヒスイゾロアーク',ability:'イリュージョン',
+  source:'https://gamewith.jp/pokemon-champions/553385',updated:'2026-10-27',
+  mechanicSource:'https://gamewith.jp/pokemon-champions/555166',mechanicUpdated:'2026-10-27'}
+]);
+function isReviewedDisguiseThreat(t){
+ return !!(t && reviewedDisguiseThreats.some(p=>p.form===t.form &&
+   p.ability===t.ability && p.source===t.source && p.updated===t.updated &&
+   p.mechanicSource===t.mechanicSource && p.mechanicUpdated===t.mechanicUpdated) &&
+   supportedNames.has(t.form) && hasEvidenceCitation(t));
+}
+function reviewedDisguiseThreatsFor(opponents){
+ const forms=new Set(opponents.flatMap(requiredMatchupForms));
+ return reviewedDisguiseThreats.filter(t=>isReviewedDisguiseThreat(t) && forms.has(t.form));
+}
 // A preview shows the ordinary species even when multiple Mega outcomes are
 // possible. The branch audit must include *each* possible form, not merely a
 // self-declared "all-known" label. Regional forms cannot Mega Evolve solely
@@ -1485,6 +1533,7 @@ function analyze(){
  const sourcedCount=vals.filter(n=>Object.prototype.hasOwnProperty.call(sourcedThreatIntel,formKey(n))).length;
  const pairRisks=reviewedPairRisksFor(vals);
  const verifiedUnsafeActions=verifiedUnsafeActionsFor(vals);
+ const disguiseThreats=reviewedDisguiseThreatsFor(vals);
  const conditionalLeadInteractions=reviewedConditionalLeadInteractionsFor(vals);
  const unverified=unverifiedMatchupBranches(vals,r.team,r.lead);
  const missingVerifiedMatchups=unverified.missing;
@@ -1536,6 +1585,10 @@ function analyze(){
  const conditionalActionWarning=conditionalLeadInteractions.length?
   '<div class="warn conditional-interactions" role="status"><details><summary>出典付き・条件付き技相互作用 '+conditionalLeadInteractions.length+'件（展開して確認／安全な選出は未検証）</summary><div class="muted">相手の技・特性・フィールド・形態を確認。選出3匹・先発の安全推奨には使用しません。</div>'+
   conditionalLeadInteractions.map(e=>'<div class="line"><b>'+esc(e.own)+' の '+esc(e.move)+' 対 '+esc(e.form)+'</b><div>'+esc(e.condition)+'</div><div>'+esc(e.effect)+'</div><div class="muted">検証 '+esc(e.updated)+'／記事更新 '+esc(e.sourceUpdated)+'／仕様更新 '+esc(e.mechanicUpdated)+' ／ <a href="'+esc(e.source)+'" target="_blank" rel="noopener noreferrer">相手の型</a>'+(e.femaleSource?' ／ <a href="'+esc(e.femaleSource)+'" target="_blank" rel="noopener noreferrer">メスの特性</a>':'')+' ／ <a href="'+esc(e.mechanicSource)+'" target="_blank" rel="noopener noreferrer">ルール</a> ／ <a href="'+esc(e.prioritySource)+'" target="_blank" rel="noopener noreferrer">先制技</a></div></div>').join('')+'</div>':'';
+ const disguiseWarning=disguiseThreats.length?
+   '<div class="warn disguise-uncertainty" role="alert"><b>⚠️ イリュージョンによる先発の正体誤認に注意：'+
+   esc(disguiseThreats.map(t=>t.form).join('・'))+'</b><div>相手の選出にゾロアーク系統がいる場合、場に出たポケモンの見た目と実際の種類・タイプが一致しない可能性があります。相手の技・ダメージ・特性表示を確認するまで、見た目だけで技無効・先発安全・交代先を断定しません。通常ゾロアーク（あく）とヒスイゾロアーク（ノーマル・ゴースト）のタイプ無効は別です。</div>'+
+   disguiseThreats.map(t=>'<div class="muted">出典 '+esc(t.updated)+'：<a href="'+esc(t.source)+'" target="_blank" rel="noopener noreferrer">'+esc(t.form)+'</a> ／ <a href="'+esc(t.mechanicSource)+'" target="_blank" rel="noopener noreferrer">イリュージョン（'+esc(t.mechanicUpdated)+'）</a></div>').join('')+'</div>':'';
  const confidenceBanner=uncovered.length
   ?'<div class="warn risk-banner" role="status"><b>⚠️ 対策データ不足：'+knownCount+'/6匹のみ登録</b><div>未登録：'+esc(uncovered.join('・'))+'</div><div>未登録の相手への有利不利は評価できません。選出判断を保留し、先発・交代先を安全とは判定しません。</div></div>'
   :'<div class="warn risk-banner" role="status"><b>注意：対策ルール登録6/6匹</b><div>名前ベースの登録件数であり、型・技・持ち物・特性・素早さ・メガ候補の対策精度は未検証です。安全性を保証しません。</div></div>';
@@ -1549,7 +1602,7 @@ function analyze(){
   const megaCaution=megaCandidates.length?'<div class="warn mega-uncertainty"><b>メガシンカの分岐に注意</b><div>'+esc(megaCandidates.join('・'))+' が候補に含まれます。実際のメガシンカ先は選出段階では確定できません。通常形態とメガ形態を両方警戒してください。</div></div>':'';
   $('#result').innerHTML=suggestionWarning+
    '<h2>② 選出判断を保留</h2><div class="warn abstention-banner" role="alert"><b>対策候補付きルール '+actionableCount+'/6匹／選出3匹の対応 '+selectedCoverage+'/6匹／検証済み対面 '+verifiedMatchupCount+'/6匹：選出3匹・先発は推奨しません</b><div>相手6匹のうち名前ベースの対策候補は'+actionableCount+'匹、暫定選出3匹が実際に対応できる候補は'+selectedCoverage+'匹です。選出3匹で対応できない相手が1匹でもいる場合、または相手6匹の中に個別対策未登録・候補未照合の入力・個別対面未検証のメガ形態・メガシンカ可能な通常形態・重大メガ分岐・サイコフィールド展開役が1匹でも含まれる場合は推奨を保留します。さらに相手6匹全員について、出典・更新日付きの個別対面と選出3匹の回答が検証済みでなければ推奨しません。名前ベースの対策候補が6/6匹でも安全とは判定しません。対戦画面でメガ候補・先制技も確認してください。</div></div>'+
-   confidenceBanner+criticalWarning+terrainWarning+megaFormWarning+megaBaseWarning+evidenceSummary+buildLeadInspector(vals)+buildReviewedOpponentProfiles(vals)+buildLeadRiskMatrix(vals)+unsafeActionWarning+conditionalActionWarning+sourcedWarning+extraThreatWarnings+pairRiskWarning+megaCaution+
+   confidenceBanner+disguiseWarning+criticalWarning+terrainWarning+megaFormWarning+megaBaseWarning+evidenceSummary+buildLeadInspector(vals)+buildReviewedOpponentProfiles(vals)+buildLeadRiskMatrix(vals)+unsafeActionWarning+conditionalActionWarning+sourcedWarning+extraThreatWarnings+pairRiskWarning+megaCaution+
    (missingVerifiedMatchups.length?'<div class="warn matchup-unverified" role="alert"><b>⚠️ 個別対面の検証不足：'+verifiedMatchupCount+'/6匹</b><div>未検証：'+esc(missingVerifiedMatchups.join('・'))+'。名前ベースの対策候補・出典付き脅威情報は、選出3匹で勝てる根拠ではありません。</div></div>':'')+
    '<div class="line abstention-coverage"><b>選出3匹で対応できない相手</b>'+ (unansweredByTrio.length?unansweredByTrio.map(c=>'<div class="line"><b>'+esc(c.name)+'</b>：'+esc(c.answer)+'</div>').join(''):'<p class="muted">名前ベースの対応候補はありますが、型・技・メガ分岐等の検証が不足しています。</p>')+'</div>'+
    '<div class="line"><b>相手6匹（入力候補の根拠／個別対面未検証）</b>'+vals.map(n=>{const p=candidateProvenance(n);return '<div class="line candidate-provenance"><b>'+esc(n)+'</b><div class="muted">'+esc(p.label)+(p.source?' ／ <a href="'+esc(p.source)+'" target="_blank" rel="noopener noreferrer">出典</a>':'')+'</div></div>';}).join('')+'</div>';
@@ -1558,7 +1611,7 @@ function analyze(){
   return;
  }
  $('#result').classList.remove('hidden');
- $('#result').innerHTML=suggestionWarning+'<h2>② おすすめ選出</h2><div class="hero"><div class="tag">登録済みの戦術ルールに基づく推奨（暫定）</div><div class="pokemon">'+r.team.map(x=>'<span class="chip">'+esc(x)+'</span>').join('')+'</div><p><b>先発：'+esc(r.lead)+'</b></p><p>'+esc(r.reason)+'</p></div>'+confidenceBanner+evidenceSummary+buildReviewedOpponentProfiles(vals)+unsafeActionWarning+conditionalActionWarning+sourcedWarning+'<div class="line"><b>立ち回り</b><p>'+esc(r.plan)+'</p></div><div class="line"><b>注意点</b>'+r.cautions.map(x=>'<div class="warn">'+esc(x)+'</div>').join('')+'</div><div class="line"><b>相手6匹の脅威チェック</b>'+r.threats.map(t=>'<div class="line"><b>'+esc(t.name)+'</b><div>'+esc(t.why)+'</div><div class="tag">対策：'+esc(t.answer)+'</div></div>').join('')+'</div><div class="line"><b>3匹比較（20通り）</b><p class="muted">'+esc(r.comparisonSummary.mode)+'。既知の対策がある相手 '+r.comparisonSummary.total+'匹中、基本選出 '+r.comparisonSummary.baseline+'匹 → 推奨 '+r.comparisonSummary.chosen+'匹。個別データがない相手は比較に反映できません。</p></div><div class="line"><b>選出3匹の対応範囲（暫定）</b><p class="muted">既知の対策候補だけを照合。要確認は相性不利の断定ではありません。</p>'+r.coverage.map(c=>'<div class="line"><b>'+esc(c.name)+' ｜ '+esc(c.status)+'</b><div class="muted">'+esc(c.answer)+'</div></div>').join('')+'</div><div class="line"><b>初手の行動分岐</b>'+r.leadBranches.map(b=>'<div class="line"><b>'+esc(b.when)+'</b><div>'+esc(b.action)+'</div></div>').join('')+'</div><details><summary>別の選出を考える条件</summary><p>相手の初手に不利で、控えの後出しも難しい場合は、メガカイリューの対面性能、ギルガルドのタスキ＋先制技、イダイトウのスカーフを軸に組み直してください。相手の選出3匹は決め打ちしません。</p></details>';
+ $('#result').innerHTML=suggestionWarning+'<h2>② おすすめ選出</h2><div class="hero"><div class="tag">登録済みの戦術ルールに基づく推奨（暫定）</div><div class="pokemon">'+r.team.map(x=>'<span class="chip">'+esc(x)+'</span>').join('')+'</div><p><b>先発：'+esc(r.lead)+'</b></p><p>'+esc(r.reason)+'</p></div>'+confidenceBanner+disguiseWarning+evidenceSummary+buildReviewedOpponentProfiles(vals)+unsafeActionWarning+conditionalActionWarning+sourcedWarning+'<div class="line"><b>立ち回り</b><p>'+esc(r.plan)+'</p></div><div class="line"><b>注意点</b>'+r.cautions.map(x=>'<div class="warn">'+esc(x)+'</div>').join('')+'</div><div class="line"><b>相手6匹の脅威チェック</b>'+r.threats.map(t=>'<div class="line"><b>'+esc(t.name)+'</b><div>'+esc(t.why)+'</div><div class="tag">対策：'+esc(t.answer)+'</div></div>').join('')+'</div><div class="line"><b>3匹比較（20通り）</b><p class="muted">'+esc(r.comparisonSummary.mode)+'。既知の対策がある相手 '+r.comparisonSummary.total+'匹中、基本選出 '+r.comparisonSummary.baseline+'匹 → 推奨 '+r.comparisonSummary.chosen+'匹。個別データがない相手は比較に反映できません。</p></div><div class="line"><b>選出3匹の対応範囲（暫定）</b><p class="muted">既知の対策候補だけを照合。要確認は相性不利の断定ではありません。</p>'+r.coverage.map(c=>'<div class="line"><b>'+esc(c.name)+' ｜ '+esc(c.status)+'</b><div class="muted">'+esc(c.answer)+'</div></div>').join('')+'</div><div class="line"><b>初手の行動分岐</b>'+r.leadBranches.map(b=>'<div class="line"><b>'+esc(b.when)+'</b><div>'+esc(b.action)+'</div></div>').join('')+'</div><details><summary>別の選出を考える条件</summary><p>相手の初手に不利で、控えの後出しも難しい場合は、メガカイリューの対面性能、ギルガルドのタスキ＋先制技、イダイトウのスカーフを軸に組み直してください。相手の選出3匹は決め打ちしません。</p></details>';
 
  // The original coverage model is sparse. Show the gaps rather than claiming exhaustive optimization.
  const detail=buildDecisionExplanation(vals,r);
