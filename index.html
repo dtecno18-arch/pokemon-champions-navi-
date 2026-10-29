@@ -358,10 +358,36 @@ const reviewedOpponentProfiles=Object.freeze([
   speedMin:153,speedMax:223,sampleSpeed:null,
   priority:'ふいうち+1・かげうち+1は掲載候補。実際の採用は未確定。',
   caveat:'M-C掲載の技候補。あく・ゴースト複合なのでノーマル・かくとう技は通常無効。4技と先制技採用は未確定。'})
-
+,
+ Object.freeze({"form":"メガカメックス","title":"M-Cからをやぶる＋特殊打点候補","source":"https://gamewith.jp/pokemon-champions/554819","usageRank":34,"item":"カメックスナイト","ability":"メガランチャー","moves":["からをやぶる","はどうだん","あくのはどう","だいちのはどう"],"alternateMoves":["れいとうビーム","みずのはどう","ねこだまし"],"speedMin":88,"speedMax":143,"boostedSpeedStage":2,"boostedSpeedMove":"からをやぶる","priority":"からをやぶる後は素早さ+2段階。ねこだまし+3は入替候補。","caveat":"採用率は通常カメックスを含む種族全体。からをやぶるの採用・成功は未確認。積み後の素早さ以外の耐久・ダメージは未検証。","regulation":"M-C","updated":"2026-10-28","usageAsOf":"2026-10-28","sampleSpeed":null}),
+ Object.freeze({"form":"メガセグレイブ","title":"M-C物理アタッカー＋先制技候補","source":"https://gamewith.jp/pokemon-champions/575651","usageRank":13,"item":"セグレイブナイト","ability":"ねつこうかん","moves":["こおりのつぶて","じしん","きょけんとつげき","つららおとし"],"alternateMoves":["りゅうのまい","つるぎのまい","つららばり"],"speedMin":96,"speedMax":152,"boostedSpeedStage":1,"boostedSpeedMove":"りゅうのまい","priority":"こおりのつぶて+1。りゅうのまいは入替候補。","caveat":"採用率は通常セグレイブを含む種族全体。ねつこうかんは炎技被弾で攻撃上昇。りゅうのまい採用・成功は未確認。","regulation":"M-C","updated":"2026-10-28","usageAsOf":"2026-10-28","sampleSpeed":null}),
+ Object.freeze({"form":"メガゲッコウガ","title":"M-C高速特殊＋みずしゅりけん候補","source":"https://gamewith.jp/pokemon-champions/554657","usageRank":28,"item":"ゲッコウガナイト","ability":"へんげんじざい","moves":["れいとうビーム","あくのはどう","ヘドロウェーブ","みずしゅりけん"],"alternateMoves":["なみのり","くさむすび","ハイドロポンプ"],"speedMin":145,"speedMax":213,"priority":"みずしゅりけん+1（2〜5回連続攻撃）。","caveat":"採用率は通常ゲッコウガを含む種族全体。へんげんじざいのタイプ変化・メガ前の素早さ・タスキ・スカーフ型は別途確認。","regulation":"M-C","updated":"2026-10-28","usageAsOf":"2026-10-28","sampleSpeed":null})
 ]);
+function isReviewedOpponentProfile(p){
+ return !!(p && typeof p.form==='string' && p.form &&
+  typeof p.regulation==='string' && /^M-[ABC]/.test(p.regulation) &&
+  hasEvidenceCitation(p) && typeof p.item==='string' && p.item &&
+  typeof p.ability==='string' && p.ability &&
+  Number.isInteger(p.speedMin) && Number.isInteger(p.speedMax) &&
+  p.speedMin>0 && p.speedMax>=p.speedMin &&
+  (p.sampleSpeed===null || (Number.isInteger(p.sampleSpeed) &&
+   p.sampleSpeed>=p.speedMin && p.sampleSpeed<=p.speedMax)) &&
+  Array.isArray(p.moves) && p.moves.length>0 &&
+  p.moves.every(m=>typeof m==='string' && m.length>0) &&
+  Array.isArray(p.alternateMoves) &&
+  (p.boostedSpeedStage===undefined ||
+   ([1,2].includes(p.boostedSpeedStage) &&
+    typeof p.boostedSpeedMove==='string' &&
+    [...p.moves,...p.alternateMoves].includes(p.boostedSpeedMove))));
+}
+function boostedSpeedRange(p){
+ if(!isReviewedOpponentProfile(p) || !p.boostedSpeedStage)return null;
+ const mult=p.boostedSpeedStage===2?2:1.5;
+ return [Math.floor(p.speedMin*mult),Math.floor(p.speedMax*mult)];
+}
 function reviewedOpponentProfilesFor(opponents){
- return reviewedOpponentProfiles.filter(p=>opponents.some(n=>requiredMatchupForms(n).includes(p.form)));
+ return reviewedOpponentProfiles.filter(p=>isReviewedOpponentProfile(p) &&
+  opponents.some(n=>requiredMatchupForms(n).includes(p.form)));
 }
 function referenceSpeedComparison(ownSpeed,p){
  if(ownSpeed>p.speedMax)return '掲載最速例より速い（差+'+(ownSpeed-p.speedMax)+'）';
