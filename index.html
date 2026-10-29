@@ -1569,10 +1569,15 @@ function leadRiskRows(opponents,ownLead){
      isReviewedConditionalLeadInteraction(e) && e.own===ownLead && e.forms.includes(form));
    const pairRisks=reviewedPairRisks.filter(e=>
      isReviewedPairRisk(e) && e.own===ownLead && e.form===form);
+   // Exact-form, source-reviewed first-turn priority hazards also belong
+   // in the 3-vs-6 matrix; do not show only the generic move category.
+   // Mechanics vetoes are already counted in unsafe and must not be doubled.
+   const adverse=adverseLeadScenariosFor([form],ownLead).filter(e=>
+     e.confidence==='conditional-risk');
    const speed=reviewedSpeedReferencesFor(ownLead,[form]);
    const boosted=reviewedOpponentProfiles.filter(p=>
      isReviewedOpponentProfile(p) && p.form===form && boostedSpeedRange(p));
-   return {form,unsafe,interactions,pairRisks,speed,boosted};
+   return {form,unsafe,interactions,pairRisks,adverse,speed,boosted};
   })
  }));
 }
@@ -1621,7 +1626,11 @@ function renderTrioRiskRows(opponents,trio){
     const vetoes=branches.flatMap(b=>b.unsafe.map(e=>b.form+'：'+
       (e.outcome==='blocked'?'通常交代不可':e.outcome==='reflected'?e.action+'反射':e.action+'無効')+'（条件付き）'));
     const cautions=branches.flatMap(b=>[
-      ...b.interactions.map(e=>b.form+'：'+e.move+'／'+e.mechanic),
+      ...b.interactions.filter(e=>!b.adverse.some(s=>
+        s.ownAction===e.move && s.opponentMove===e.opponentMove))
+        .map(e=>b.form+'：'+e.move+'／'+e.mechanic),
+      ...b.adverse.map(s=>b.form+'：'+s.ownAction+' 対 '+s.opponentMove+
+        (s.outcome==='priority-tie-risk'?'（同優先度・先手未確定）':'（相手先制リスク）')),
       ...b.pairRisks.map(e=>b.form+'：型・先制技'),
       ...b.speed.filter(p=>p.fasterPossible).map(p=>b.form+'：同優先度の素早さ注意'),
       ...b.boosted.map(p=>b.form+'：'+p.boostedSpeedMove+'成功時の素早さ注意')
