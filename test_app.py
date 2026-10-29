@@ -1021,6 +1021,9 @@ def main():
                 page.locator('#analyze').click()
                 risk = page.locator('#result .reviewed-pair-risks')
                 assert risk.count() == 1
+                assert risk.locator('details').get_attribute('open') is None
+                risk.locator('summary').click()
+                assert risk.locator('details').get_attribute('open') is not None
                 assert all(x in risk.inner_text() for x in (own, opponent, warning, '未検証'))
                 assert risk.locator('a[href*="'+source+'"]').count() >= 1
                 # Reviewed M-7 observations are form-specific warning context,
@@ -1078,7 +1081,7 @@ def main():
                 verifiedSafeCount:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
-            assert unsafe_gate == {'count':7,'valid':True,'wrongSource':False,
+            assert unsafe_gate == {'count':19,'valid':True,'wrongSource':False,
                 'wrongAbility':False,'ghostLead':False,'wrongItem':False,
                 'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
             # Reviewed interaction facts: 5 terrain-vs-priority moves and 4
@@ -1144,12 +1147,13 @@ def main():
             assert page.locator('#result .hero').count() == 0
             page.locator('#foe0').fill('メガグソクムシャ')
             page.locator('#analyze').click()
-            assert page.locator('#result .verified-unsafe-action').count() == 0
+            # Other slots still contain Mimikyu and Gholdengo, both Ghost.
+            assert page.locator('#result .verified-unsafe-action .line').count() == 6
             assert page.locator('#result .hero').count() == 0
 
             # Ghost immunities: exact moves, items and sources, never a safe lead.
             immune_gate=page.evaluate("""() => {
-              return verifiedUnsafeActionEvidence.slice(4).map(e=>({
+              return verifiedUnsafeActionEvidence.slice(4,7).map(e=>({
                 lead:e.ownLead,move:e.action,valid:isVerifiedUnsafeActionEvidence(e),
                 wrongMove:isVerifiedUnsafeActionEvidence({...e,action:'じしん'}),
                 wrongChart:isVerifiedUnsafeActionEvidence({...e,mechanicSource:''}),
@@ -1166,10 +1170,44 @@ def main():
             page.locator('#foe0').fill('メガゲンガー')
             page.locator('#analyze').click()
             ghost_warning=page.locator('#result .verified-unsafe-action')
-            assert ghost_warning.locator('.line').count() == 6
+            assert ghost_warning.locator('.line').count() == 12
             for move in ('しんそく','しんくうは','インファイト'):
                 assert move+'無効（条件付き）' in ghost_warning.inner_text()
             assert page.locator('#result .hero').count() == 0
+
+            # Twelve new source-reviewed Ghost immunities (4 species x 3
+            # roster moves), all strictly conditional and NEVER safe answers.
+            ghost_batch=page.evaluate("""() => verifiedUnsafeActionEvidence.slice(7).map(e=>({
+              form:e.form,move:e.action,valid:isVerifiedUnsafeActionEvidence(e),
+              wrongType:isVerifiedUnsafeActionEvidence({...e,ability:'かげふみ'}),
+              wrongMoveSource:isVerifiedUnsafeActionEvidence({...e,moveSource:''}),
+              wrongDate:isVerifiedUnsafeActionEvidence({...e,sourceUpdated:'未確認'}),
+              wrongForm:isVerifiedUnsafeActionEvidence({...e,form:'メガグソクムシャ'}),
+              wrongScope:isVerifiedUnsafeActionEvidence({...e,scope:'safe-lead'})
+            }))""")
+            assert len(ghost_batch)==12, ghost_batch
+            assert set(x['form'] for x in ghost_batch)=={'ゲンガー','ミミッキュ','サーフゴー','ドラパルト'}
+            assert all(x['valid'] and not x['wrongType'] and not x['wrongMoveSource']
+                and not x['wrongDate'] and not x['wrongForm'] and not x['wrongScope']
+                for x in ghost_batch)
+            # Remove the other Ghost opponents so each case has an exact count.
+            page.locator('#foe1').fill('ドドゲザン')
+            page.locator('#foe2').fill('エースバーン')
+            for opponent, expected in [('ミミッキュ',3),('サーフゴー',3),
+                                       ('ドラパルト',3),('ゲンガー',9)]:
+                page.locator('#foe0').fill(opponent)
+                page.locator('#analyze').click()
+                assert page.locator('#result .verified-unsafe-action .line').count()==expected
+                assert page.locator('#result .hero').count()==0
+                assert page.locator('#result .risk-matrix .matrix-foe').count()==6
+                assert page.locator('#result .risk-matrix .matrix-cell').count()==36
+                assert page.locator('#result .risk-matrix details').get_attribute('open') is None
+                assert '未検証（安全性不明）' in page.locator('#result .risk-matrix').text_content()
+                assert 'しんそく' in page.locator('#result .risk-matrix').text_content()
+                assert page.evaluate('() => document.documentElement.scrollWidth <= innerWidth + 1')
+            page.locator('#result .risk-matrix summary').click()
+            assert page.locator('#result .risk-matrix details').get_attribute('open') is not None
+            assert page.locator('#result .hero').count()==0
 
             tie_gate=page.evaluate("""() => {
               return reviewedConditionalLeadInteractions.slice(9).map(e=>({
