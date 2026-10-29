@@ -1792,7 +1792,7 @@ def main():
                 terrainStatus:terrain.status,priority:priority.status,
                 bounce:bounce.status,
                 switchExcluded:ghost.branches.every(b=>b.vetoes.every(e=>e.action==='しんそく')),
-                stats:moveAuditStats(CASES[0],['カバルドン','メガルカリオZ','メガカイリュー'])};
+                stats:moveAuditStats(['カバルドン','アシレーヌ','サーフゴー','ガブリアス','メガボーマンダ','ミミッキュ'],['カバルドン','メガルカリオZ','メガカイリュー'])};
             }""")
             assert audit['normalStatus']=='danger'
             assert ['リザードン',1] in audit['normal']
