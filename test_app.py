@@ -1794,6 +1794,47 @@ def main():
                 switchExcluded:ghost.branches.every(b=>b.vetoes.every(e=>e.action==='しんそく')),
                 stats:moveAuditStats(['カバルドン','アシレーヌ','サーフゴー','ガブリアス','メガボーマンダ','ミミッキュ'],['カバルドン','メガルカリオZ','メガカイリュー'])};
             }""")
+            # 2026-10-30: two source-reviewed, CONDITIONAL negative lead
+            # interactions. Good as Gold and Air Balloon are distinct mechanics.
+            # The latter is a held-item branch, never a universal Ground immunity.
+            gold=page.evaluate("""() => {
+              const cases=verifiedUnsafeActionEvidence.filter(e=>
+                e.form==='サーフゴー' && e.ownLead==='カバルドン' &&
+                ['あくび','じしん'].includes(e.action) && e.updated==='2026-10-30');
+              const yawn=cases.find(e=>e.action==='あくび');
+              const quake=cases.find(e=>e.action==='じしん');
+              const status=(move,foe)=>auditMoveAgainstOpponent('カバルドン',move,foe);
+              const gholdengo=reviewedOpponentProfiles.find(p=>p.form==='サーフゴー');
+              const hippo=reviewedOpponentProfiles.find(p=>p.form==='カバルドン');
+              return {
+                count:cases.length,allReviewed:cases.every(isVerifiedUnsafeActionEvidence),
+                yawn:status('あくび','サーフゴー').status,
+                quake:status('じしん','サーフゴー').status,
+                rocks:status('ステルスロック','サーフゴー').status,
+                exactYawn:status('あくび','サーフゴー').branches.every(b=>b.form==='サーフゴー'),
+                wrongAbility:isVerifiedUnsafeActionEvidence({...yawn,ability:'ふうせん'}),
+                wrongMove:isVerifiedUnsafeActionEvidence({...quake,action:'あくび'}),
+                wrongSource:isVerifiedUnsafeActionEvidence({...quake,source:'https://example.org'}),
+                wrongDate:isVerifiedUnsafeActionEvidence({...yawn,sourceUpdated:'2026-10-28'}),
+                hasConditions:cases.every(e=>e.when.includes('場合') || e.when.includes('のみ')),
+                profiles:[gholdengo && isReviewedOpponentProfile(gholdengo),
+                          hippo && isReviewedOpponentProfile(hippo)],
+                profileSpeeds:[gholdengo?.sampleSpeed,hippo?.sampleSpeed],
+                goldItem:gholdengo?.item,hippoItem:hippo?.item,
+                noSafeMatchups:Object.keys(verifiedMatchupEvidence).length===0
+              };
+            }""")
+            assert gold['count']==2 and gold['allReviewed'], gold
+            assert gold['yawn']=='danger' and gold['quake']=='danger', gold
+            assert gold['rocks']=='unknown' and gold['exactYawn'], gold
+            assert not any(gold[k] for k in ('wrongAbility','wrongMove','wrongSource','wrongDate')), gold
+            assert gold['hasConditions'] and gold['profiles']==[True,True], gold
+            assert gold['profileSpeeds']==[149,67], gold
+            assert gold['goldItem']=='こだわりスカーフ' and gold['hippoItem']=='たべのこし', gold
+            assert gold['noSafeMatchups'], gold
+            assert page.locator('#result .verified-unsafe-action').count()==1
+            assert 'ふうせん' in page.locator('#result .verified-unsafe-action').inner_text()
+            assert page.locator('#result .hero').count()==0
             assert audit['normalStatus']=='danger'
             assert ['リザードン',1] in audit['normal']
             assert ['メガリザードンY',1] in audit['normal']
