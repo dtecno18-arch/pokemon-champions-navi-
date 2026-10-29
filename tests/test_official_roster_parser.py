@@ -40,5 +40,71 @@ class OfficialRosterParserTest(unittest.TestCase):
         self.assertEqual(audit.extract_official("参加できるポケモン"), [])
 
 
+    def test_official_mega_section_normalizes_fullwidth_xyz(self):
+        text = ("このレギュレーションでメガシンカできるのは、下記のポケモンです。\n"
+                "メガリザードンＸ\nメガリザードンＹ\nメガガブリアスＺ\n"
+                "ポケモンの持ち物")
+        self.assertEqual(audit.extract_official_megas(text), [
+            "メガリザードンX", "メガリザードンY", "メガガブリアスZ"
+        ])
+
+    def test_official_mega_missing_section_fails_closed(self):
+        with self.assertRaises(ValueError):
+            audit.extract_official_megas("メガリザードンＸ メガリザードンＹ")
+
+    def test_official_mega_duplicate_fails_closed(self):
+        with self.assertRaises(ValueError):
+            audit.extract_official_megas(
+                "下記のポケモンです。メガリザードンＸ メガリザードンＸ ポケモンの持ち物")
+
+    @staticmethod
+    def mega_fixture():
+        notices = {
+            "M-A": ["メガニャオニクス"] + [f"メガテストA{i}" for i in range(58)],
+            "M-B": [f"メガテストB{i}" for i in range(16)],
+            "M-C": [f"メガテストC{i}" for i in range(6)],
+        }
+        expanded = set().union(*[set(v) for v in notices.values()])
+        expanded.remove("メガニャオニクス")
+        expanded.update(audit.MEGA_SEX_EXPANSIONS["メガニャオニクス"])
+        return notices, sorted(expanded)
+
+    def test_mega_exact_match_81_names_82_input_forms(self):
+        notices, forms = self.mega_fixture()
+        result = audit.reconcile_official_megas(notices, notices, forms, forms)
+        self.assertTrue(result["passed"])
+        self.assertEqual(result["officialNamed"], 81)
+        self.assertEqual(result["officialExpanded"], 82)
+
+    def test_mega_same_count_wrong_name_rejected(self):
+        notices, forms = self.mega_fixture()
+        app = {k: list(v) for k, v in notices.items()}
+        app["M-C"][-1] = "メガ誤登録"
+        result = audit.reconcile_official_megas(notices, app, forms, forms)
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["bucketDiff"]["M-C"]["extra"], ["メガ誤登録"])
+
+    def test_mega_same_count_wrong_input_rejected(self):
+        notices, forms = self.mega_fixture()
+        bad = forms[:-1] + ["メガ誤登録"]
+        result = audit.reconcile_official_megas(notices, notices, bad, bad)
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["candidateExtra"], ["メガ誤登録"])
+
+    def test_mega_same_count_wrong_candidate_rejected(self):
+        notices, forms = self.mega_fixture()
+        bad = forms[:-1] + ["メガ誤登録"]
+        result = audit.reconcile_official_megas(notices, notices, forms, bad)
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["candidateExtra"], ["メガ誤登録"])
+
+    def test_mega_duplicate_bucket_rejected(self):
+        notices, forms = self.mega_fixture()
+        app = {k: list(v) for k, v in notices.items()}
+        app["M-C"][-1] = app["M-C"][0]
+        with self.assertRaises(ValueError):
+            audit.reconcile_official_megas(notices, app, forms, forms)
+
+
 if __name__ == "__main__":
     unittest.main()
