@@ -1061,6 +1061,44 @@ def main():
             }""")
             assert risk_gate == [True, False, False, False, False, False, False, 0], risk_gate
 
+            # One source-reviewed NEGATIVE action (Shadow Tag), not a safe
+            # matchup. It must be shown for explicit Mega and possible Mega
+            # branches, but never unlock the team/lead recommendation.
+            unsafe_gate = page.evaluate("""() => {
+              const e=verifiedUnsafeActionEvidence[0];
+              return {
+                count:verifiedUnsafeActionEvidence.length,
+                valid:isVerifiedUnsafeActionEvidence(e),
+                wrongSource:isVerifiedUnsafeActionEvidence({...e,source:''}),
+                wrongAbility:isVerifiedUnsafeActionEvidence({...e,ability:'ふゆう'}),
+                ghostLead:isVerifiedUnsafeActionEvidence({...e,
+                  ownLead:'ミミッキュ',heldItem:'いのちのたま'}),
+                wrongItem:isVerifiedUnsafeActionEvidence({...e,heldItem:'オボンのみ'}),
+                promotedToSafe:isVerifiedUnsafeActionEvidence({...e,scope:'safe-lead'}),
+                verifiedSafeCount:Object.keys(verifiedMatchupEvidence).length
+              };
+            }""")
+            assert unsafe_gate == {'count':1,'valid':True,'wrongSource':False,
+                'wrongAbility':False,'ghostLead':False,'wrongItem':False,
+                'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
+            unsafe_names=['メガゲンガー','ミミッキュ','サーフゴー',
+                          'アシレーヌ','ガブリアス','カバルドン']
+            for i, name in enumerate(unsafe_names):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .verified-unsafe-action').count() == 1
+            assert '通常交代不可' in page.locator('#result .verified-unsafe-action').inner_text()
+            assert '2026-10-27' in page.locator('#result .verified-unsafe-action').inner_text()
+            assert page.locator('#result .hero').count() == 0
+            page.locator('#foe0').fill('ゲンガー')
+            page.locator('#analyze').click()
+            assert page.locator('#result .verified-unsafe-action').count() == 1
+            assert page.locator('#result .hero').count() == 0
+            page.locator('#foe0').fill('メガグソクムシャ')
+            page.locator('#analyze').click()
+            assert page.locator('#result .verified-unsafe-action').count() == 0
+            assert page.locator('#result .hero').count() == 0
+
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):
