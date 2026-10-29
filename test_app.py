@@ -1153,7 +1153,7 @@ def main():
                 verifiedSafeCount:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
-            assert unsafe_gate == {'count':86,'valid':True,'wrongSource':False,
+            assert unsafe_gate == {'count':109,'valid':True,'wrongSource':False,
                 'wrongAbility':False,'ghostLead':False,'wrongItem':False,
                 'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
 
@@ -1246,7 +1246,7 @@ def main():
               item:p.item,ability:p.ability,moves:p.moves,
               speed:[p.speedMin,p.speedMax],sample:p.sampleSpeed
             }))""")
-            assert len(sample_profiles)==18
+            assert len(sample_profiles)==19
             assert sample_profiles[0]['form']=='メガグソクムシャ'
             assert sample_profiles[0]['regulation']=='M-C'
             assert sample_profiles[0]['speed']==[54,101]
@@ -1499,7 +1499,7 @@ def main():
             }""")
             assert bad_profile=={
                 'source':False,'date':False,'speed':False,'boost':False,
-                'move':False,'invalidBoost':None,'reviewedCount':18,
+                'move':False,'invalidBoost':None,'reviewedCount':19,
                 'verifiedSafe':0}, bad_profile
             for i,name in enumerate(['カメックス','セグレイブ','ゲッコウガ',
                                      'アシレーヌ','ガブリアス','ペリッパー']):
@@ -1910,7 +1910,7 @@ def main():
               };
             }""")
             assert expanded['forms']==6 and expanded['records']==18, expanded
-            assert expanded['total']==86 and expanded['distinct']==18, expanded
+            assert expanded['total']==109 and expanded['distinct']==18, expanded
             assert expanded['valid'] and expanded['hasDates'] and expanded['hisuiValid'], expanded
             assert not any(expanded[k] for k in ('wrongForm','wrongSource','wrongMove',
                 'hisuiWrongForm','hisuiWrongMove','hisuiWrongDate','wrongDisguise')), expanded
@@ -1987,7 +1987,7 @@ def main():
             assert set(rotom['forms'])=={'ヒートロトム','フロストロトム',
                                         'スピンロトム','カットロトム'}, rotom
             assert rotom['danger'] and rotom['unknown'] and rotom['safe']==0, rotom
-            assert rotom['profiles']==[True,True] and rotom['profileCount']==18, rotom
+            assert rotom['profiles']==[True,True] and rotom['profileCount']==19, rotom
             assert rotom['speed']==[106,106] and rotom['rank']==[26,218], rotom
             assert not any(rotom[k] for k in ('forgedForm','forgedSource','forgedAbility',
                 'forgedDate','forgedProfileSource','forgedItem','forgedMoves','forgedProfileDate')), rotom
@@ -2010,6 +2010,76 @@ def main():
             page.locator('#analyze').click()
             assert '同じポケモンが重複' in page.locator('#status').inner_text()
             page.locator('#foe1').fill('メガリザードンY')
+            # 2026-10-30: Normal typing blocks the four registered Ghost
+            # attacks (5 exact forms), and H-Zoroark blocks 3 additional
+            # attacks without duplicating the prior Poltergeist veto.
+            # These are negative actions only, never verified safe matchups.
+            normal_audit=page.evaluate("""() => {
+              const names=['カビゴン','ガルーラ','メガガルーラ',
+                'イッカネズミ(3びき)','イッカネズミ(4ひき)','ヒスイゾロアーク'];
+              const entries=verifiedUnsafeActionEvidence.filter(e=>
+                names.includes(e.form) && ghostDamageRosterMoves.some(m=>
+                  m.ownLead===e.ownLead && m.action===e.action) &&
+                e.updated==='2026-10-30' && e.ability==='type-only');
+              const mega=reviewedOpponentProfiles.find(p=>p.form==='メガガルーラ');
+              const kangaroo=entries.find(e=>e.form==='メガガルーラ');
+              const zoroark=entries.filter(e=>e.form==='ヒスイゾロアーク');
+              return {
+                total:verifiedUnsafeActionEvidence.length,
+                records:entries.length,distinct:new Set(entries.map(e=>
+                  e.form+'|'+e.ownLead+'|'+e.action)).size,
+                valid:entries.every(isVerifiedUnsafeActionEvidence),
+                dated:entries.every(e=>e.sourceUpdated && e.moveUpdated &&
+                  e.mechanicUpdated==='2026-10-28' && e.updated==='2026-10-30'),
+                zoroark:zoroark.map(e=>e.action).sort(),
+                wrongSource:isVerifiedUnsafeActionEvidence({...kangaroo,source:'https://example.com'}),
+                wrongForm:isVerifiedUnsafeActionEvidence({...kangaroo,form:'グソクムシャ'}),
+                wrongMove:isVerifiedUnsafeActionEvidence({...kangaroo,action:'じしん'}),
+                wrongDate:isVerifiedUnsafeActionEvidence({...kangaroo,sourceUpdated:'2026-10-27'}),
+                ordinary:auditMoveAgainstOpponent('ミミッキュ','かげうち','ガルーラ').branches.map(b=>[b.form,b.vetoes.length]),
+                family:auditMoveAgainstOpponent('イダイトウ♂','おはかまいり','イッカネズミ').branches.map(b=>[b.form,b.vetoes.length]),
+                hisui:auditMoveAgainstOpponent('ミミッキュ','かげうち','ヒスイゾロアーク').status,
+                unrelated:auditMoveAgainstOpponent('イダイトウ♂','おはかまいり','グソクムシャ').status,
+                profile:isReviewedOpponentProfile(mega),
+                profileCount:reviewedOpponentProfiles.filter(isReviewedOpponentProfile).length,
+                speed:[mega.speedMin,mega.speedMax],
+                rank:mega.usageRank,
+                priority:mega.priority,
+                forgedProfileSource:isReviewedOpponentProfile({...mega,source:'https://example.com'}),
+                forgedProfileSpeed:isReviewedOpponentProfile({...mega,speedMax:200}),
+                forgedProfileMove:isReviewedOpponentProfile({...mega,moves:['ふいうち']}),
+                forgedProfileItem:isReviewedOpponentProfile({...mega,item:'オボンのみ'}),
+                safe:Object.keys(verifiedMatchupEvidence).length
+              };
+            }""")
+            assert normal_audit['total']==109 and normal_audit['records']==23, normal_audit
+            assert normal_audit['distinct']==23 and normal_audit['valid'] and normal_audit['dated'], normal_audit
+            assert normal_audit['zoroark']==['おはかまいり','かげうち','かげうち'], normal_audit
+            assert ['ガルーラ',1] in normal_audit['ordinary'], normal_audit
+            assert ['メガガルーラ',1] in normal_audit['ordinary'], normal_audit
+            assert len(normal_audit['family'])==2 and all(b[1]==1 for b in normal_audit['family']), normal_audit
+            assert normal_audit['hisui']=='danger' and normal_audit['unrelated']=='unknown', normal_audit
+            assert normal_audit['profile'] and normal_audit['profileCount']==19, normal_audit
+            assert normal_audit['speed']==[108,167] and normal_audit['rank']==75, normal_audit
+            assert 'ふいうち+1' in normal_audit['priority'], normal_audit
+            assert not any(normal_audit[k] for k in ('wrongSource','wrongForm','wrongMove','wrongDate',
+                'forgedProfileSource','forgedProfileSpeed','forgedProfileMove','forgedProfileItem')), normal_audit
+            assert normal_audit['safe']==0, normal_audit
+            for i,name in enumerate(['ガルーラ','メガリザードンY','シャンデラ',
+                                     'カバルドン','ニンフィア','ドドゲザン']):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .hero').count()==0
+            assert page.locator('#result .abstention-banner').count()==1
+            assert 'メガガルーラ' in page.locator('#result .verified-unsafe-action').text_content()
+            assert 'メガガルーラ' in page.locator('#result .reviewed-opponent-profiles').text_content()
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
+            page.locator('#foe0').fill('イッカネズミ')
+            page.locator('#analyze').click()
+            assert page.locator('#result .hero').count()==0
+            assert 'イッカネズミ(3びき)' in page.locator('#result .verified-unsafe-action').text_content()
+            assert 'イッカネズミ(4ひき)' in page.locator('#result .verified-unsafe-action').text_content()
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
             # Unknown Pokémon must not crash the app or inject markup.
             # Refill all slots after the explicit clear/reload above.
             for i, name in enumerate(unknown_names):
