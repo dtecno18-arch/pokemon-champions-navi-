@@ -747,6 +747,68 @@ def main():
                             'eternalFloetteBranches': ['フラエッテ(えいえんのはな)','メガフラエッテ'],
                             'ordinaryFloetteBranches': ['フラエッテ'],
                             'megaFloetteBranches': ['メガフラエッテ']}, gate
+            # Synthetic evidence ONLY: a reviewed Mega or base+all Mega branches
+            # must not be vetoed by an unconditional Mega/critical/terrain flag.
+            # Missing a single form, a reviewed lead or a selected team answer
+            # must still fail closed. No synthetic record is persisted to the app.
+            branch_gate = page.evaluate("""() => {
+              const cited={source:'https://example.org/synthetic-fixture',updated:'2026-10-29'};
+              const team=['カバルドン','ミミッキュ','メガルカリオZ'];
+              const lead='カバルドン';
+              const mk=form=>{
+                const forms=requiredMatchupForms(form);
+                const variants=forms.map((f,i)=>({...cited,id:'v'+i,form:f,
+                  reviewed:true,ability:'fixture-only',speedBase:100,
+                  speedRangeReviewed:true,speedMin:50,speedMax:150,
+                  moveCoverageReviewed:true,moves:['fixture-move'],
+                  itemCoverageReviewed:true,items:['fixture-item'],
+                  priorityMoves:[]}));
+                return {...cited,form,reviewed:true,formReviewed:true,
+                  branchScope:'all-known',variants,
+                  answers:variants.map(v=>({...cited,variant:v.id,
+                    pokemon:lead,reason:'synthetic fixture',reviewed:true})),
+                  leadChecks:variants.map(v=>({...cited,variant:v.id,
+                    lead,response:'stay',reason:'synthetic fixture',reviewed:true}))};
+              };
+              const evidence={
+                'リザードン':mk('リザードン'),
+                'メガリザードンY':mk('メガリザードンY'),
+                'イエッサン(メス)':mk('イエッサン(メス)'),
+                'イエッサン(オス)':mk('イエッサン(オス)')
+              };
+              const names=['リザードン','メガリザードンY','イエッサン(メス)','イエッサン(オス)'];
+              const compact=x=>({missing:x.missing,megaForms:x.megaForms,
+                megaBases:x.megaBases});
+              const full=unverifiedMatchupBranches(names,team,lead,evidence);
+              const none=unverifiedMatchupBranches(names,team,lead,{});
+              const incomplete={...evidence,'リザードン':{
+                ...evidence['リザードン'],
+                variants:evidence['リザードン'].variants.slice(0,2)}};
+              const partial=unverifiedMatchupBranches(names,team,lead,incomplete);
+              const wrongLead=unverifiedMatchupBranches(names,team,'ミミッキュ',evidence);
+              const megaOnly=unverifiedMatchupBranches(['メガリザードンY'],
+                team,lead,{'メガリザードンY':evidence['メガリザードンY']});
+              return {full:compact(full),none:compact(none),partial:compact(partial),
+                wrongLead:compact(wrongLead),megaOnly:compact(megaOnly),
+                fullCritical:full.missing.some(n=>n==='リザードン'),
+                fullTerrain:full.missing.some(n=>n==='イエッサン(メス)'),
+                missingCritical:none.missing.includes('リザードン'),
+                missingTerrain:none.missing.includes('イエッサン(メス)')};
+            }""")
+            assert branch_gate == {
+                'full': {'missing': [], 'megaForms': [], 'megaBases': []},
+                'none': {'missing': ['リザードン','メガリザードンY','イエッサン(メス)','イエッサン(オス)'],
+                         'megaForms': ['メガリザードンY'],
+                         'megaBases': ['リザードン']},
+                'partial': {'missing': ['リザードン'],
+                            'megaForms': [], 'megaBases': ['リザードン']},
+                'wrongLead': {'missing': ['リザードン','メガリザードンY','イエッサン(メス)','イエッサン(オス)'],
+                              'megaForms': ['メガリザードンY'],
+                              'megaBases': ['リザードン']},
+                'megaOnly': {'missing': [], 'megaForms': [], 'megaBases': []},
+                'fullCritical': False, 'fullTerrain': False,
+                'missingCritical': True, 'missingTerrain': True
+            }, branch_gate
             # Regional variants must not inherit another form's Mega branch.
             # This is a threat-warning correctness check, NOT matchup clearance.
             regional_case = ['アローラライチュウ','ミミッキュ','ドドゲザン',
