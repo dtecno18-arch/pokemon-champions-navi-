@@ -767,6 +767,58 @@ def main():
                             'eternalFloetteBranches': ['フラエッテ(えいえんのはな)','メガフラエッテ'],
                             'ordinaryFloetteBranches': ['フラエッテ'],
                             'megaFloetteBranches': ['メガフラエッテ']}, gate
+            # Source-reviewed conditional move risks must veto a synthetic
+            # safe-action claim, without leaking into unrelated forms or moves.
+            # This checks the audited gate only: no real safe matchup is added.
+            conditional_audit_gate=page.evaluate("""() => {
+              const cited={source:'https://example.org/synthetic',updated:'2026-10-29'};
+              const team=['カバルドン','メガルカリオZ','ミミッキュ'];
+              const mk=(form,lead,action,ability,moves,response='stay',switchTo)=>{
+                const variant={...cited,id:'v1',form,reviewed:true,ability,
+                  speedBase:100,speedRangeReviewed:true,speedMin:50,speedMax:150,
+                  moveCoverageReviewed:true,moves,
+                  itemCoverageReviewed:true,items:['synthetic-item'],
+                  priorityMoves:[]};
+                return {...cited,form,reviewed:true,formReviewed:true,
+                  branchScope:'all-known',variants:[variant],
+                  answers:[{...cited,variant:'v1',pokemon:response==='switch'?
+                    switchTo:lead,action,reason:'synthetic action',reviewed:true}],
+                  leadChecks:[{...cited,variant:'v1',lead,response,
+                    switchTo,reason:'synthetic lead',reviewed:true}]};
+              };
+              const check=(r,lead)=>hasVerifiedMatchupAnswer(r,r.form,team,lead);
+              return {
+                baseline:check(mk('ドヒドイデ','カバルドン','じしん',
+                  'さいせいりょく',['どくどく']),'カバルドン'),
+                terrainPriority:check(mk('イエッサン(オス)','メガルカリオZ',
+                  'しんくうは','サイコメイカー',['サイコキネシス']),'メガルカリオZ'),
+                terrainOtherMove:check(mk('イエッサン(オス)','メガルカリオZ',
+                  'あくのはどう','サイコメイカー',['サイコキネシス']),'メガルカリオZ'),
+                fasterPriority:check(mk('メガグソクムシャ','メガルカリオZ',
+                  'しんくうは','かたいツメ',['であいがしら']),'メガルカリオZ'),
+                tiedPriority:check(mk('メガグソクムシャ','メガルカリオZ',
+                  'しんくうは','かたいツメ',['ふいうち']),'メガルカリオZ'),
+                absentOpponentMove:check(mk('メガグソクムシャ','メガルカリオZ',
+                  'しんくうは','かたいツメ',['アイアンヘッド']),'メガルカリオZ'),
+                unrelatedForm:check(mk('メガゲッコウガ','メガルカリオZ',
+                  'しんくうは','へんげんじざい',['であいがしら']),'メガルカリオZ'),
+                reviewedTrap:check(mk('メガゲンガー','カバルドン',
+                  'かげうち','fixture-only',['シャドーボール'],
+                  'switch','ミミッキュ'),'カバルドン'),
+                ghostLeadNotTrapped:check(mk('メガゲンガー','ミミッキュ',
+                  'じしん','fixture-only',['シャドーボール'],
+                  'switch','カバルドン'),'ミミッキュ'),
+                productionSafeCount:Object.keys(verifiedMatchupEvidence).length
+              };
+            }""")
+            assert conditional_audit_gate == {
+                'baseline':True,'terrainPriority':False,'terrainOtherMove':True,
+                'fasterPriority':False,'tiedPriority':False,
+                'absentOpponentMove':True,'unrelatedForm':True,
+                'reviewedTrap':False,'ghostLeadNotTrapped':True,
+                'productionSafeCount':0
+            }, conditional_audit_gate
+
             # Synthetic evidence ONLY: a reviewed Mega or base+all Mega branches
             # must not be vetoed by an unconditional Mega/critical/terrain flag.
             # Missing a single form, a reviewed lead or a selected team answer
