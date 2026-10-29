@@ -1143,6 +1143,7 @@ def main():
             assert sample_profiles[0]['form']=='メガグソクムシャ'
             assert sample_profiles[0]['regulation']=='M-C'
             assert sample_profiles[0]['speed']==[54,101]
+            assert sample_profiles[0]['sample']==60
             assert sample_profiles[0]['moves']==['ビルドアップ','きゅうけつ','アイアンヘッド','ふいうち']
             assert sample_profiles[1]['regulation'].startswith('M-A/M-B')
             assert sample_profiles[1]['sample']==200
