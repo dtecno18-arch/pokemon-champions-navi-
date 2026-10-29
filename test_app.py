@@ -773,9 +773,9 @@ def main():
               const evidence={
                 'リザードン':mk('リザードン'),
                 'メガリザードンY':mk('メガリザードンY'),
-                'イエッサン':mk('イエッサン')
+                'イエッサン(メス)':mk('イエッサン(メス)')
               };
-              const names=['リザードン','メガリザードンY','イエッサン'];
+              const names=['リザードン','メガリザードンY','イエッサン(メス)'];
               const compact=x=>({missing:x.missing,megaForms:x.megaForms,
                 megaBases:x.megaBases});
               const full=unverifiedMatchupBranches(names,team,lead,evidence);
@@ -790,18 +790,18 @@ def main():
               return {full:compact(full),none:compact(none),partial:compact(partial),
                 wrongLead:compact(wrongLead),megaOnly:compact(megaOnly),
                 fullCritical:full.missing.some(n=>n==='リザードン'),
-                fullTerrain:full.missing.some(n=>n==='イエッサン'),
+                fullTerrain:full.missing.some(n=>n==='イエッサン(メス)'),
                 missingCritical:none.missing.includes('リザードン'),
-                missingTerrain:none.missing.includes('イエッサン')};
+                missingTerrain:none.missing.includes('イエッサン(メス)')};
             }""")
             assert branch_gate == {
                 'full': {'missing': [], 'megaForms': [], 'megaBases': []},
-                'none': {'missing': ['リザードン','メガリザードンY','イエッサン'],
+                'none': {'missing': ['リザードン','メガリザードンY','イエッサン(メス)'],
                          'megaForms': ['メガリザードンY'],
                          'megaBases': ['リザードン']},
                 'partial': {'missing': ['リザードン'],
                             'megaForms': [], 'megaBases': ['リザードン']},
-                'wrongLead': {'missing': ['リザードン','メガリザードンY','イエッサン'],
+                'wrongLead': {'missing': ['リザードン','メガリザードンY','イエッサン(メス)'],
                               'megaForms': ['メガリザードンY'],
                               'megaBases': ['リザードン']},
                 'megaOnly': {'missing': [], 'megaForms': [], 'megaBases': []},
