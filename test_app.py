@@ -1061,7 +1061,7 @@ def main():
             }""")
             assert risk_gate == [True, False, False, False, False, False, False, 0], risk_gate
 
-            # One source-reviewed NEGATIVE action (Shadow Tag), not a safe
+            # Two source-reviewed NEGATIVE actions (Shadow Tag / Ground immunity), not safe
             # matchup. It must be shown for explicit Mega and possible Mega
             # branches, but never unlock the team/lead recommendation.
             unsafe_gate = page.evaluate("""() => {
@@ -1078,7 +1078,7 @@ def main():
                 verifiedSafeCount:Object.keys(verifiedMatchupEvidence).length
               };
             }""")
-            assert unsafe_gate == {'count':1,'valid':True,'wrongSource':False,
+            assert unsafe_gate == {'count':2,'valid':True,'wrongSource':False,
                 'wrongAbility':False,'ghostLead':False,'wrongItem':False,
                 'promotedToSafe':False,'verifiedSafeCount':0}, unsafe_gate
             unsafe_names=['メガゲンガー','ミミッキュ','サーフゴー',
@@ -1097,6 +1097,52 @@ def main():
             page.locator('#foe0').fill('メガグソクムシャ')
             page.locator('#analyze').click()
             assert page.locator('#result .verified-unsafe-action').count() == 0
+            assert page.locator('#result .hero').count() == 0
+
+            # The second independently sourced negative action is a move-specific
+            # immunity: Hippowdon's Earthquake vs Flying-type Mega Charizard Y.
+            # It must not be confused with a safe lead or guaranteed victory.
+            ground_gate = page.evaluate("""() => {
+              const e=verifiedUnsafeActionEvidence[1];
+              return {
+                valid:isVerifiedUnsafeActionEvidence(e),
+                wrongSource:isVerifiedUnsafeActionEvidence({...e,source:''}),
+                wrongMoveSource:isVerifiedUnsafeActionEvidence({...e,moveSource:''}),
+                wrongChart:isVerifiedUnsafeActionEvidence({...e,mechanicSource:''}),
+                wrongMove:isVerifiedUnsafeActionEvidence({...e,action:'ステルスロック'}),
+                wrongAbility:isVerifiedUnsafeActionEvidence({...e,ability:'もうか'}),
+                wrongItem:isVerifiedUnsafeActionEvidence({...e,heldItem:'オボンのみ'}),
+                wrongForm:isVerifiedUnsafeActionEvidence({...e,form:'メガリザードンX'}),
+                wrongScope:isVerifiedUnsafeActionEvidence({...e,scope:'safe-lead'}),
+                safeCount:Object.keys(verifiedMatchupEvidence).length
+              };
+            }""")
+            assert ground_gate == {'valid':True,'wrongSource':False,
+                'wrongMoveSource':False,'wrongChart':False,'wrongMove':False,
+                'wrongAbility':False,'wrongItem':False,'wrongForm':False,
+                'wrongScope':False,'safeCount':0}, ground_gate
+            page.locator('#foe0').fill('メガリザードンY')
+            page.locator('#analyze').click()
+            warning=page.locator('#result .verified-unsafe-action')
+            assert warning.count() == 1
+            assert 'じしん無効（条件付き）' in warning.inner_text()
+            assert '2026-10-28' in warning.inner_text()
+            assert warning.locator('a[href*="554282"]').count() == 1
+            assert warning.locator('a[href*="546446"]').count() == 1
+            assert '検証済み危険行動 1件' in page.locator('#result .evidence-summary').inner_text()
+            assert '検証済み対面 0/6匹' in page.locator('#result .evidence-summary').inner_text()
+            assert page.locator('#result .hero').count() == 0
+            page.locator('#foe0').fill('リザードン')
+            page.locator('#analyze').click()
+            assert 'じしん無効（条件付き）' in page.locator('#result .verified-unsafe-action').inner_text()
+            page.locator('#foe0').fill('メガリザードンX')
+            page.locator('#analyze').click()
+            assert page.locator('#result .verified-unsafe-action').count() == 0
+            page.locator('#foe0').fill('メガリザードンY')
+            page.locator('#foe1').fill('メガゲンガー')
+            page.locator('#analyze').click()
+            assert '検証済み危険行動 2件' in page.locator('#result .evidence-summary').inner_text()
+            assert page.locator('#result .verified-unsafe-action .line').count() == 2
             assert page.locator('#result .hero').count() == 0
 
             # Unknown Pokémon must not crash the app or inject markup.
