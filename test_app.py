@@ -2020,7 +2020,8 @@ def main():
               const entries=verifiedUnsafeActionEvidence.filter(e=>
                 names.includes(e.form) && ghostDamageRosterMoves.some(m=>
                   m.ownLead===e.ownLead && m.action===e.action) &&
-                e.updated==='2026-10-30' && e.ability==='type-only');
+                e.updated==='2026-10-30' && e.ability==='type-only' &&
+                !(e.form==='ヒスイゾロアーク' && e.action==='ポルターガイスト'));
               const mega=reviewedOpponentProfiles.find(p=>p.form==='メガガルーラ');
               const kangaroo=entries.find(e=>e.form==='メガガルーラ');
               const zoroark=entries.filter(e=>e.form==='ヒスイゾロアーク');
