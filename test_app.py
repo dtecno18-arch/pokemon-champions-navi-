@@ -166,7 +166,7 @@ def main():
             assert page.locator('.published-set-own').count() == 12
             page.locator('#trio-inspector-0').select_option('ギルガルド')
             assert page.locator('.published-set-own').count() == 12
-            assert 'ギルガルド' in page.locator('.published-set-audit').inner_text()
+            assert 'ギルガルド' in page.locator('.published-set-own').first.text_content()
             page.locator('#trio-inspector-0').select_option('カバルドン')
             assert page.locator('#result .hero').count() == 0
             ma_new = ['アローラキュウコン','コータス','エルフーン',
