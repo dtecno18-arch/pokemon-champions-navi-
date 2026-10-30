@@ -160,6 +160,7 @@ def main():
             assert page.locator('#result .hero').count() == 0
             assert page.locator('#result .abstention-banner').count() == 1
             assert page.locator('.published-set-audit .published-set-row').count() == 4
+            page.locator('.published-set-audit > details > summary').click()
             assert page.locator('.published-set-audit').inner_text().find('推奨なし') >= 0
             assert page.locator('.published-set-audit').inner_text().find('過去M-A/B') >= 0
             assert page.locator('.published-set-own').count() == 12
