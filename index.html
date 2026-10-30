@@ -91,7 +91,7 @@
 <section class="panel hidden" id="result" tabindex="-1" aria-live="polite"></section>
 <section class="panel"><h2>自分の6匹・登録済みの構築データ</h2><div class="roster" id="roster"></div><details><summary>記事に基づく基本戦術</summary><p class="sub">カバルドンでステルスロック・あくびの起点を作り、メガルカリオZのわるだくみから崩す。ミミッキュ・ギルガルドの先制技で削り、スカーフイダイトウのおはかまいりで締める。メガカイリューは対面性能としんそくを活用。</p></details></section>
 <section class="panel"><h2>登録済みの素早さ目安（Lv.50）</h2><p class="sub">メガルカリオZ：201 ／ メガカイリュー：152 ／ ミミッキュ：131 ／ ギルガルド：112 ／ イダイトウ♂：143（スカーフ適用後214）／ カバルドン：67。先制技の優先度やサイコフィールドは別に考慮してください。</p></section><section class="panel"><h2>分析の前提</h2><p class="sub">これは記事の実戦方針に基づく暫定選出支援です。相手6匹全員の脅威を確認します。実際の選出3匹・技・持ち物は断定できません。記事の選出を参考にした条件分岐であり、勝率を保証するランキングや全対面のダメージ計算ではありません。</p><p class="sub">出典：<a href="https://eff4dckeqm1cwsf.hatenablog.com/entry/2026/10/10/081058" target="_blank" rel="noopener noreferrer">S6最終2位 構築記事</a></p></section>
-</main><script src="move_audit.js"></script><script src="lead_scenarios.js"></script>
+</main><script src="move_audit.js"></script><script src="lead_scenarios.js"></script><script src="published_sets.js"></script>
 <script>
 const roster=[
  ['カバルドン','たべのこし','じしん／あくび／ステルスロック／なまける','起点作成・クッション'],
@@ -1660,6 +1660,7 @@ function buildLeadInspector(opponents){
   '<p id="trio-inspector-status" class="muted" role="status">手動選択3匹・重複なし。先発候補はこの3匹に限定します。</p>'+
   '<details class="trio-inspector-details" open><summary>手動選択3匹 × 相手6匹｜18組の危険点検（安全判定なし）</summary>'+
   '<div id="trio-inspector-rows">'+renderTrioRiskRows(opponents,inspectedTrio)+'</div></details>'+
+  '<div id="published-set-audit">'+renderPublishedSetAudit(opponents,inspectedTrio)+'</div>'+
   '<label for="lead-inspector-select">確認する自分の先発候補（選択3匹内）</label> '+
   '<select id="lead-inspector-select">'+roster.map(p=>
    '<option value="'+esc(p[0])+'"'+(p[0]===inspectedLead?' selected':'')+'>'+esc(p[0])+'</option>').join('')+'</select>'+
@@ -1690,6 +1691,7 @@ $('#result').addEventListener('change',event=>{
    $('#lead-inspector-rows').innerHTML=renderLeadInspectorRows(opponents,inspectedLead);
    $('#adverse-lead-scenarios').innerHTML=renderAdverseLeadScenarios(opponents,inspectedLead);
    refreshMoveAudit(opponents,inspectedTrio,inspectedLead);
+   $('#published-set-audit').innerHTML=renderPublishedSetAudit(opponents,inspectedTrio);
   }
   return;
  }
@@ -1711,6 +1713,7 @@ $('#result').addEventListener('change',event=>{
   $('#lead-inspector-rows').innerHTML=renderLeadInspectorRows(opponents,lead);
   $('#adverse-lead-scenarios').innerHTML=renderAdverseLeadScenarios(opponents,lead);
   refreshMoveAudit(opponents,inspectedTrio,inspectedLead);
+   $('#published-set-audit').innerHTML=renderPublishedSetAudit(opponents,inspectedTrio);
   $('#trio-inspector-rows').innerHTML=renderTrioRiskRows(opponents,inspectedTrio);
  }
 });

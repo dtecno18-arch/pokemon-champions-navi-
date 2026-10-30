@@ -23,6 +23,30 @@ def main():
             page.on('pageerror', lambda e: errors.append(str(e)))
             page.goto(url, wait_until='domcontentloaded')
             assert page.locator('#analyze').count()==1
+            # Published four-move sets are source-confirmed *examples*, not
+            # evidence that the opponent selected that set or a safe matchup.
+            assert page.evaluate("() => publishedOpponentSets.length") == 4
+            assert page.evaluate("() => publishedOpponentSets.every(isReviewedPublishedSet)")
+            assert page.evaluate("""() => publishedSetsFor(
+                ['グソクムシャ','リザードン','ゲンガー']).length""") == 4
+            assert page.evaluate("() => publishedSetsFor(['メガリザードンX']).length") == 0
+            assert page.evaluate("""() => publishedSetSpeedOrder(
+                'カバルドン', publishedOpponentSets[0])""") == 'before'
+            assert page.evaluate("""() => publishedSetSpeedOrder(
+                'カバルドン', publishedOpponentSets[2])""") == 'after'
+            assert page.evaluate("""() => publishedSetSpeedOrder(
+                'メガルカリオZ', publishedOpponentSets[2])""") == 'before'
+            assert page.evaluate("""() => publishedSetActionRisk(
+                'カバルドン','あくび',publishedOpponentSets[0]).length""") == 0
+            assert page.evaluate("""() => publishedSetActionRisk(
+                'カバルドン','じしん',publishedOpponentSets[0]).length""") == 1
+            assert page.evaluate("""() => publishedSetActionRisk(
+                'メガカイリュー','しんそく',publishedOpponentSets[0]).length""") == 0
+            assert not page.evaluate("""() => isReviewedPublishedSet({
+                ...publishedOpponentSets[0], speed:999})""")
+            assert not page.evaluate("""() => isReviewedPublishedSet({
+                ...publishedOpponentSets[0], moves:['ねこだまし',
+                    ...publishedOpponentSets[0].moves.slice(1)]})""")
             assert page.locator('#analyze').inner_text() == 'リスクを確認'
             assert page.locator('.slot-source').count() == 6
             assert '選出3匹・先発の推奨は保留' in page.locator('.sub').first.inner_text()
@@ -126,6 +150,25 @@ def main():
             assert page.evaluate("() => formKey('パルデアケンタロス(炎)') === formKey('パルデアケンタロス(ほのお)')")
             assert '公式M-A特別セレクト31形態' in page.locator('#count + p').inner_text()
             assert '公式M-C全件監査2026-10-29成功' in page.locator('#count + p').inner_text()
+            # A normal species preview must expose each possible Mega set,
+            # without certifying any lead or converting old M-A/B sets to M-C.
+            sample_foes = ['グソクムシャ','リザードン','ゲンガー',
+                           'カバルドン','アシレーヌ','サーフゴー']
+            for i, name in enumerate(sample_foes):
+                page.locator(f'#foe{i}').fill(name)
+            page.locator('#analyze').click()
+            assert page.locator('#result .hero').count() == 0
+            assert page.locator('#result .abstention-banner').count() == 1
+            assert page.locator('.published-set-audit .published-set-row').count() == 4
+            page.locator('.published-set-audit > details > summary').click()
+            assert page.locator('.published-set-audit').inner_text().find('推奨なし') >= 0
+            assert page.locator('.published-set-audit').inner_text().find('過去M-A/B') >= 0
+            assert page.locator('.published-set-own').count() == 12
+            page.locator('#trio-inspector-0').select_option('ギルガルド')
+            assert page.locator('.published-set-own').count() == 12
+            assert 'ギルガルド' in page.locator('.published-set-own').first.text_content()
+            page.locator('#trio-inspector-0').select_option('カバルドン')
+            assert page.locator('#result .hero').count() == 0
             ma_new = ['アローラキュウコン','コータス','エルフーン',
                       'ニャオニクス(メス)','イダイトウ(オス)','イッカネズミ(3びき)']
             for i, name in enumerate(ma_new):
